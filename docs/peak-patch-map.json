@@ -1,0 +1,2982 @@
+{
+ "source": "Peak firmware 2.2, mapping runs 2026-11-09 (Tests/fixtures/mapping)",
+ "dumpLength": 527,
+ "nameOffset": 16,
+ "nameLength": 16,
+ "params": [
+  {
+   "name": "Patch Category",
+   "kind": "nrpn",
+   "num": [
+    0,
+    0
+   ],
+   "lo": 0,
+   "hi": 14,
+   "offset": 32,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Patch Genre",
+   "kind": "nrpn",
+   "num": [
+    0,
+    1
+   ],
+   "lo": 0,
+   "hi": 9,
+   "offset": 33,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Voice Mode",
+   "kind": "nrpn",
+   "num": [
+    0,
+    2
+   ],
+   "lo": 0,
+   "hi": 4,
+   "offset": 48,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Voice Unison",
+   "kind": "nrpn",
+   "num": [
+    0,
+    3
+   ],
+   "lo": 0,
+   "hi": 4,
+   "offset": 49,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Unison Detune",
+   "kind": "nrpn",
+   "num": [
+    0,
+    4
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 50,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Spread",
+   "kind": "nrpn",
+   "num": [
+    0,
+    5
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 51,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Keyboard Octave",
+   "kind": "nrpn",
+   "num": [
+    0,
+    6
+   ],
+   "lo": 61,
+   "hi": 67,
+   "offset": 52,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Glide Time",
+   "kind": "cc",
+   "num": 5,
+   "lo": 0,
+   "hi": 127,
+   "offset": 53,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Pre-Glide",
+   "kind": "nrpn",
+   "num": [
+    0,
+    7
+   ],
+   "lo": 52,
+   "hi": 76,
+   "offset": 54,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Glide On",
+   "kind": "cc",
+   "num": 35,
+   "lo": 0,
+   "hi": 1,
+   "offset": 55,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc Divergence",
+   "kind": "nrpn",
+   "num": [
+    0,
+    9
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 57,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc Drift",
+   "kind": "nrpn",
+   "num": [
+    0,
+    10
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 58,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Noise LPF",
+   "kind": "nrpn",
+   "num": [
+    0,
+    11
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 59,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Noise HPF",
+   "kind": "nrpn",
+   "num": [
+    0,
+    12
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 60,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Range",
+   "kind": "cc",
+   "num": 3,
+   "lo": 63,
+   "hi": 66,
+   "offset": 62,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Coarse",
+   "kind": "pair",
+   "num": 14,
+   "lo": 0,
+   "hi": 255,
+   "offset": 63,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Fine",
+   "kind": "pair",
+   "num": 15,
+   "lo": 28,
+   "hi": 228,
+   "offset": 65,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 ModEnv2>Pitch",
+   "kind": "cc",
+   "num": 9,
+   "lo": 1,
+   "hi": 127,
+   "offset": 67,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 LFO2>Pitch",
+   "kind": "pair",
+   "num": 16,
+   "lo": 1,
+   "hi": 255,
+   "offset": 68,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Wave",
+   "kind": "nrpn",
+   "num": [
+    0,
+    14
+   ],
+   "lo": 0,
+   "hi": 4,
+   "offset": 70,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Wave More",
+   "kind": "nrpn",
+   "num": [
+    0,
+    15
+   ],
+   "lo": 4,
+   "hi": 63,
+   "offset": 71,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Shape Source",
+   "kind": "nrpn",
+   "num": [
+    0,
+    16
+   ],
+   "lo": 0,
+   "hi": 2,
+   "offset": 72,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Manual Shape",
+   "kind": "cc",
+   "num": 12,
+   "lo": 0,
+   "hi": 127,
+   "offset": 73,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 ModEnv1>Shape",
+   "kind": "cc",
+   "num": 119,
+   "lo": 0,
+   "hi": 127,
+   "offset": 74,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 LFO1>Shape",
+   "kind": "cc",
+   "num": 33,
+   "lo": 0,
+   "hi": 127,
+   "offset": 75,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Vsync",
+   "kind": "cc",
+   "num": 34,
+   "lo": 0,
+   "hi": 127,
+   "offset": 76,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Saw Density",
+   "kind": "nrpn",
+   "num": [
+    0,
+    17
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 77,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Saw Detune",
+   "kind": "nrpn",
+   "num": [
+    0,
+    18
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 78,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Fixed Note",
+   "kind": "nrpn",
+   "num": [
+    0,
+    19
+   ],
+   "lo": 0,
+   "hi": 88,
+   "offset": 79,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc1 Bend Range",
+   "kind": "nrpn",
+   "num": [
+    0,
+    20
+   ],
+   "lo": 40,
+   "hi": 88,
+   "offset": 80,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Range",
+   "kind": "cc",
+   "num": 37,
+   "lo": 63,
+   "hi": 66,
+   "offset": 83,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Coarse",
+   "kind": "pair",
+   "num": 17,
+   "lo": 0,
+   "hi": 255,
+   "offset": 84,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Fine",
+   "kind": "pair",
+   "num": 18,
+   "lo": 28,
+   "hi": 228,
+   "offset": 86,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 ModEnv2>Pitch",
+   "kind": "cc",
+   "num": 38,
+   "lo": 1,
+   "hi": 127,
+   "offset": 88,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 LFO2>Pitch",
+   "kind": "pair",
+   "num": 19,
+   "lo": 1,
+   "hi": 255,
+   "offset": 89,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Wave",
+   "kind": "nrpn",
+   "num": [
+    0,
+    23
+   ],
+   "lo": 0,
+   "hi": 4,
+   "offset": 91,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Wave More",
+   "kind": "nrpn",
+   "num": [
+    0,
+    24
+   ],
+   "lo": 4,
+   "hi": 63,
+   "offset": 92,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Shape Source",
+   "kind": "nrpn",
+   "num": [
+    0,
+    25
+   ],
+   "lo": 0,
+   "hi": 2,
+   "offset": 93,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Manual Shape",
+   "kind": "cc",
+   "num": 39,
+   "lo": 0,
+   "hi": 127,
+   "offset": 94,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 ModEnv1>Shape",
+   "kind": "cc",
+   "num": 40,
+   "lo": 0,
+   "hi": 127,
+   "offset": 95,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 LFO1>Shape",
+   "kind": "cc",
+   "num": 41,
+   "lo": 0,
+   "hi": 127,
+   "offset": 96,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Vsync",
+   "kind": "cc",
+   "num": 42,
+   "lo": 0,
+   "hi": 127,
+   "offset": 97,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Saw Density",
+   "kind": "nrpn",
+   "num": [
+    0,
+    26
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 98,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Saw Detune",
+   "kind": "nrpn",
+   "num": [
+    0,
+    27
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 99,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Fixed Note",
+   "kind": "nrpn",
+   "num": [
+    0,
+    28
+   ],
+   "lo": 0,
+   "hi": 88,
+   "offset": 100,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc2 Bend Range",
+   "kind": "nrpn",
+   "num": [
+    0,
+    29
+   ],
+   "lo": 40,
+   "hi": 88,
+   "offset": 101,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Range",
+   "kind": "cc",
+   "num": 65,
+   "lo": 63,
+   "hi": 66,
+   "offset": 104,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Coarse",
+   "kind": "pair",
+   "num": 20,
+   "lo": 0,
+   "hi": 255,
+   "offset": 105,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Fine",
+   "kind": "pair",
+   "num": 21,
+   "lo": 28,
+   "hi": 228,
+   "offset": 107,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified with caveat",
+   "note": "Value 45 was ignored twice (CC 21 msb 22); 131/182/200/108 stored fine. Needs a targeted test."
+  },
+  {
+   "name": "Osc3 ModEnv2>Pitch",
+   "kind": "cc",
+   "num": 43,
+   "lo": 1,
+   "hi": 127,
+   "offset": 109,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 LFO2>Pitch",
+   "kind": "pair",
+   "num": 22,
+   "lo": 1,
+   "hi": 255,
+   "offset": 110,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Wave",
+   "kind": "nrpn",
+   "num": [
+    0,
+    32
+   ],
+   "lo": 0,
+   "hi": 4,
+   "offset": 112,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Wave More",
+   "kind": "nrpn",
+   "num": [
+    0,
+    33
+   ],
+   "lo": 4,
+   "hi": 63,
+   "offset": 113,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Shape Source",
+   "kind": "nrpn",
+   "num": [
+    0,
+    34
+   ],
+   "lo": 0,
+   "hi": 2,
+   "offset": 114,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Manual Shape",
+   "kind": "cc",
+   "num": 71,
+   "lo": 0,
+   "hi": 127,
+   "offset": 115,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 ModEnv1>Shape",
+   "kind": "cc",
+   "num": 72,
+   "lo": 0,
+   "hi": 127,
+   "offset": 116,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 LFO1>Shape",
+   "kind": "cc",
+   "num": 73,
+   "lo": 0,
+   "hi": 127,
+   "offset": 117,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Vsync",
+   "kind": "cc",
+   "num": 44,
+   "lo": 0,
+   "hi": 127,
+   "offset": 118,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Saw Density",
+   "kind": "nrpn",
+   "num": [
+    0,
+    35
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 119,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Saw Detune",
+   "kind": "nrpn",
+   "num": [
+    0,
+    36
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 120,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Fixed Note",
+   "kind": "nrpn",
+   "num": [
+    0,
+    37
+   ],
+   "lo": 0,
+   "hi": 88,
+   "offset": 121,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3 Bend Range",
+   "kind": "nrpn",
+   "num": [
+    0,
+    38
+   ],
+   "lo": 40,
+   "hi": 88,
+   "offset": 122,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mix Osc1",
+   "kind": "pair",
+   "num": 23,
+   "lo": 0,
+   "hi": 255,
+   "offset": 125,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Mix Osc2",
+   "kind": "pair",
+   "num": 24,
+   "lo": 0,
+   "hi": 255,
+   "offset": 127,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Mix Osc3",
+   "kind": "pair",
+   "num": 25,
+   "lo": 0,
+   "hi": 255,
+   "offset": 129,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Ring 1*2",
+   "kind": "pair",
+   "num": 26,
+   "lo": 0,
+   "hi": 255,
+   "offset": 131,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Noise Level",
+   "kind": "pair",
+   "num": 27,
+   "lo": 0,
+   "hi": 255,
+   "offset": 133,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Patch Level",
+   "kind": "nrpn",
+   "num": [
+    0,
+    41
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 135,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "VCA Gain",
+   "kind": "nrpn",
+   "num": [
+    0,
+    42
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 136,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Dry Level",
+   "kind": "nrpn",
+   "num": [
+    0,
+    43
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 137,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Wet Level",
+   "kind": "nrpn",
+   "num": [
+    0,
+    44
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 138,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Filter Overdrive",
+   "kind": "cc",
+   "num": 80,
+   "lo": 0,
+   "hi": 127,
+   "offset": 139,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Filter Post Drive",
+   "kind": "cc",
+   "num": 36,
+   "lo": 0,
+   "hi": 127,
+   "offset": 140,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Filter Slope",
+   "kind": "nrpn",
+   "num": [
+    0,
+    45
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 141,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Filter Shape",
+   "kind": "nrpn",
+   "num": [
+    0,
+    46
+   ],
+   "lo": 0,
+   "hi": 2,
+   "offset": 142,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Filter Key Track",
+   "kind": "cc",
+   "num": 75,
+   "lo": 0,
+   "hi": 127,
+   "offset": 143,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Filter Resonance",
+   "kind": "cc",
+   "num": 79,
+   "lo": 0,
+   "hi": 127,
+   "offset": 144,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Filter Frequency",
+   "kind": "pair",
+   "num": 29,
+   "lo": 0,
+   "hi": 255,
+   "offset": 145,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1>Filter",
+   "kind": "pair",
+   "num": 28,
+   "lo": 1,
+   "hi": 255,
+   "offset": 147,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "Osc3>Filter",
+   "kind": "cc",
+   "num": 76,
+   "lo": 0,
+   "hi": 127,
+   "offset": 149,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Filter Env Select",
+   "kind": "nrpn",
+   "num": [
+    0,
+    47
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 150,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "AmpEnv>Filter",
+   "kind": "cc",
+   "num": 77,
+   "lo": 1,
+   "hi": 127,
+   "offset": 151,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv1>Filter",
+   "kind": "cc",
+   "num": 78,
+   "lo": 1,
+   "hi": 127,
+   "offset": 152,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Filter Divergence",
+   "kind": "nrpn",
+   "num": [
+    0,
+    48
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 153,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Pan Posn",
+   "kind": "nrpn",
+   "num": [
+    0,
+    51
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 156,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Spread Mode",
+   "kind": "nrpn",
+   "num": [
+    0,
+    52
+   ],
+   "lo": 0,
+   "hi": 3,
+   "offset": 157,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "AmpEnv Attack",
+   "kind": "cc",
+   "num": 86,
+   "lo": 0,
+   "hi": 127,
+   "offset": 160,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "AmpEnv Decay",
+   "kind": "cc",
+   "num": 87,
+   "lo": 0,
+   "hi": 127,
+   "offset": 161,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "AmpEnv Sustain",
+   "kind": "cc",
+   "num": 88,
+   "lo": 0,
+   "hi": 127,
+   "offset": 162,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "AmpEnv Release",
+   "kind": "cc",
+   "num": 89,
+   "lo": 0,
+   "hi": 127,
+   "offset": 163,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "AmpEnv Velocity",
+   "kind": "nrpn",
+   "num": [
+    0,
+    55
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 164,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "AmpEnv Trigger",
+   "kind": "nrpn",
+   "num": [
+    0,
+    56
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 165,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv1 Attack",
+   "kind": "cc",
+   "num": 90,
+   "lo": 0,
+   "hi": 127,
+   "offset": 169,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv1 Decay",
+   "kind": "cc",
+   "num": 91,
+   "lo": 0,
+   "hi": 127,
+   "offset": 170,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv1 Sustain",
+   "kind": "cc",
+   "num": 92,
+   "lo": 0,
+   "hi": 127,
+   "offset": 171,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv1 Release",
+   "kind": "cc",
+   "num": 93,
+   "lo": 0,
+   "hi": 127,
+   "offset": 172,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv1 Velocity",
+   "kind": "nrpn",
+   "num": [
+    0,
+    60
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 173,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv1 Trigger",
+   "kind": "nrpn",
+   "num": [
+    0,
+    61
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 174,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv2 Attack",
+   "kind": "cc",
+   "num": 94,
+   "lo": 0,
+   "hi": 127,
+   "offset": 177,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv2 Decay",
+   "kind": "cc",
+   "num": 95,
+   "lo": 0,
+   "hi": 127,
+   "offset": 178,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv2 Sustain",
+   "kind": "cc",
+   "num": 117,
+   "lo": 0,
+   "hi": 127,
+   "offset": 179,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv2 Release",
+   "kind": "cc",
+   "num": 103,
+   "lo": 0,
+   "hi": 127,
+   "offset": 180,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv2 Velocity",
+   "kind": "nrpn",
+   "num": [
+    0,
+    64
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 181,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv2 Trigger",
+   "kind": "nrpn",
+   "num": [
+    0,
+    65
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 182,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 Range",
+   "kind": "nrpn",
+   "num": [
+    0,
+    68
+   ],
+   "lo": 0,
+   "hi": 2,
+   "offset": 185,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 Rate",
+   "kind": "pair",
+   "num": 30,
+   "lo": 0,
+   "hi": 255,
+   "offset": 186,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 Sync Rate",
+   "kind": "cc",
+   "num": 81,
+   "lo": 0,
+   "hi": 34,
+   "offset": 188,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 Wave",
+   "kind": "nrpn",
+   "num": [
+    0,
+    69
+   ],
+   "lo": 0,
+   "hi": 3,
+   "offset": 189,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 Phase",
+   "kind": "nrpn",
+   "num": [
+    0,
+    70
+   ],
+   "lo": 0,
+   "hi": 120,
+   "offset": 190,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 Slew",
+   "kind": "nrpn",
+   "num": [
+    0,
+    71
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 191,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 Fade Time",
+   "kind": "cc",
+   "num": 82,
+   "lo": 0,
+   "hi": 127,
+   "offset": 192,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 Fade In/Out",
+   "kind": "nrpn",
+   "num": [
+    0,
+    72
+   ],
+   "lo": 0,
+   "hi": 3,
+   "offset": 193,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 One Shot",
+   "kind": "nrpn",
+   "num": [
+    0,
+    75
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 196,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 Common",
+   "kind": "nrpn",
+   "num": [
+    0,
+    76
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 197,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 Range",
+   "kind": "cc",
+   "num": 83,
+   "lo": 0,
+   "hi": 2,
+   "offset": 199,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 Rate",
+   "kind": "pair",
+   "num": 31,
+   "lo": 0,
+   "hi": 255,
+   "offset": 200,
+   "encoding": "msb7+lsbBit6 (2 bytes)",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 Sync Rate",
+   "kind": "cc",
+   "num": 84,
+   "lo": 0,
+   "hi": 34,
+   "offset": 202,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 Wave",
+   "kind": "nrpn",
+   "num": [
+    0,
+    78
+   ],
+   "lo": 0,
+   "hi": 3,
+   "offset": 203,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 Phase",
+   "kind": "nrpn",
+   "num": [
+    0,
+    79
+   ],
+   "lo": 0,
+   "hi": 120,
+   "offset": 204,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 Slew",
+   "kind": "nrpn",
+   "num": [
+    0,
+    80
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 205,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 Fade Time",
+   "kind": "cc",
+   "num": 85,
+   "lo": 0,
+   "hi": 127,
+   "offset": 206,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 Fade In/Out",
+   "kind": "nrpn",
+   "num": [
+    0,
+    81
+   ],
+   "lo": 0,
+   "hi": 3,
+   "offset": 207,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 One Shot",
+   "kind": "nrpn",
+   "num": [
+    0,
+    84
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 210,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 Common",
+   "kind": "nrpn",
+   "num": [
+    0,
+    85
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 211,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Distortion Level",
+   "kind": "cc",
+   "num": 104,
+   "lo": 0,
+   "hi": 127,
+   "offset": 213,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "FX Bypass",
+   "kind": "nrpn",
+   "num": [
+    0,
+    88
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 215,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "FX Routing",
+   "kind": "nrpn",
+   "num": [
+    0,
+    89
+   ],
+   "lo": 0,
+   "hi": 6,
+   "offset": 216,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay Level",
+   "kind": "cc",
+   "num": 108,
+   "lo": 0,
+   "hi": 127,
+   "offset": 218,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay Time",
+   "kind": "cc",
+   "num": 109,
+   "lo": 0,
+   "hi": 127,
+   "offset": 219,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay Width",
+   "kind": "nrpn",
+   "num": [
+    0,
+    92
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 221,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay Sync",
+   "kind": "nrpn",
+   "num": [
+    0,
+    93
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 222,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay Sync Time",
+   "kind": "nrpn",
+   "num": [
+    0,
+    94
+   ],
+   "lo": 0,
+   "hi": 18,
+   "offset": 223,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay Feedback",
+   "kind": "cc",
+   "num": 110,
+   "lo": 0,
+   "hi": 127,
+   "offset": 224,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay LP Damp",
+   "kind": "nrpn",
+   "num": [
+    0,
+    95
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 225,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay HP Damp",
+   "kind": "nrpn",
+   "num": [
+    0,
+    96
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 226,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay Slew",
+   "kind": "nrpn",
+   "num": [
+    0,
+    97
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 227,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay TimeMode",
+   "kind": "nrpn",
+   "num": [
+    0,
+    98
+   ],
+   "lo": 0,
+   "hi": 4,
+   "offset": 228,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Reverb Level",
+   "kind": "cc",
+   "num": 112,
+   "lo": 0,
+   "hi": 127,
+   "offset": 231,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Reverb Type",
+   "kind": "nrpn",
+   "num": [
+    0,
+    101
+   ],
+   "lo": 0,
+   "hi": 2,
+   "offset": 232,
+   "encoding": "byte",
+   "status": "verified with caveat",
+   "note": "Coupled with Reverb Size: setting Type loads a preset Size (1->64, 2->127); setting Size re-derives Type (e.g. 9,26->0, 63->1, 92->2). Send Size after Type."
+  },
+  {
+   "name": "Reverb Time",
+   "kind": "cc",
+   "num": 113,
+   "lo": 0,
+   "hi": 127,
+   "offset": 233,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Reverb Damp LP",
+   "kind": "nrpn",
+   "num": [
+    0,
+    102
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 234,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Reverb Damp HP",
+   "kind": "nrpn",
+   "num": [
+    0,
+    103
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 235,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Reverb Size",
+   "kind": "nrpn",
+   "num": [
+    0,
+    104
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 236,
+   "encoding": "byte",
+   "status": "verified with caveat",
+   "note": "See Reverb Type coupling."
+  },
+  {
+   "name": "Reverb Mod",
+   "kind": "nrpn",
+   "num": [
+    0,
+    105
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 237,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Reverb Mod Rate",
+   "kind": "nrpn",
+   "num": [
+    0,
+    106
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 238,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Reverb LowPass",
+   "kind": "nrpn",
+   "num": [
+    0,
+    107
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 239,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Reverb HighPass",
+   "kind": "nrpn",
+   "num": [
+    0,
+    108
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 240,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Reverb PreDelay",
+   "kind": "nrpn",
+   "num": [
+    0,
+    109
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 241,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Chorus Level",
+   "kind": "cc",
+   "num": 105,
+   "lo": 0,
+   "hi": 127,
+   "offset": 243,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Chorus Type",
+   "kind": "nrpn",
+   "num": [
+    0,
+    111
+   ],
+   "lo": 0,
+   "hi": 2,
+   "offset": 244,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Chorus Rate",
+   "kind": "cc",
+   "num": 118,
+   "lo": 0,
+   "hi": 127,
+   "offset": 245,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Chorus Depth",
+   "kind": "nrpn",
+   "num": [
+    0,
+    112
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 246,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Chorus Feedback",
+   "kind": "cc",
+   "num": 107,
+   "lo": 0,
+   "hi": 127,
+   "offset": 247,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Chorus LP",
+   "kind": "nrpn",
+   "num": [
+    0,
+    113
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 248,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Chorus HP",
+   "kind": "nrpn",
+   "num": [
+    0,
+    114
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 249,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Chorus Mode",
+   "kind": "nrpn",
+   "num": [
+    0,
+    115
+   ],
+   "lo": 0,
+   "hi": 2,
+   "offset": 250,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Arp Sync Rate",
+   "kind": "nrpn",
+   "num": [
+    0,
+    116
+   ],
+   "lo": 0,
+   "hi": 18,
+   "offset": 253,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Arp Type",
+   "kind": "nrpn",
+   "num": [
+    0,
+    117
+   ],
+   "lo": 0,
+   "hi": 6,
+   "offset": 254,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Arp Rhythm",
+   "kind": "nrpn",
+   "num": [
+    0,
+    118
+   ],
+   "lo": 0,
+   "hi": 32,
+   "offset": 255,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Arp Octave",
+   "kind": "nrpn",
+   "num": [
+    0,
+    119
+   ],
+   "lo": 0,
+   "hi": 5,
+   "offset": 256,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Arp Gate",
+   "kind": "cc",
+   "num": 116,
+   "lo": 0,
+   "hi": 127,
+   "offset": 257,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Arp Swing",
+   "kind": "nrpn",
+   "num": [
+    0,
+    120
+   ],
+   "lo": 20,
+   "hi": 80,
+   "offset": 258,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Arp On",
+   "kind": "nrpn",
+   "num": [
+    0,
+    121
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 259,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Arp Key Latch",
+   "kind": "nrpn",
+   "num": [
+    0,
+    122
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 260,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Arp Key Sync",
+   "kind": "nrpn",
+   "num": [
+    0,
+    123
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 261,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Arp Chance",
+   "kind": "nrpn",
+   "num": [
+    25,
+    33
+   ],
+   "lo": 1,
+   "hi": 100,
+   "offset": 395,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Animate1 Hold",
+   "kind": "cc",
+   "num": 114,
+   "lo": 0,
+   "hi": 1,
+   "offset": null,
+   "status": "not stored in patch (performance state)"
+  },
+  {
+   "name": "Animate2 Hold",
+   "kind": "cc",
+   "num": 115,
+   "lo": 0,
+   "hi": 1,
+   "offset": null,
+   "status": "not stored in patch (performance state)"
+  },
+  {
+   "name": "Mod1 Source1",
+   "kind": "nrpn",
+   "num": [
+    1,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 266,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod1 Source2",
+   "kind": "nrpn",
+   "num": [
+    1,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 267,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod1 Depth",
+   "kind": "nrpn",
+   "num": [
+    1,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 268,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod1 Dest",
+   "kind": "nrpn",
+   "num": [
+    1,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 269,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod2 Source1",
+   "kind": "nrpn",
+   "num": [
+    2,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 270,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod2 Source2",
+   "kind": "nrpn",
+   "num": [
+    2,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 271,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod2 Depth",
+   "kind": "nrpn",
+   "num": [
+    2,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 272,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod2 Dest",
+   "kind": "nrpn",
+   "num": [
+    2,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 273,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod3 Source1",
+   "kind": "nrpn",
+   "num": [
+    3,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 274,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod3 Source2",
+   "kind": "nrpn",
+   "num": [
+    3,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 275,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod3 Depth",
+   "kind": "nrpn",
+   "num": [
+    3,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 276,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod3 Dest",
+   "kind": "nrpn",
+   "num": [
+    3,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 277,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod4 Source1",
+   "kind": "nrpn",
+   "num": [
+    4,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 278,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod4 Source2",
+   "kind": "nrpn",
+   "num": [
+    4,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 279,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod4 Depth",
+   "kind": "nrpn",
+   "num": [
+    4,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 280,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod4 Dest",
+   "kind": "nrpn",
+   "num": [
+    4,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 281,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod5 Source1",
+   "kind": "nrpn",
+   "num": [
+    5,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 282,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod5 Source2",
+   "kind": "nrpn",
+   "num": [
+    5,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 283,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod5 Depth",
+   "kind": "nrpn",
+   "num": [
+    5,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 284,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod5 Dest",
+   "kind": "nrpn",
+   "num": [
+    5,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 285,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod6 Source1",
+   "kind": "nrpn",
+   "num": [
+    6,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 286,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod6 Source2",
+   "kind": "nrpn",
+   "num": [
+    6,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 287,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod6 Depth",
+   "kind": "nrpn",
+   "num": [
+    6,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 288,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod6 Dest",
+   "kind": "nrpn",
+   "num": [
+    6,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 289,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod7 Source1",
+   "kind": "nrpn",
+   "num": [
+    7,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 290,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod7 Source2",
+   "kind": "nrpn",
+   "num": [
+    7,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 291,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod7 Depth",
+   "kind": "nrpn",
+   "num": [
+    7,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 292,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod7 Dest",
+   "kind": "nrpn",
+   "num": [
+    7,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 293,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod8 Source1",
+   "kind": "nrpn",
+   "num": [
+    8,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 294,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod8 Source2",
+   "kind": "nrpn",
+   "num": [
+    8,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 295,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod8 Depth",
+   "kind": "nrpn",
+   "num": [
+    8,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 296,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod8 Dest",
+   "kind": "nrpn",
+   "num": [
+    8,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 297,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod9 Source1",
+   "kind": "nrpn",
+   "num": [
+    9,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 298,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod9 Source2",
+   "kind": "nrpn",
+   "num": [
+    9,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 299,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod9 Depth",
+   "kind": "nrpn",
+   "num": [
+    9,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 300,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod9 Dest",
+   "kind": "nrpn",
+   "num": [
+    9,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 301,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod10 Source1",
+   "kind": "nrpn",
+   "num": [
+    10,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 302,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod10 Source2",
+   "kind": "nrpn",
+   "num": [
+    10,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 303,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod10 Depth",
+   "kind": "nrpn",
+   "num": [
+    10,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 304,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod10 Dest",
+   "kind": "nrpn",
+   "num": [
+    10,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 305,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod11 Source1",
+   "kind": "nrpn",
+   "num": [
+    11,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 306,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod11 Source2",
+   "kind": "nrpn",
+   "num": [
+    11,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 307,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod11 Depth",
+   "kind": "nrpn",
+   "num": [
+    11,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 308,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod11 Dest",
+   "kind": "nrpn",
+   "num": [
+    11,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 309,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod12 Source1",
+   "kind": "nrpn",
+   "num": [
+    12,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 310,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod12 Source2",
+   "kind": "nrpn",
+   "num": [
+    12,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 311,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod12 Depth",
+   "kind": "nrpn",
+   "num": [
+    12,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 312,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod12 Dest",
+   "kind": "nrpn",
+   "num": [
+    12,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 313,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod13 Source1",
+   "kind": "nrpn",
+   "num": [
+    13,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 314,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod13 Source2",
+   "kind": "nrpn",
+   "num": [
+    13,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 315,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod13 Depth",
+   "kind": "nrpn",
+   "num": [
+    13,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 316,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod13 Dest",
+   "kind": "nrpn",
+   "num": [
+    13,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 317,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod14 Source1",
+   "kind": "nrpn",
+   "num": [
+    14,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 318,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod14 Source2",
+   "kind": "nrpn",
+   "num": [
+    14,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 319,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod14 Depth",
+   "kind": "nrpn",
+   "num": [
+    14,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 320,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod14 Dest",
+   "kind": "nrpn",
+   "num": [
+    14,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 321,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod15 Source1",
+   "kind": "nrpn",
+   "num": [
+    15,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 322,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod15 Source2",
+   "kind": "nrpn",
+   "num": [
+    15,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 323,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod15 Depth",
+   "kind": "nrpn",
+   "num": [
+    15,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 324,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod15 Dest",
+   "kind": "nrpn",
+   "num": [
+    15,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 325,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod16 Source1",
+   "kind": "nrpn",
+   "num": [
+    16,
+    0
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 326,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod16 Source2",
+   "kind": "nrpn",
+   "num": [
+    16,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 327,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod16 Depth",
+   "kind": "nrpn",
+   "num": [
+    16,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 328,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Mod16 Dest",
+   "kind": "nrpn",
+   "num": [
+    16,
+    3
+   ],
+   "lo": 0,
+   "hi": 36,
+   "offset": 329,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Tuning Table",
+   "kind": "nrpn",
+   "num": [
+    25,
+    6
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 368,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "FM Osc3>1",
+   "kind": "nrpn",
+   "num": [
+    25,
+    13
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": null,
+   "status": "no effect on dump; probably Summit-only"
+  },
+  {
+   "name": "FM Osc1>2",
+   "kind": "nrpn",
+   "num": [
+    25,
+    17
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": null,
+   "status": "no effect on dump; probably Summit-only"
+  },
+  {
+   "name": "FM Osc2>3",
+   "kind": "nrpn",
+   "num": [
+    25,
+    21
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": null,
+   "status": "no effect on dump; probably Summit-only"
+  },
+  {
+   "name": "Anim1 Att",
+   "kind": "nrpn",
+   "num": [
+    25,
+    34
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 396,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Anim1 Rel",
+   "kind": "nrpn",
+   "num": [
+    25,
+    35
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 397,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Anim2 Att",
+   "kind": "nrpn",
+   "num": [
+    25,
+    36
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 398,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Anim2 Rel",
+   "kind": "nrpn",
+   "num": [
+    25,
+    37
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 399,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO3 Phase",
+   "kind": "nrpn",
+   "num": [
+    25,
+    38
+   ],
+   "lo": 0,
+   "hi": 120,
+   "offset": 400,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO3 Slew",
+   "kind": "nrpn",
+   "num": [
+    25,
+    39
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 401,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO3 Fade",
+   "kind": "nrpn",
+   "num": [
+    25,
+    40
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 402,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO4 Phase",
+   "kind": "nrpn",
+   "num": [
+    25,
+    41
+   ],
+   "lo": 0,
+   "hi": 120,
+   "offset": 403,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO4 Slew",
+   "kind": "nrpn",
+   "num": [
+    25,
+    42
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 404,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO4 Fade",
+   "kind": "nrpn",
+   "num": [
+    25,
+    43
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 405,
+   "encoding": "byte",
+   "status": "verified"
+  }
+ ]
+}
