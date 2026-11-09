@@ -18,6 +18,7 @@ Generated from `docs/peak-patch-map.json`. The offset is the byte index in the 5
 | 0x03A | Osc Drift | NRPN 0:10 | 0–127 |
 | 0x03B | Noise LPF | NRPN 0:11 | 0–127 |
 | 0x03C | Noise HPF | NRPN 0:12 | 0–127 |
+| 0x03D | Osc KeySync | NRPN 0:13 | 0–1 |
 | 0x03E | Osc1 Range | CC 3 | 63–66 |
 | 0x03F | Osc1 Coarse | PAIR 14 | 0–255 |
 | 0x041 | Osc1 Fine | PAIR 15 | 28–228 |
@@ -96,18 +97,24 @@ Generated from `docs/peak-patch-map.json`. The offset is the byte index in the 5
 | 0x0A3 | AmpEnv Release | CC 89 | 0–127 |
 | 0x0A4 | AmpEnv Velocity | NRPN 0:55 | 0–127 |
 | 0x0A5 | AmpEnv Trigger | NRPN 0:56 | 0–1 |
+| 0x0A6 | AmpEnv HoldTime | NRPN 0:57 | 0–127 |
+| 0x0A7 | AmpEnv Repeats | NRPN 0:58 | 0–127 |
 | 0x0A9 | ModEnv1 Attack | CC 90 | 0–127 |
 | 0x0AA | ModEnv1 Decay | CC 91 | 0–127 |
 | 0x0AB | ModEnv1 Sustain | CC 92 | 0–127 |
 | 0x0AC | ModEnv1 Release | CC 93 | 0–127 |
 | 0x0AD | ModEnv1 Velocity | NRPN 0:60 | 0–127 |
 | 0x0AE | ModEnv1 Trigger | NRPN 0:61 | 0–1 |
+| 0x0AF | ModEnv1 HoldTime | NRPN 0:62 | 0–127 |
+| 0x0B0 | ModEnv1 Repeats | NRPN 0:63 | 0–127 |
 | 0x0B1 | ModEnv2 Attack | CC 94 | 0–127 |
 | 0x0B2 | ModEnv2 Decay | CC 95 | 0–127 |
 | 0x0B3 | ModEnv2 Sustain | CC 117 | 0–127 |
 | 0x0B4 | ModEnv2 Release | CC 103 | 0–127 |
 | 0x0B5 | ModEnv2 Velocity | NRPN 0:64 | 0–127 |
 | 0x0B6 | ModEnv2 Trigger | NRPN 0:65 | 0–1 |
+| 0x0B7 | ModEnv2 HoldTime | NRPN 0:66 | 0–127 |
+| 0x0B8 | ModEnv2 Repeats | NRPN 0:67 | 0–127 |
 | 0x0B9 | LFO1 Range | NRPN 0:68 | 0–2 |
 | 0x0BA | LFO1 Rate | PAIR 30 | 0–255 |
 | 0x0BC | LFO1 Sync Rate | CC 81 | 0–34 |
@@ -116,7 +123,9 @@ Generated from `docs/peak-patch-map.json`. The offset is the byte index in the 5
 | 0x0BF | LFO1 Slew | NRPN 0:71 | 0–127 |
 | 0x0C0 | LFO1 Fade Time | CC 82 | 0–127 |
 | 0x0C1 | LFO1 Fade In/Out | NRPN 0:72 | 0–3 |
-| 0x0C4 | LFO1 One Shot | NRPN 0:75 | 0–1 |
+| 0x0C2 | LFO1 FadeSync | NRPN 0:73 | 0–1 |
+| 0x0C3 | LFO1 MonoTrig | NRPN 0:74 | 0–1 |
+| 0x0C4 | LFO1 Repeats | NRPN 0:75 | 0–127 |
 | 0x0C5 | LFO1 Common | NRPN 0:76 | 0–1 |
 | 0x0C7 | LFO2 Range | CC 83 | 0–2 |
 | 0x0C8 | LFO2 Rate | PAIR 31 | 0–255 |
@@ -126,13 +135,16 @@ Generated from `docs/peak-patch-map.json`. The offset is the byte index in the 5
 | 0x0CD | LFO2 Slew | NRPN 0:80 | 0–127 |
 | 0x0CE | LFO2 Fade Time | CC 85 | 0–127 |
 | 0x0CF | LFO2 Fade In/Out | NRPN 0:81 | 0–3 |
-| 0x0D2 | LFO2 One Shot | NRPN 0:84 | 0–1 |
+| 0x0D0 | LFO2 FadeSync | NRPN 0:82 | 0–1 |
+| 0x0D1 | LFO2 MonoTrig | NRPN 0:83 | 0–1 |
+| 0x0D2 | LFO2 Repeats | NRPN 0:84 | 0–127 |
 | 0x0D3 | LFO2 Common | NRPN 0:85 | 0–1 |
 | 0x0D5 | Distortion Level | CC 104 | 0–127 |
 | 0x0D7 | FX Bypass | NRPN 0:88 | 0–1 |
 | 0x0D8 | FX Routing | NRPN 0:89 | 0–6 |
 | 0x0DA | Delay Level | CC 108 | 0–127 |
 | 0x0DB | Delay Time | CC 109 | 0–127 |
+| 0x0DC | Delay LR Ratio | NRPN 0:91 | 0–127 |
 | 0x0DD | Delay Width | NRPN 0:92 | 0–127 |
 | 0x0DE | Delay Sync | NRPN 0:93 | 0–1 |
 | 0x0DF | Delay Sync Time | NRPN 0:94 | 0–18 |
@@ -233,7 +245,28 @@ Generated from `docs/peak-patch-map.json`. The offset is the byte index in the 5
 | 0x147 | Mod16 Source2 | NRPN 16:1 | 0–16 |
 | 0x148 | Mod16 Depth | NRPN 16:2 | 0–127 |
 | 0x149 | Mod16 Dest | NRPN 16:3 | 0–36 |
+| 0x14A | FXMod1 Source | NRPN 17:0 | 0–127 |
+| 0x14C | FXMod1 Depth | NRPN 17:2 | 0–127 |
+| 0x14D | FXMod1 Dest | NRPN 17:3 | 0–127 |
+| 0x14E | FXMod2 Source | NRPN 18:0 | 0–127 |
+| 0x150 | FXMod2 Depth | NRPN 18:2 | 0–127 |
+| 0x151 | FXMod2 Dest | NRPN 18:3 | 0–127 |
+| 0x152 | FXMod3 Source | NRPN 19:0 | 0–127 |
+| 0x154 | FXMod3 Depth | NRPN 19:2 | 0–127 |
+| 0x155 | FXMod3 Dest | NRPN 19:3 | 0–127 |
+| 0x156 | FXMod4 Source | NRPN 20:0 | 0–127 |
+| 0x158 | FXMod4 Depth | NRPN 20:2 | 0–127 |
+| 0x159 | FXMod4 Dest | NRPN 20:3 | 0–127 |
+| 0x16A | LFO3 Wave | NRPN 25:0 | 0–3 |
+| 0x16B | LFO3 Rate | NRPN 25:1 | 0–127 |
+| 0x16C | LFO3 RateSync | NRPN 25:2 | 0–35 |
+| 0x16D | LFO4 Wave | NRPN 25:3 | 0–3 |
+| 0x16E | LFO4 Rate | NRPN 25:4 | 0–127 |
+| 0x16F | LFO4 RateSync | NRPN 25:5 | 0–35 |
 | 0x170 | Tuning Table | NRPN 25:6 | 0–16 |
+| 0x188 | AmpEnv Delay | NRPN 25:30 | 0–127 |
+| 0x189 | ModEnv1 Delay | NRPN 25:31 | 0–127 |
+| 0x18A | ModEnv2 Delay | NRPN 25:32 | 0–127 |
 | 0x18B | Arp Chance | NRPN 25:33 | 1–100 |
 | 0x18C | Anim1 Att | NRPN 25:34 | 0–127 |
 | 0x18D | Anim1 Rel | NRPN 25:35 | 0–127 |
@@ -245,3 +278,5 @@ Generated from `docs/peak-patch-map.json`. The offset is the byte index in the 5
 | 0x193 | LFO4 Phase | NRPN 25:41 | 0–120 |
 | 0x194 | LFO4 Slew | NRPN 25:42 | 0–127 |
 | 0x195 | LFO4 Fade | NRPN 25:43 | 0–127 |
+| 0x196 | Delay Mode | NRPN 25:44 | 0–2 |
+| 0x197 | Delay Output | NRPN 25:45 | 0–1 |
