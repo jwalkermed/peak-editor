@@ -1,6 +1,6 @@
 #pragma once
 
-#include "peak/PeakConnection.h"
+#include "peak/PeakModel.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -35,10 +35,10 @@ public:
     void getStateInformation (juce::MemoryBlock&) override {}
     void setStateInformation (const void*, int) override {}
 
-    PeakConnection& getConnection() { return *connection; }
+    PeakModel& getModel() { return *model; }
 
 private:
-    juce::SharedResourcePointer<PeakConnection> connection;
+    juce::SharedResourcePointer<PeakModel> model;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PeakEditorProcessor)
 };

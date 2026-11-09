@@ -1,10 +1,17 @@
 // Minimal self-contained tests for the JUCE-free core. Run: ./build/PeakCoreTests
 #include "peak/core/MidiDescribe.h"
 #include "peak/core/Nrpn.h"
+#include "peak/core/ParamMidi.h"
+#include "peak/core/Patch.h"
 #include "peak/core/Sysex.h"
 
 #include <cstdio>
+#include <cstring>
+#include <fstream>
 #include <functional>
+#include <iterator>
+#include <set>
+#include <string>
 
 namespace
 {
@@ -19,6 +26,28 @@ void test (const char* name, const std::function<void()>& body)
     body();
     std::printf ("%s %s\n", failures == before ? "ok  " : "FAIL", name);
 }
+
+peak::Bytes readFixture (const std::string& name)
+{
+    std::ifstream in (std::string (PEAK_FIXTURE_DIR) + "/" + name, std::ios::binary);
+    return { std::istreambuf_iterator<char> (in), {} };
+}
+
+struct Expectation
+{
+    const char* file;
+    const char* param;
+    int value;
+};
+
+const Expectation mappingExpectations[] {
+#include "MappingExpectations.inc"
+};
+
+const char* const dumpFixtures[] { "current-all-in-sync.syx",
+                                   "mapping/run1-dump0.syx", "mapping/run1-dump1.syx", "mapping/run1-dump2.syx",
+                                   "mapping/run1-dump3.syx", "mapping/run1-dump4.syx",
+                                   "mapping/run2-dump0.syx", "mapping/run2-dump1.syx", "mapping/run2-dump2.syx" };
 } // namespace
 
 int main()
@@ -94,6 +123,149 @@ int main()
         const uint8_t clk[] { 0xF8 };
         CHECK (isRealtime (clk, 1));
         CHECK (describeMidi (clk, 1) == "Clock");
+    });
+
+    test ("parameter table is consistent", [] {
+        std::set<std::string> ids;
+        std::set<int> ccs, nrpns, bytes;
+        for (const auto& p : allParams())
+        {
+            CHECK (ids.insert (p.id).second);
+            CHECK (p.min <= p.max && p.min >= 0 && p.max <= (p.kind == MidiKind::ccPair ? 255 : 127));
+
+            if (p.kind == MidiKind::nrpn)
+                CHECK (nrpns.insert (p.number).second);
+            else
+                CHECK (ccs.insert (p.number).second);
+
+            if (p.kind == MidiKind::ccPair)
+                CHECK (ccs.insert (p.number + 32).second);
+
+            if (p.isStored())
+            {
+                CHECK (p.offset >= 32 && p.offset < (int) Patch::dumpSize - 2);
+                CHECK (bytes.insert (p.offset).second);
+                if (p.kind == MidiKind::ccPair)
+                    CHECK (bytes.insert (p.offset + 1).second);
+            }
+        }
+        // NRPN plumbing CCs must never be parameters (CC 38 is one on the Peak, so it is not used as data LSB).
+        for (int cc : { 6, 98, 99, 100, 101 })
+            CHECK (ccs.count (cc) == 0);
+        CHECK (allParams().size() > 240);
+    });
+
+    test ("every hardware dump decodes and re-encodes byte-identically", [] {
+        for (const auto* f : dumpFixtures)
+        {
+            const auto bytes = readFixture (f);
+            const auto patch = Patch::fromSysex (bytes);
+            CHECK (patch.has_value());
+            if (patch)
+                CHECK (patch->toSysex() == bytes);
+        }
+        CHECK (Patch::fromSysex (readFixture ("current-all-in-sync.syx"))->name() == "All In Sync");
+    });
+
+    test ("decoded values match what was sent during hardware mapping", [] {
+        int checked = 0;
+        std::string lastFile;
+        std::optional<Patch> patch;
+        for (const auto& e : mappingExpectations)
+        {
+            if (lastFile != e.file)
+            {
+                lastFile = e.file;
+                patch = Patch::fromSysex (readFixture (std::string ("mapping/") + e.file));
+                CHECK (patch.has_value());
+            }
+            const auto* p = findParam (e.param);
+            CHECK (p != nullptr);
+            if (p && patch)
+            {
+                const auto got = patch->get (*p);
+                if (got != e.value)
+                    std::printf ("  %s %s: expected %d got %d\n", e.file, e.param, e.value, got);
+                CHECK (got == e.value);
+                ++checked;
+            }
+        }
+        CHECK (checked > 1000);
+    });
+
+    test ("set changes only the parameter's own bytes", [] {
+        const auto original = *Patch::fromSysex (readFixture ("current-all-in-sync.syx"));
+        for (const auto& p : allParams())
+        {
+            if (! p.isStored())
+                continue;
+            for (int v : { p.min, p.max, (p.min + p.max) / 2 | 1 })
+            {
+                auto copy = original;
+                copy.set (p, v);
+                CHECK (copy.get (p) == std::clamp (v, p.min, p.max));
+                for (size_t i = 0; i < Patch::dumpSize; ++i)
+                    if (copy.bytes()[i] != original.bytes()[i])
+                        CHECK (i == (size_t) p.offset || (p.kind == MidiKind::ccPair && i == (size_t) p.offset + 1));
+            }
+        }
+        auto copy = original;
+        copy.set (*findParam ("filter_frequency"), 999);
+        CHECK (copy.get (*findParam ("filter_frequency")) == 255);
+    });
+
+    test ("patch names", [] {
+        Patch p;
+        p.setName ("Bass\x01Line 2 with a long name");
+        CHECK (p.name() == "Bass Line 2 with");
+        p.setName ("Pad");
+        CHECK (p.name() == "Pad");
+        CHECK (Patch::fromSysex (p.toSysex()).has_value());
+    });
+
+    test ("patch -> CC/NRPN stream -> decoder reproduces every stored value", [] {
+        for (const auto* f : dumpFixtures)
+        {
+            const auto source = *Patch::fromSysex (readFixture (f));
+            Patch rebuilt;
+            ParamMidiDecoder dec;
+            for (const auto& m : encodePatch (source, 3))
+                if (const auto c = dec.feed (3, m[0], m[1], m[2]))
+                    rebuilt.set (*c->param, c->value);
+
+            for (const auto& p : allParams())
+                if (p.isStored())
+                    CHECK (rebuilt.get (p) == source.get (p));
+        }
+    });
+
+    test ("patch stream sends Reverb Type before Reverb Size", [] {
+        const auto msgs = encodePatch (Patch(), 0);
+        const auto type = findParam ("reverb_type")->number, size = findParam ("reverb_size")->number;
+        int typeAt = -1, sizeAt = -1;
+        for (size_t i = 0; i + 2 < msgs.size(); ++i)
+            if (msgs[i][1] == 99 && msgs[i + 1][1] == 98)
+            {
+                const int n = (msgs[i][2] << 7) | msgs[i + 1][2];
+                if (n == type) typeAt = (int) i;
+                if (n == size) sizeAt = (int) i;
+            }
+        CHECK (typeAt >= 0 && sizeAt > typeAt);
+    });
+
+    test ("decoder: pairs complete on LSB, CC 38 is a parameter, other channels ignored", [] {
+        ParamMidiDecoder dec;
+        CHECK (! dec.feed (0, 0xB0, 14, 5));
+        const auto c = dec.feed (0, 0xB0, 46, 64);
+        CHECK (c && c->param == findParam ("osc1_coarse") && c->value == 11);
+        const auto cc38 = dec.feed (0, 0xB0, 38, 70);
+        CHECK (cc38 && cc38->param == findParam ("osc2_modenv2_to_pitch") && cc38->value == 70);
+        CHECK (! dec.feed (0, 0xB1, 5, 10));
+        // A real Peak NRPN from the capture: 0:121 (Arp On) = 1
+        dec.feed (0, 0xB0, 99, 0);
+        dec.feed (0, 0xB0, 98, 121);
+        const auto n = dec.feed (0, 0xB0, 6, 1);
+        CHECK (n && n->param == findParam ("arp_on") && n->value == 1);
     });
 
     std::printf (failures == 0 ? "\nAll tests passed\n" : "\n%d failure(s)\n", failures);
