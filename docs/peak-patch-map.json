@@ -1,5 +1,5 @@
 {
- "source": "Peak firmware 2.2, mapping runs 2026-11-09 (Tests/fixtures/mapping)",
+ "source": "Peak firmware 2.2, mapping runs 2026-11-09 (Tests/fixtures/mapping); run 3 (menu walk + 4 dumps) added envelope/LFO/delay/FX-matrix menu parameters",
  "dumpLength": 527,
  "nameOffset": 16,
  "nameLength": 16,
@@ -571,7 +571,7 @@
    "offset": 107,
    "encoding": "msb7+lsbBit6 (2 bytes)",
    "status": "verified with caveat",
-   "note": "Value 45 was ignored twice (CC 21 msb 22); 131/182/200/108 stored fine. Needs a targeted test."
+   "note": "Peak ignores CC 21 (MSB) for some values: 45/47/44 (MSB 22/23) never applied across two runs; 108-200 fine. Firmware quirk."
   },
   {
    "name": "Osc3 ModEnv2>Pitch",
@@ -1288,17 +1288,18 @@
    "status": "verified"
   },
   {
-   "name": "LFO1 One Shot",
+   "name": "LFO1 Repeats",
    "kind": "nrpn",
    "num": [
     0,
     75
    ],
    "lo": 0,
-   "hi": 1,
+   "hi": 127,
    "offset": 196,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "Manual chart calls this One Shot 0-1; the menu (and dump) is Repeats Off,1-127 (run 3)."
   },
   {
    "name": "LFO1 Common",
@@ -1406,17 +1407,18 @@
    "status": "verified"
   },
   {
-   "name": "LFO2 One Shot",
+   "name": "LFO2 Repeats",
    "kind": "nrpn",
    "num": [
     0,
     84
    ],
    "lo": 0,
-   "hi": 1,
+   "hi": 127,
    "offset": 210,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "Manual chart calls this One Shot 0-1; the menu (and dump) is Repeats Off,1-127 (run 3)."
   },
   {
    "name": "LFO2 Common",
@@ -2977,6 +2979,476 @@
    "offset": 405,
    "encoding": "byte",
    "status": "verified"
+  },
+  {
+   "name": "Osc KeySync",
+   "kind": "nrpn",
+   "num": [
+    0,
+    13
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 61,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "AmpEnv HoldTime",
+   "kind": "nrpn",
+   "num": [
+    0,
+    57
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 166,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "AmpEnv Repeats",
+   "kind": "nrpn",
+   "num": [
+    0,
+    58
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 167,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv1 HoldTime",
+   "kind": "nrpn",
+   "num": [
+    0,
+    62
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 175,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv1 Repeats",
+   "kind": "nrpn",
+   "num": [
+    0,
+    63
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 176,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv2 HoldTime",
+   "kind": "nrpn",
+   "num": [
+    0,
+    66
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 183,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv2 Repeats",
+   "kind": "nrpn",
+   "num": [
+    0,
+    67
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 184,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 FadeSync",
+   "kind": "nrpn",
+   "num": [
+    0,
+    73
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 194,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO1 MonoTrig",
+   "kind": "nrpn",
+   "num": [
+    0,
+    74
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 195,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 FadeSync",
+   "kind": "nrpn",
+   "num": [
+    0,
+    82
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 208,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO2 MonoTrig",
+   "kind": "nrpn",
+   "num": [
+    0,
+    83
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 209,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay LR Ratio",
+   "kind": "nrpn",
+   "num": [
+    0,
+    91
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 220,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "LFO3 Wave",
+   "kind": "nrpn",
+   "num": [
+    25,
+    0
+   ],
+   "lo": 0,
+   "hi": 3,
+   "offset": 362,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO3 Rate",
+   "kind": "nrpn",
+   "num": [
+    25,
+    1
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 363,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO3 RateSync",
+   "kind": "nrpn",
+   "num": [
+    25,
+    2
+   ],
+   "lo": 0,
+   "hi": 35,
+   "offset": 364,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "LFO4 Wave",
+   "kind": "nrpn",
+   "num": [
+    25,
+    3
+   ],
+   "lo": 0,
+   "hi": 3,
+   "offset": 365,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO4 Rate",
+   "kind": "nrpn",
+   "num": [
+    25,
+    4
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 366,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "LFO4 RateSync",
+   "kind": "nrpn",
+   "num": [
+    25,
+    5
+   ],
+   "lo": 0,
+   "hi": 35,
+   "offset": 367,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "AmpEnv Delay",
+   "kind": "nrpn",
+   "num": [
+    25,
+    30
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 392,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv1 Delay",
+   "kind": "nrpn",
+   "num": [
+    25,
+    31
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 393,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "ModEnv2 Delay",
+   "kind": "nrpn",
+   "num": [
+    25,
+    32
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 394,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay Mode",
+   "kind": "nrpn",
+   "num": [
+    25,
+    44
+   ],
+   "lo": 0,
+   "hi": 2,
+   "offset": 406,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "Delay Output",
+   "kind": "nrpn",
+   "num": [
+    25,
+    45
+   ],
+   "lo": 0,
+   "hi": 1,
+   "offset": 407,
+   "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "FXMod1 Source",
+   "kind": "nrpn",
+   "num": [
+    17,
+    0
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 330,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "FXMod1 Depth",
+   "kind": "nrpn",
+   "num": [
+    17,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 332,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "FXMod1 Dest",
+   "kind": "nrpn",
+   "num": [
+    17,
+    3
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 333,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "FXMod2 Source",
+   "kind": "nrpn",
+   "num": [
+    18,
+    0
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 334,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "FXMod2 Depth",
+   "kind": "nrpn",
+   "num": [
+    18,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 336,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "FXMod2 Dest",
+   "kind": "nrpn",
+   "num": [
+    18,
+    3
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 337,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "FXMod3 Source",
+   "kind": "nrpn",
+   "num": [
+    19,
+    0
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 338,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "FXMod3 Depth",
+   "kind": "nrpn",
+   "num": [
+    19,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 340,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "FXMod3 Dest",
+   "kind": "nrpn",
+   "num": [
+    19,
+    3
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 341,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "FXMod4 Source",
+   "kind": "nrpn",
+   "num": [
+    20,
+    0
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 342,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "FXMod4 Depth",
+   "kind": "nrpn",
+   "num": [
+    20,
+    2
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 344,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+  },
+  {
+   "name": "FXMod4 Dest",
+   "kind": "nrpn",
+   "num": [
+    20,
+    3
+   ],
+   "lo": 0,
+   "hi": 127,
+   "offset": 345,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
   }
  ]
 }

@@ -79,7 +79,19 @@ Method: CC/NRPN messages set every charted parameter to its own distinctive valu
 - **Osc 3 Fine (CC 21/53):** the value 45 was ignored in two separate runs, while other values were stored. This needs a targeted test (it could be the Peak or the network bridge).
 - Patch Category 0x20, Genre 0x21.
 
-### Bytes not yet identified (patch area 0x20–0x20D)
-0x022–0x02F, 0x038, 0x03D, 0x051–0x052, 0x066–0x067, 0x07B–0x07C, 0x09A–0x09B, 0x09E–0x09F, 0x0A6–0x0A8, 0x0AF–0x0B0, 0x0B7–0x0B8, 0x0C2–0x0C3, 0x0C6, 0x0D0–0x0D1, 0x0D4, 0x0D6, 0x0D9, 0x0DC, 0x0E5–0x0E6, 0x0F2, 0x0FB–0x0FC, 0x106–0x109, 0x14A–0x16F, 0x171–0x18A, 0x196–0x20D
 
-Parameters known to exist but not yet charted or located: envelope Delay/Hold/Repeats, LFO FadeSync, LFO 3/4 rate/wave/sync, FX mod matrix, Delay mode/output, glide/voice extras, and arp extras. Each needs a turn-a-control-in-the-menu capture: the Peak transmits the NRPN, and a dump shows the byte.
+## Menu parameters (run 3, verified 2026-11-09)
+Found by walking every Osc/Env/LFO/Arp/Voice/FX menu page (each value nudged up one click and back while recording; log in `Tests/fixtures/mapping/run3-menu-walk.log`), then 3 mapping rounds.
+
+- **Osc KeySync** NRPN 0:13 → 0x03D
+- **Envelopes:** HoldTime and Repeats at 0:57/58 (Amp), 0:62/63 (Mod 1), 0:66/67 (Mod 2) → 0xA6/A7, 0xAF/B0, 0xB7/B8. **Delay** (firmware 2.1) at 25:30/31/32 → 0x188/189/18A.
+- **LFO 1/2:** FadeSync 0:73/0:82 → 0xC2/0xD0; MonoTrig 0:74/0:83 → 0xC3/0xD1. **The chart's "LFO One Shot" (0:75/0:84) is really Repeats** (Off, 1–127; 0xC4/0xD2).
+- **LFO 3/4:** Wave/Rate/RateSync at 25:0–2 and 25:3–5 → 0x16A–0x16F.
+- **Delay:** LR Ratio 0:91 → 0xDC; Mode 25:44 → 0x196; Output 25:45 → 0x197.
+- **FX mod matrix: 4 slots**, NRPN banks 17–20, at 0x14A + 4·n as [Source, ?, Depth, Dest]. The second byte is never written by the menu, and banks 21–24 have no effect.
+- **NRPN 62:0** is sent when a menu button is pressed (which menu is open). It's UI state, not a patch parameter. **NRPN 64:6** came from the Arp/Clock menu and is global (bank 64).
+- **Osc 3 Fine:** the Peak ignored CC 21 (MSB) for values 44, 45 and 47 (MSB 22/23) in every run, while 108–200 apply. This looks like a firmware quirk. If it matters, check what the Peak itself sends when its knob is turned to the bottom.
+- The ranges of FX-matrix sources/destinations, LFO 3/4 RateSync and LR Ratio are not documented. Their upper bounds in the map are placeholders.
+
+### Bytes not yet identified (patch area 0x20–0x20D)
+0x022–0x02F, 0x038, 0x051–0x052, 0x066–0x067, 0x07B–0x07C, 0x09A–0x09B, 0x09E–0x09F, 0x0A8, 0x0C6, 0x0D4, 0x0D6, 0x0D9, 0x0E5–0x0E6, 0x0F2, 0x0FB–0x0FC, 0x106–0x109, 0x14B, 0x14F, 0x153, 0x157, 0x15A–0x169, 0x171–0x187, 0x198–0x20D

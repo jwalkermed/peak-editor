@@ -47,7 +47,8 @@ const Expectation mappingExpectations[] {
 const char* const dumpFixtures[] { "current-all-in-sync.syx",
                                    "mapping/run1-dump0.syx", "mapping/run1-dump1.syx", "mapping/run1-dump2.syx",
                                    "mapping/run1-dump3.syx", "mapping/run1-dump4.syx",
-                                   "mapping/run2-dump0.syx", "mapping/run2-dump1.syx", "mapping/run2-dump2.syx" };
+                                   "mapping/run2-dump0.syx", "mapping/run2-dump1.syx", "mapping/run2-dump2.syx",
+                                   "mapping/run3-dump0.syx", "mapping/run3-dump1.syx", "mapping/run3-dump2.syx", "mapping/run3-dump3.syx" };
 } // namespace
 
 int main()

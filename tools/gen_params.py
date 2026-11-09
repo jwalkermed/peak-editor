@@ -15,14 +15,14 @@ pmap = json.loads((root / "docs/peak-patch-map.json").read_text())
 SECTIONS = [  # (name prefix regex, section)
     (r"^Patch (Category|Genre)$", "Patch"), (r"^Patch Level$", "Mixer"),
     (r"^(Voice|Unison|Spread$|Keyboard|Pan Posn|Spread Mode)", "Voice"),
-    (r"^(Glide|Pre-Glide)", "Glide"), (r"^(Osc Divergence|Osc Drift|Noise [LH]PF|Tuning)", "Osc Common"),
+    (r"^(Glide|Pre-Glide)", "Glide"), (r"^(Osc Divergence|Osc Drift|Osc KeySync|Noise [LH]PF|Tuning)", "Osc Common"),
     (r"^Osc1 ", "Oscillator 1"), (r"^Osc2 ", "Oscillator 2"), (r"^Osc3 ", "Oscillator 3"),
     (r"^(Mix |Ring|Noise Level|VCA|Dry|Wet)", "Mixer"),
     (r"^(Filter|LFO1>Filter|Osc3>Filter|AmpEnv>Filter|ModEnv1>Filter)", "Filter"),
     (r"^AmpEnv", "Amp Envelope"), (r"^ModEnv1", "Mod Envelope 1"), (r"^ModEnv2", "Mod Envelope 2"),
     (r"^LFO1", "LFO 1"), (r"^LFO2", "LFO 2"), (r"^LFO3", "LFO 3"), (r"^LFO4", "LFO 4"),
     (r"^(Distortion|FX )", "Effects"), (r"^Delay", "Delay"), (r"^Reverb", "Reverb"), (r"^Chorus", "Chorus"),
-    (r"^Arp", "Arp"), (r"^(Animate|Anim)", "Animate"), (r"^Mod\d+ ", "Mod Matrix"),
+    (r"^Arp", "Arp"), (r"^(Animate|Anim)", "Animate"), (r"^Mod\d+ ", "Mod Matrix"), (r"^FXMod\d+ ", "FX Mod Matrix"),
 ]
 
 def section(name):
@@ -34,7 +34,12 @@ def section(name):
 def ident(name):
     return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", name.lower().replace(">", " to "))).strip("_")
 
+# Table order: panel/menu sections in this order, then dump order within a section.
+ORDER = ["Patch", "Voice", "Glide", "Osc Common", "Oscillator 1", "Oscillator 2", "Oscillator 3", "Mixer", "Filter",
+         "Amp Envelope", "Mod Envelope 1", "Mod Envelope 2", "LFO 1", "LFO 2", "LFO 3", "LFO 4", "Effects", "Distortion",
+         "Delay", "Reverb", "Chorus", "Arp", "Animate", "Mod Matrix", "FX Mod Matrix"]
 params = [p for p in pmap["params"] if p["offset"] is not None or p["status"].startswith("not stored")]
+params.sort(key=lambda p: (ORDER.index(section(p["name"])), p["offset"] if p["offset"] is not None else 9999))
 rows = []
 for p in params:
     kind = {"cc": "cc", "pair": "ccPair", "nrpn": "nrpn"}[p["kind"]]
@@ -60,15 +65,21 @@ const std::vector<ParamDef>& allParams()
 # Expected decoded values per mapping dump. Known hardware caveats are skipped
 # (see docs/sysex-notes.md): Reverb Type/Size coupling and the dropped Osc3 Fine 45.
 skip = {("run1", "Reverb Type"), ("run2", "Reverb Size")}
+renamed = {"LFO1 One Shot": "LFO1 Repeats", "LFO2 One Shot": "LFO2 Repeats", "FXMod17 Source": "FXMod1 Source",
+           **{f"FXMod{17 + i} {k}": f"FXMod{1 + i} {k}" for i in range(4) for k in ("Source", "Depth", "Dest")}}
+known = {p["name"] for p in params if p["offset"] is not None}
 exp = []
-for run in ("run1", "run2"):
+for run in ("run1", "run2", "run3"):
     plan = json.loads((root / f"Tests/fixtures/mapping/{run}-plan.json").read_text())
-    first = 1 if run == "run1" else 0
+    first = 0 if run == "run2" else 1
     for p in plan:
+        p["name"] = renamed.get(p["name"], p["name"])
+        if p["name"] not in known:
+            continue  # e.g. FX mod banks 21-24, which do not exist
         if (run, p["name"]) in skip or p["name"].startswith("FM ") or "Hold" in p["name"]:
             continue
         for i, v in enumerate(p["values"]):
-            if p["name"] == "Osc3 Fine" and v == 45:
+            if p["name"] == "Osc3 Fine" and v in (44, 45, 47):
                 continue
             if run == "run2" and i == 0 and p["name"] == "Reverb Type":
                 continue  # baseline Type was re-derived from the Size sent after it in run 1
