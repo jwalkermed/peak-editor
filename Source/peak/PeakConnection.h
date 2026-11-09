@@ -1,8 +1,11 @@
 #pragma once
 
+#include "peak/CoreMidiTransport.h"
+#include "peak/core/ParamMidi.h"
 #include "peak/core/Sysex.h"
 
-#include <juce_audio_devices/juce_audio_devices.h>
+#include <juce_audio_basics/juce_audio_basics.h>
+#include <juce_events/juce_events.h>
 #include <juce_data_structures/juce_data_structures.h>
 
 #include <atomic>
@@ -11,7 +14,7 @@
 // The single CoreMIDI connection to the Peak, shared by every plugin instance
 // and the standalone app in a process (use via juce::SharedResourcePointer).
 // Plugins talk to the hardware directly rather than through host MIDI routing.
-class PeakConnection final : private juce::MidiInputCallback
+class PeakConnection final : private juce::AsyncUpdater
 {
 public:
     struct LogEntry
@@ -21,8 +24,13 @@ public:
         peak::Bytes bytes;
     };
 
+    using PortInfo = CoreMidiTransport::PortInfo;
+
     PeakConnection();
     ~PeakConnection() override;
+
+    static std::vector<PortInfo> getInputs();
+    static std::vector<PortInfo> getOutputs();
 
     // Device selection. An empty identifier closes the port.
     void openInput (const juce::String& identifier);
@@ -40,6 +48,12 @@ public:
 
     bool send (const juce::MidiMessage& message);
     bool sendSysex (const peak::Bytes& message); // must include F0 ... F7
+    bool sendParam (const peak::ParamDef&, int value);
+    // Sends a long run of CC/NRPN messages spaced out so DIN/network bridges keep up.
+    bool sendPaced (const std::vector<peak::ShortMessage>& messages, double msBetween = 2.0);
+
+    // Parameter changes and patch dumps received from the Peak since the last call.
+    void takeIncoming (std::vector<peak::ParamChange>& changes, std::vector<peak::Bytes>& dumps);
 
     // Monitor log and captured incoming SysEx (thread-safe snapshots).
     std::vector<LogEntry> getLog() const;
@@ -51,27 +65,29 @@ public:
     // Async notifications on the message thread.
     juce::ChangeBroadcaster logChanged;   // new log entries or captures
     juce::ChangeBroadcaster stateChanged; // ports opened/closed or device list changed
+    juce::ChangeBroadcaster incoming;     // takeIncoming() has something
 
 private:
-    void handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMessage&) override;
+    void handleIncoming (const uint8_t* data, size_t size); // CoreMIDI thread
+    void handleAsyncUpdate() override; // device list changed
     void addToLog (bool outgoing, const juce::uint8* data, int size);
-    void deviceListChanged();
 
     static constexpr size_t maxLogEntries = 5000;
     static constexpr size_t maxCaptured = 2048;
 
     juce::ApplicationProperties settings;
-    juce::MidiDeviceListConnection deviceListConnection;
 
-    mutable juce::CriticalSection portLock;
-    std::unique_ptr<juce::MidiInput> input;
-    std::unique_ptr<juce::MidiOutput> output;
+    CoreMidiTransport transport;
 
     mutable juce::CriticalSection logLock;
     std::deque<LogEntry> log;
     std::vector<peak::Bytes> captured;
 
-    int channel = 0;
+    peak::ParamMidiDecoder decoder; // MIDI thread only
+    std::vector<peak::ParamChange> pendingChanges;
+    std::vector<peak::Bytes> pendingDumps;
+
+    std::atomic<int> channel { 0 }; // read on the MIDI thread
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PeakConnection)
 };

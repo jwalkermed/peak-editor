@@ -1,0 +1,82 @@
+#include "Patch.h"
+
+#include <algorithm>
+
+namespace peak
+{
+namespace
+{
+// Header of a "Current" dump from firmware 2.2 (meaning of bytes 4-15 still unverified).
+constexpr uint8_t currentHeader[] { 0xF0, 0x00, 0x20, 0x29, 0x01, 0x10, 0x00, 0x7E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+} // namespace
+
+Patch::Patch()
+{
+    std::copy (std::begin (currentHeader), std::end (currentHeader), raw.begin());
+    raw.back() = 0xF7;
+    setName ("Init");
+}
+
+bool Patch::looksLikePatchDump (const uint8_t* data, size_t size)
+{
+    return size == dumpSize && isNovationSysex (data, size) && data[size - 1] == 0xF7
+        && std::all_of (data + 1, data + size - 1, [] (uint8_t b) { return b < 0x80; });
+}
+
+std::optional<Patch> Patch::fromSysex (const Bytes& message)
+{
+    if (! looksLikePatchDump (message.data(), message.size()))
+        return std::nullopt;
+
+    Patch p;
+    std::copy (message.begin(), message.end(), p.raw.begin());
+    return p;
+}
+
+int Patch::get (const ParamDef& def) const
+{
+    if (! def.isStored())
+        return -1;
+
+    const auto o = static_cast<size_t> (def.offset);
+    if (def.kind == MidiKind::ccPair)
+        return (raw[o] << 1) | (raw[o + 1] >> 6);
+
+    return raw[o];
+}
+
+void Patch::set (const ParamDef& def, int value)
+{
+    if (! def.isStored())
+        return;
+
+    value = std::clamp (value, def.min, def.max);
+    const auto o = static_cast<size_t> (def.offset);
+
+    if (def.kind == MidiKind::ccPair)
+    {
+        raw[o] = static_cast<uint8_t> (value >> 1);
+        raw[o + 1] = static_cast<uint8_t> ((value & 1) << 6);
+    }
+    else
+    {
+        raw[o] = static_cast<uint8_t> (value);
+    }
+}
+
+std::string Patch::name() const
+{
+    std::string s (raw.begin() + nameOffset, raw.begin() + nameOffset + nameLength);
+    s.erase (s.find_last_not_of (' ') + 1);
+    return s;
+}
+
+void Patch::setName (std::string_view newName)
+{
+    for (size_t i = 0; i < nameLength; ++i)
+    {
+        const auto c = i < newName.size() ? static_cast<uint8_t> (newName[i]) : uint8_t (' ');
+        raw[nameOffset + i] = (c >= 0x20 && c < 0x7F) ? c : uint8_t (' ');
+    }
+}
+} // namespace peak

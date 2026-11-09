@@ -22,7 +22,11 @@ FetchContent_MakeAvailable(JUCE)
 set(PEAK_CORE_SOURCES
     Source/peak/core/Sysex.cpp
     Source/peak/core/Nrpn.cpp
-    Source/peak/core/MidiDescribe.cpp)
+    Source/peak/core/MidiDescribe.cpp
+    Source/peak/core/Params.cpp
+    Source/peak/core/ParamTable.cpp
+    Source/peak/core/ParamMidi.cpp
+    Source/peak/core/Patch.cpp)
 
 juce_add_plugin(PeakEditor
     COMPANY_NAME "Peak Editor"
@@ -44,8 +48,11 @@ target_sources(PeakEditor PRIVATE
     ${PEAK_CORE_SOURCES}
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp
+    Source/peak/CoreMidiTransport.mm
     Source/peak/PeakConnection.cpp
-    Source/ui/MidiMonitorPanel.cpp)
+    Source/peak/PeakModel.cpp
+    Source/ui/MidiMonitorPanel.cpp
+    Source/ui/ParameterListPanel.cpp)
 
 target_include_directories(PeakEditor PRIVATE Source)
 
@@ -57,6 +64,7 @@ target_compile_definitions(PeakEditor PUBLIC
 target_link_libraries(PeakEditor
     PRIVATE
         juce::juce_audio_utils
+        "-framework CoreMIDI"
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
@@ -65,5 +73,6 @@ target_link_libraries(PeakEditor
 # Core unit tests: build and run with `ctest` or ./build/PeakCoreTests
 enable_testing()
 add_executable(PeakCoreTests Tests/CoreTests.cpp ${PEAK_CORE_SOURCES})
-target_include_directories(PeakCoreTests PRIVATE Source)
+target_include_directories(PeakCoreTests PRIVATE Source Tests)
+target_compile_definitions(PeakCoreTests PRIVATE PEAK_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/Tests/fixtures")
 add_test(NAME PeakCoreTests COMMAND PeakCoreTests)

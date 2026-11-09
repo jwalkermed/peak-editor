@@ -11,15 +11,15 @@ juce::FontOptions mono (float size = 13.0f)
     return juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), size, juce::Font::plain);
 }
 
-void fillPortBox (juce::ComboBox& box, const juce::Array<juce::MidiDeviceInfo>& devices, const juce::String& selectedId)
+void fillPortBox (juce::ComboBox& box, const std::vector<PeakConnection::PortInfo>& devices, const juce::String& selectedId)
 {
     box.clear (juce::dontSendNotification);
     box.addItem (noPort, 1);
 
-    for (int i = 0; i < devices.size(); ++i)
+    for (int i = 0; i < (int) devices.size(); ++i)
     {
-        box.addItem (devices[i].name, i + 2);
-        if (devices[i].identifier == selectedId)
+        box.addItem (juce::String (devices[(size_t) i].name), i + 2);
+        if (selectedId == juce::String (devices[(size_t) i].id))
             box.setSelectedId (i + 2, juce::dontSendNotification);
     }
 
@@ -38,15 +38,15 @@ MidiMonitorPanel::MidiMonitorPanel (PeakConnection& c) : connection (c)
     }
 
     inputBox.onChange = [this] {
-        const auto devices = juce::MidiInput::getAvailableDevices();
+        const auto devices = PeakConnection::getInputs();
         const auto i = inputBox.getSelectedId() - 2;
-        connection.openInput (juce::isPositiveAndBelow (i, devices.size()) ? devices[i].identifier : juce::String());
+        connection.openInput (juce::isPositiveAndBelow (i, (int) devices.size()) ? juce::String (devices[(size_t) i].id) : juce::String());
     };
 
     outputBox.onChange = [this] {
-        const auto devices = juce::MidiOutput::getAvailableDevices();
+        const auto devices = PeakConnection::getOutputs();
         const auto i = outputBox.getSelectedId() - 2;
-        connection.openOutput (juce::isPositiveAndBelow (i, devices.size()) ? devices[i].identifier : juce::String());
+        connection.openOutput (juce::isPositiveAndBelow (i, (int) devices.size()) ? juce::String (devices[(size_t) i].id) : juce::String());
     };
 
     for (int ch = 1; ch <= 16; ++ch)
@@ -158,8 +158,8 @@ void MidiMonitorPanel::changeListenerCallback (juce::ChangeBroadcaster* source)
 
 void MidiMonitorPanel::refreshPorts()
 {
-    fillPortBox (inputBox, juce::MidiInput::getAvailableDevices(), connection.getInputIdentifier());
-    fillPortBox (outputBox, juce::MidiOutput::getAvailableDevices(), connection.getOutputIdentifier());
+    fillPortBox (inputBox, PeakConnection::getInputs(), connection.getInputIdentifier());
+    fillPortBox (outputBox, PeakConnection::getOutputs(), connection.getOutputIdentifier());
     channelBox.setSelectedId (connection.getChannel() + 1, juce::dontSendNotification);
 
     if (! connection.isInputOpen() || ! connection.isOutputOpen())

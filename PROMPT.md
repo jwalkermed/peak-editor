@@ -14,6 +14,7 @@ Build an editor and librarian for the **Novation Peak** (8-voice hybrid polysynt
 
 ## How the plugins talk to the Peak
 - Every format talks to the Peak **directly over CoreMIDI** (its USB port or a network MIDI session), not through the host's MIDI routing. Hosts handle SysEx inconsistently, and most can't route MIDI out of an AU instrument.
+- Use CoreMIDI directly (`Source/peak/CoreMidiTransport.mm`), **not** JUCE's `MidiInput`/`MidiOutput`. JUCE 9.0.5's device list leaves out network (RTP-MIDI) sessions, and this Peak is reached over "Network NovPeak".
 - All plugin instances in a process share one connection object (`SharedResourcePointer`). The chosen ports are saved in a shared settings file, so the standalone app and the plugins agree.
 - The plugin registers as an instrument (`IS_SYNTH`) with a silent stereo output, so it can be placed on a track in Logic, Live, and other hosts. Later: optionally forward the track's MIDI notes to the Peak, and expose patch parameters to the host for automation, sent on to the Peak as CC/NRPN.
 - The plugin state saves the current patch in the DAW project. On project load, it offers to send the saved patch to the Peak's edit buffer, and never sends without asking.
