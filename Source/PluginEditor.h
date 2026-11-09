@@ -1,6 +1,8 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "ui/FrontPanel.h"
+#include "ui/KeyboardStrip.h"
 #include "ui/MidiMonitorPanel.h"
 #include "ui/ParameterListPanel.h"
 

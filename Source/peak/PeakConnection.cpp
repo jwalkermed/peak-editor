@@ -8,6 +8,7 @@ namespace
 constexpr auto inputKey = "midiInput";
 constexpr auto outputKey = "midiOutput";
 constexpr auto channelKey = "midiChannel";
+constexpr auto keyboardKey = "keyboardInput";
 
 juce::String findPeakPort (const std::vector<PeakConnection::PortInfo>& ports)
 {
@@ -25,7 +26,9 @@ bool isAvailable (const std::vector<PeakConnection::PortInfo>& ports, const juce
 
 PeakConnection::PeakConnection()
     : transport ([this] (const uint8_t* data, size_t size) { handleIncoming (data, size); },
-                 [this] { triggerAsyncUpdate(); })
+                 [this] { triggerAsyncUpdate(); }),
+      keyboardTransport ([this] (const uint8_t* data, size_t size) { handleKeyboardInput (data, size); },
+                         [this] { triggerAsyncUpdate(); })
 {
     juce::PropertiesFile::Options options;
     options.applicationName = "settings";
@@ -36,11 +39,13 @@ PeakConnection::PeakConnection()
     settings.setStorageParameters (options);
 
     channel = juce::jlimit (0, 15, settings.getUserSettings()->getIntValue (channelKey, 0));
+    keyboardState.addListener (this);
     autoConnect();
 }
 
 PeakConnection::~PeakConnection()
 {
+    keyboardState.removeListener (this);
     cancelPendingUpdate();
 }
 
@@ -94,6 +99,58 @@ void PeakConnection::autoConnect()
         if (id.isNotEmpty())
             openOutput (id);
     }
+
+    if (getKeyboardInputIdentifier().isEmpty())
+        if (const auto saved = props->getValue (keyboardKey); isAvailable (inputs, saved))
+            openKeyboardInput (saved);
+}
+
+void PeakConnection::openKeyboardInput (const juce::String& identifier)
+{
+    keyboardState.allNotesOff (0);
+    const auto ok = keyboardTransport.openInput (identifier.toStdString());
+
+    if (identifier.isEmpty() || ok)
+        settings.getUserSettings()->setValue (keyboardKey, identifier);
+
+    stateChanged.sendChangeMessage();
+}
+
+juce::String PeakConnection::getKeyboardInputIdentifier() const
+{
+    return keyboardTransport.getInputId();
+}
+
+void PeakConnection::handleKeyboardInput (const uint8_t* data, size_t size)
+{
+    if (size < 2 || data[0] < 0x80 || data[0] >= 0xF0)
+        return;
+
+    const auto kind = data[0] & 0xF0;
+    const auto d1 = data[1], d2 = size > 2 ? data[2] : uint8_t (0);
+
+    // Notes go through the keyboard state so the on-screen keys light up too.
+    if (kind == 0x90 && d2 > 0)
+        keyboardState.noteOn (1, d1, (float) d2 / 127.0f);
+    else if (kind == 0x80 || kind == 0x90)
+        keyboardState.noteOff (1, d1, (float) d2 / 127.0f);
+    else if (kind == 0xE0 || kind == 0xD0 || kind == 0xA0
+             || (kind == 0xB0 && (d1 == 1 || d1 == 2 || d1 == 4 || d1 == 11 || d1 == 64 || d1 == 66 || d1 == 123)))
+    {
+        // Performance data only: other CCs from a controller could silently change patch parameters.
+        uint8_t msg[3] { uint8_t (kind | channel.load()), d1, d2 };
+        send (juce::MidiMessage (msg, kind == 0xD0 ? 2 : 3));
+    }
+}
+
+void PeakConnection::handleNoteOn (juce::MidiKeyboardState*, int, int note, float velocity)
+{
+    send (juce::MidiMessage::noteOn (channel.load() + 1, note, velocity));
+}
+
+void PeakConnection::handleNoteOff (juce::MidiKeyboardState*, int, int note, float velocity)
+{
+    send (juce::MidiMessage::noteOff (channel.load() + 1, note, velocity));
 }
 
 void PeakConnection::setChannel (int newChannel)
@@ -111,6 +168,12 @@ void PeakConnection::handleAsyncUpdate()
 
     if (const auto id = getOutputIdentifier(); id.isNotEmpty() && ! isAvailable (getOutputs(), id))
         transport.openOutput ({});
+
+    if (const auto id = getKeyboardInputIdentifier(); id.isNotEmpty() && ! isAvailable (getInputs(), id))
+    {
+        keyboardTransport.openInput ({});
+        keyboardState.allNotesOff (0);
+    }
 
     autoConnect();
     stateChanged.sendChangeMessage();

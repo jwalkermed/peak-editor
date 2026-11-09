@@ -1,0 +1,2313 @@
+{
+ "source": "docs/reference/peak-front-panel.png (lens- and parallax-corrected; tools/measure_panel.py)",
+ "parallax": {
+  "k": 0.02145,
+  "axis": [
+   1103.2,
+   613.5
+  ],
+  "knobsFitted": 36,
+  "rmsPx": 1.09
+ },
+ "panel": [
+  49.5,
+  8.3,
+  2143.8,
+  1101.4
+ ],
+ "rules": [
+  [
+   381.9,
+   76.6,
+   999.2
+  ],
+  [
+   1008.2,
+   76.6,
+   1115.4
+  ],
+  [
+   1124.4,
+   76.6,
+   1624.6
+  ],
+  [
+   205.9,
+   76.9,
+   371.8
+  ],
+  [
+   66.5,
+   75.9,
+   196.8
+  ],
+  [
+   1633.6,
+   76.4,
+   2127.4
+  ],
+  [
+   67.0,
+   269.5,
+   196.0
+  ],
+  [
+   1125.6,
+   269.4,
+   1251.6
+  ],
+  [
+   1261.6,
+   269.2,
+   1624.4
+  ],
+  [
+   1634.4,
+   269.2,
+   2128.3
+  ],
+  [
+   66.0,
+   504.2,
+   998.8
+  ],
+  [
+   1008.8,
+   504.8,
+   1115.8
+  ],
+  [
+   1125.8,
+   504.1,
+   1252.8
+  ],
+  [
+   1261.8,
+   504.3,
+   1624.4
+  ],
+  [
+   1634.4,
+   504.4,
+   1750.9
+  ],
+  [
+   1759.9,
+   504.3,
+   2128.8
+  ],
+  [
+   66.4,
+   677.4,
+   999.0
+  ],
+  [
+   1634.5,
+   677.4,
+   2128.8
+  ],
+  [
+   66.4,
+   851.6,
+   998.2
+  ],
+  [
+   1760.3,
+   851.4,
+   2129.2
+  ],
+  [
+   1634.8,
+   851.3,
+   1751.3
+  ]
+ ],
+ "elements": [
+  {
+   "type": "knob",
+   "id": "master_volume",
+   "x": 131.4,
+   "y": 165.0,
+   "label": "Volume",
+   "bind": "",
+   "big": false
+  },
+  {
+   "type": "button",
+   "id": "initialise",
+   "x": 250.5,
+   "y": 131.8,
+   "w": 62,
+   "h": 26,
+   "label": "Initialise",
+   "bind": "action:initialise",
+   "style": "dark"
+  },
+  {
+   "type": "button",
+   "id": "compare",
+   "x": 335.1,
+   "y": 132.1,
+   "w": 62,
+   "h": 26,
+   "label": "Compare",
+   "bind": "action:compare",
+   "style": "dark"
+  },
+  {
+   "type": "button",
+   "id": "audition",
+   "x": 250.9,
+   "y": 189.9,
+   "w": 62,
+   "h": 26,
+   "label": "Audition",
+   "bind": "action:audition",
+   "style": "dark"
+  },
+  {
+   "type": "button",
+   "id": "save",
+   "x": 335.4,
+   "y": 190.2,
+   "w": 62,
+   "h": 26,
+   "label": "Save",
+   "bind": "action:save",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "patch_encoder",
+   "x": 290.1,
+   "y": 325.8,
+   "label": "",
+   "bind": "action:patch_encoder",
+   "big": false
+  },
+  {
+   "type": "button",
+   "id": "patch_down",
+   "x": 251.9,
+   "y": 438.0,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "action:patch_down",
+   "style": "dark"
+  },
+  {
+   "type": "button",
+   "id": "patch_up",
+   "x": 336.3,
+   "y": 438.1,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "action:patch_up",
+   "style": "dark"
+  },
+  {
+   "type": "text",
+   "id": "patch_pm_label",
+   "x": 290.7,
+   "y": 471.4,
+   "label": "\u2013      Patch      +",
+   "size": 12,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "button",
+   "id": "anim1",
+   "x": 134.6,
+   "y": 333.8,
+   "w": 56,
+   "h": 56,
+   "label": "1",
+   "bind": "animate1_hold",
+   "style": "animate"
+  },
+  {
+   "type": "button",
+   "id": "anim2",
+   "x": 134.9,
+   "y": 409.9,
+   "w": 56,
+   "h": 56,
+   "label": "2",
+   "bind": "animate2_hold",
+   "style": "animate"
+  },
+  {
+   "type": "button",
+   "id": "anim_hold",
+   "x": 135.1,
+   "y": 470.9,
+   "w": 56,
+   "h": 18,
+   "label": "Hold",
+   "bind": "",
+   "style": "hold"
+  },
+  {
+   "type": "button",
+   "id": "menu_patch",
+   "x": 432.6,
+   "y": 166.4,
+   "w": 62,
+   "h": 26,
+   "label": "Patch",
+   "bind": "menu:Patch",
+   "style": "white"
+  },
+  {
+   "type": "button",
+   "id": "menu_osc",
+   "x": 540.6,
+   "y": 134.5,
+   "w": 62,
+   "h": 26,
+   "label": "Osc",
+   "bind": "menu:Osc",
+   "style": "white"
+  },
+  {
+   "type": "button",
+   "id": "menu_env",
+   "x": 624.6,
+   "y": 134.6,
+   "w": 62,
+   "h": 26,
+   "label": "Env",
+   "bind": "menu:Env",
+   "style": "white"
+  },
+  {
+   "type": "button",
+   "id": "menu_lfo",
+   "x": 708.5,
+   "y": 134.7,
+   "w": 62,
+   "h": 26,
+   "label": "LFO",
+   "bind": "menu:LFO",
+   "style": "white"
+  },
+  {
+   "type": "button",
+   "id": "menu_arp_clock",
+   "x": 793.4,
+   "y": 134.7,
+   "w": 62,
+   "h": 26,
+   "label": "Arp/Clock",
+   "bind": "menu:Arp/Clock",
+   "style": "white"
+  },
+  {
+   "type": "button",
+   "id": "menu_mod",
+   "x": 540.8,
+   "y": 193.5,
+   "w": 62,
+   "h": 26,
+   "label": "Mod",
+   "bind": "menu:Mod",
+   "style": "white"
+  },
+  {
+   "type": "button",
+   "id": "menu_voice",
+   "x": 624.8,
+   "y": 193.6,
+   "w": 62,
+   "h": 26,
+   "label": "Voice",
+   "bind": "menu:Voice",
+   "style": "white"
+  },
+  {
+   "type": "button",
+   "id": "menu_fx",
+   "x": 708.7,
+   "y": 193.7,
+   "w": 62,
+   "h": 26,
+   "label": "FX",
+   "bind": "menu:FX",
+   "style": "white"
+  },
+  {
+   "type": "button",
+   "id": "menu_settings",
+   "x": 793.5,
+   "y": 193.7,
+   "w": 62,
+   "h": 26,
+   "label": "Settings",
+   "bind": "menu:Settings",
+   "style": "white"
+  },
+  {
+   "type": "led",
+   "id": "voice1",
+   "x": 865.2,
+   "y": 151.7,
+   "label": "",
+   "bind": "voices",
+   "value": 0
+  },
+  {
+   "type": "text",
+   "id": "voice1_num",
+   "x": 865.1,
+   "y": 130.7,
+   "label": "1",
+   "size": 11,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "led",
+   "id": "voice2",
+   "x": 898.5,
+   "y": 151.7,
+   "label": "",
+   "bind": "voices",
+   "value": 1
+  },
+  {
+   "type": "text",
+   "id": "voice2_num",
+   "x": 898.5,
+   "y": 130.7,
+   "label": "2",
+   "size": 11,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "led",
+   "id": "voice3",
+   "x": 931.9,
+   "y": 151.7,
+   "label": "",
+   "bind": "voices",
+   "value": 2
+  },
+  {
+   "type": "text",
+   "id": "voice3_num",
+   "x": 931.8,
+   "y": 130.6,
+   "label": "3",
+   "size": 11,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "led",
+   "id": "voice4",
+   "x": 965.2,
+   "y": 151.7,
+   "label": "",
+   "bind": "voices",
+   "value": 3
+  },
+  {
+   "type": "text",
+   "id": "voice4_num",
+   "x": 965.2,
+   "y": 130.6,
+   "label": "4",
+   "size": 11,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "led",
+   "id": "voice5",
+   "x": 865.2,
+   "y": 170.8,
+   "label": "",
+   "bind": "voices",
+   "value": 4
+  },
+  {
+   "type": "text",
+   "id": "voice5_num",
+   "x": 865.3,
+   "y": 190.8,
+   "label": "5",
+   "size": 11,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "led",
+   "id": "voice6",
+   "x": 898.6,
+   "y": 170.8,
+   "label": "",
+   "bind": "voices",
+   "value": 5
+  },
+  {
+   "type": "text",
+   "id": "voice6_num",
+   "x": 898.6,
+   "y": 190.8,
+   "label": "6",
+   "size": 11,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "led",
+   "id": "voice7",
+   "x": 931.9,
+   "y": 170.8,
+   "label": "",
+   "bind": "voices",
+   "value": 6
+  },
+  {
+   "type": "text",
+   "id": "voice7_num",
+   "x": 931.9,
+   "y": 190.8,
+   "label": "7",
+   "size": 11,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "led",
+   "id": "voice8",
+   "x": 965.2,
+   "y": 170.7,
+   "label": "",
+   "bind": "voices",
+   "value": 7
+  },
+  {
+   "type": "text",
+   "id": "voice8_num",
+   "x": 965.3,
+   "y": 190.8,
+   "label": "8",
+   "size": 11,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "text",
+   "id": "active_voices",
+   "x": 915.3,
+   "y": 208.9,
+   "label": "Active Voices",
+   "size": 11,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "button",
+   "id": "soft1",
+   "x": 433.1,
+   "y": 288.4,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "action:soft1",
+   "style": "dark"
+  },
+  {
+   "type": "button",
+   "id": "soft2",
+   "x": 433.2,
+   "y": 343.3,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "action:soft2",
+   "style": "dark"
+  },
+  {
+   "type": "button",
+   "id": "soft3",
+   "x": 433.4,
+   "y": 397.2,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "action:soft3",
+   "style": "dark"
+  },
+  {
+   "type": "display",
+   "id": "display",
+   "x": 495.5,
+   "y": 278.0,
+   "x1": 835.6,
+   "y1": 382.2
+  },
+  {
+   "type": "button",
+   "id": "page_prev",
+   "x": 625.4,
+   "y": 438.1,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "action:page_prev",
+   "style": "lit"
+  },
+  {
+   "type": "button",
+   "id": "page_next",
+   "x": 709.2,
+   "y": 438.0,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "action:page_next",
+   "style": "lit"
+  },
+  {
+   "type": "text",
+   "id": "page_select",
+   "x": 665.5,
+   "y": 471.4,
+   "label": "\u25c0  Page/Select  \u25b6",
+   "size": 12,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "knob",
+   "id": "data_encoder",
+   "x": 914.9,
+   "y": 329.7,
+   "label": "",
+   "bind": "action:data_encoder",
+   "big": false
+  },
+  {
+   "type": "button",
+   "id": "value_down",
+   "x": 873.7,
+   "y": 437.9,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "action:value_down",
+   "style": "dark"
+  },
+  {
+   "type": "button",
+   "id": "value_up",
+   "x": 957.3,
+   "y": 437.9,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "action:value_up",
+   "style": "dark"
+  },
+  {
+   "type": "text",
+   "id": "value_label",
+   "x": 914.7,
+   "y": 471.2,
+   "label": "\u2013      Value      +",
+   "size": 12,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "knob",
+   "id": "arp_gate",
+   "x": 1060.6,
+   "y": 167.4,
+   "label": "Gate",
+   "bind": "arp_gate",
+   "big": false
+  },
+  {
+   "type": "button",
+   "id": "key_latch",
+   "x": 1059.8,
+   "y": 329.1,
+   "w": 62,
+   "h": 26,
+   "label": "Key Latch",
+   "bind": "arp_key_latch",
+   "style": "toggle"
+  },
+  {
+   "type": "button",
+   "id": "arp_on",
+   "x": 1059.9,
+   "y": 437.8,
+   "w": 62,
+   "h": 26,
+   "label": "On",
+   "bind": "arp_on",
+   "style": "toggle"
+  },
+  {
+   "type": "knob",
+   "id": "glide_time",
+   "x": 1190.2,
+   "y": 344.1,
+   "label": "Time",
+   "bind": "glide_time",
+   "big": false
+  },
+  {
+   "type": "button",
+   "id": "glide_on",
+   "x": 1191.4,
+   "y": 437.6,
+   "w": 62,
+   "h": 26,
+   "label": "On",
+   "bind": "glide_on",
+   "style": "toggle"
+  },
+  {
+   "type": "led",
+   "id": "lfo1_wave_0",
+   "x": 1192.5,
+   "y": 118.3,
+   "label": "~tri",
+   "bind": "lfo1_wave",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "lfo1_wave_1",
+   "x": 1192.5,
+   "y": 139.4,
+   "label": "~saw",
+   "bind": "lfo1_wave",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "lfo1_wave_2",
+   "x": 1192.5,
+   "y": 160.5,
+   "label": "~square",
+   "bind": "lfo1_wave",
+   "value": 2
+  },
+  {
+   "type": "led",
+   "id": "lfo1_wave_3",
+   "x": 1192.5,
+   "y": 181.5,
+   "label": "S+H",
+   "bind": "lfo1_wave",
+   "value": 3
+  },
+  {
+   "type": "button",
+   "id": "lfo1_type",
+   "x": 1215.1,
+   "y": 223.2,
+   "w": 62,
+   "h": 26,
+   "label": "Type",
+   "bind": "cycle:lfo1_wave",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "lfo1_fade",
+   "x": 1331.3,
+   "y": 167.8,
+   "label": "Fade Time",
+   "bind": "lfo1_fade_time",
+   "big": false
+  },
+  {
+   "type": "led",
+   "id": "lfo1_range_0",
+   "x": 1419.8,
+   "y": 138.9,
+   "label": "Low",
+   "bind": "lfo1_range",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "lfo1_range_1",
+   "x": 1419.8,
+   "y": 160.0,
+   "label": "High",
+   "bind": "lfo1_range",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "lfo1_range_2",
+   "x": 1419.8,
+   "y": 181.1,
+   "label": "Sync",
+   "bind": "lfo1_range",
+   "value": 2
+  },
+  {
+   "type": "button",
+   "id": "lfo1_range_btn",
+   "x": 1441.4,
+   "y": 222.8,
+   "w": 62,
+   "h": 26,
+   "label": "Range",
+   "bind": "cycle:lfo1_range",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "lfo1_rate",
+   "x": 1556.4,
+   "y": 168.1,
+   "label": "Rate",
+   "bind": "lfo1_rate@lfo1_range=0|lfo1_rate@lfo1_range=1|lfo1_sync_rate@lfo1_range=2",
+   "big": false
+  },
+  {
+   "type": "bracket",
+   "id": "lfo1_range_rate",
+   "x": 1472.9,
+   "x1": 1565.2,
+   "y": 242.1,
+   "label": ""
+  },
+  {
+   "type": "led",
+   "id": "lfo2_wave_0",
+   "x": 1693.9,
+   "y": 118.0,
+   "label": "~tri",
+   "bind": "lfo2_wave",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "lfo2_wave_1",
+   "x": 1693.8,
+   "y": 139.1,
+   "label": "~saw",
+   "bind": "lfo2_wave",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "lfo2_wave_2",
+   "x": 1693.8,
+   "y": 160.2,
+   "label": "~square",
+   "bind": "lfo2_wave",
+   "value": 2
+  },
+  {
+   "type": "led",
+   "id": "lfo2_wave_3",
+   "x": 1693.8,
+   "y": 181.3,
+   "label": "S+H",
+   "bind": "lfo2_wave",
+   "value": 3
+  },
+  {
+   "type": "button",
+   "id": "lfo2_type",
+   "x": 1714.2,
+   "y": 223.0,
+   "w": 62,
+   "h": 26,
+   "label": "Type",
+   "bind": "cycle:lfo2_wave",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "lfo2_fade",
+   "x": 1830.6,
+   "y": 167.3,
+   "label": "Fade Time",
+   "bind": "lfo2_fade_time",
+   "big": false
+  },
+  {
+   "type": "led",
+   "id": "lfo2_range_0",
+   "x": 1918.7,
+   "y": 139.0,
+   "label": "Low",
+   "bind": "lfo2_range",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "lfo2_range_1",
+   "x": 1918.6,
+   "y": 160.1,
+   "label": "High",
+   "bind": "lfo2_range",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "lfo2_range_2",
+   "x": 1918.6,
+   "y": 181.2,
+   "label": "Sync",
+   "bind": "lfo2_range",
+   "value": 2
+  },
+  {
+   "type": "button",
+   "id": "lfo2_range_btn",
+   "x": 1939.1,
+   "y": 223.0,
+   "w": 62,
+   "h": 26,
+   "label": "Range",
+   "bind": "cycle:lfo2_range",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "lfo2_rate",
+   "x": 2056.3,
+   "y": 165.4,
+   "label": "Rate",
+   "bind": "lfo2_rate@lfo2_range=0|lfo2_rate@lfo2_range=1|lfo2_sync_rate@lfo2_range=2",
+   "big": false
+  },
+  {
+   "type": "bracket",
+   "id": "lfo2_range_rate",
+   "x": 1973.0,
+   "x1": 2076.5,
+   "y": 242.3,
+   "label": ""
+  },
+  {
+   "type": "fader",
+   "id": "ampenv_attack",
+   "x": 1307.7,
+   "y": 301.6,
+   "y1": 467.7,
+   "label": "Attack",
+   "bind": "ampenv_attack"
+  },
+  {
+   "type": "fader",
+   "id": "ampenv_decay",
+   "x": 1397.8,
+   "y": 301.4,
+   "y1": 467.6,
+   "label": "Decay",
+   "bind": "ampenv_decay"
+  },
+  {
+   "type": "fader",
+   "id": "ampenv_sustain",
+   "x": 1488.0,
+   "y": 301.2,
+   "y1": 467.4,
+   "label": "Sustain",
+   "bind": "ampenv_sustain"
+  },
+  {
+   "type": "fader",
+   "id": "ampenv_release",
+   "x": 1576.2,
+   "y": 301.0,
+   "y1": 467.3,
+   "label": "Release",
+   "bind": "ampenv_release"
+  },
+  {
+   "type": "led",
+   "id": "modenv_sel_1",
+   "x": 1668.5,
+   "y": 375.9,
+   "label": "1",
+   "bind": "ui:modenv_select",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "modenv_sel_2",
+   "x": 1668.5,
+   "y": 397.0,
+   "label": "2",
+   "bind": "ui:modenv_select",
+   "value": 1
+  },
+  {
+   "type": "button",
+   "id": "modenv_select",
+   "x": 1689.1,
+   "y": 437.8,
+   "w": 62,
+   "h": 26,
+   "label": "Select",
+   "bind": "cycle:ui:modenv_select",
+   "style": "dark"
+  },
+  {
+   "type": "fader",
+   "id": "modenv_attack",
+   "x": 1789.2,
+   "y": 300.4,
+   "y1": 466.8,
+   "label": "Attack",
+   "bind": "modenv1_attack@ui:modenv_select=0|modenv2_attack@ui:modenv_select=1"
+  },
+  {
+   "type": "fader",
+   "id": "modenv_decay",
+   "x": 1877.9,
+   "y": 300.0,
+   "y1": 466.6,
+   "label": "Decay",
+   "bind": "modenv1_decay@ui:modenv_select=0|modenv2_decay@ui:modenv_select=1"
+  },
+  {
+   "type": "fader",
+   "id": "modenv_sustain",
+   "x": 1967.8,
+   "y": 299.7,
+   "y1": 466.4,
+   "label": "Sustain",
+   "bind": "modenv1_sustain@ui:modenv_select=0|modenv2_sustain@ui:modenv_select=1"
+  },
+  {
+   "type": "fader",
+   "id": "modenv_release",
+   "x": 2057.0,
+   "y": 299.2,
+   "y1": 466.1,
+   "label": "Release",
+   "bind": "modenv1_release@ui:modenv_select=0|modenv2_release@ui:modenv_select=1"
+  },
+  {
+   "type": "led",
+   "id": "osc1_range_16",
+   "x": 108.9,
+   "y": 560.7,
+   "label": "16'",
+   "bind": "osc1_range",
+   "value": 63
+  },
+  {
+   "type": "led",
+   "id": "osc1_range_8",
+   "x": 108.9,
+   "y": 581.8,
+   "label": "8'",
+   "bind": "osc1_range",
+   "value": 64
+  },
+  {
+   "type": "led",
+   "id": "osc1_range_4",
+   "x": 152.5,
+   "y": 560.7,
+   "label": "4'",
+   "bind": "osc1_range",
+   "value": 65
+  },
+  {
+   "type": "led",
+   "id": "osc1_range_2",
+   "x": 152.5,
+   "y": 581.8,
+   "label": "2'",
+   "bind": "osc1_range",
+   "value": 66
+  },
+  {
+   "type": "button",
+   "id": "osc1_range_btn",
+   "x": 135.5,
+   "y": 621.9,
+   "w": 62,
+   "h": 26,
+   "label": "Range",
+   "bind": "cycle:osc1_range",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "osc1_coarse",
+   "x": 241.5,
+   "y": 578.5,
+   "label": "Coarse",
+   "bind": "osc1_coarse",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "osc1_fine",
+   "x": 364.2,
+   "y": 578.1,
+   "label": "Fine",
+   "bind": "osc1_fine",
+   "big": false
+  },
+  {
+   "type": "led",
+   "id": "osc1_wave_0",
+   "x": 445.9,
+   "y": 540.5,
+   "label": "~sine",
+   "bind": "osc1_wave",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "osc1_wave_1",
+   "x": 445.9,
+   "y": 561.6,
+   "label": "~tri",
+   "bind": "osc1_wave",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "osc1_wave_2",
+   "x": 446.0,
+   "y": 582.6,
+   "label": "~saw",
+   "bind": "osc1_wave",
+   "value": 2
+  },
+  {
+   "type": "led",
+   "id": "osc1_wave_3",
+   "x": 488.1,
+   "y": 540.5,
+   "label": "~pulse",
+   "bind": "osc1_wave",
+   "value": 3
+  },
+  {
+   "type": "led",
+   "id": "osc1_wave_4",
+   "x": 488.1,
+   "y": 561.6,
+   "label": "more",
+   "bind": "osc1_wave",
+   "value": 4
+  },
+  {
+   "type": "button",
+   "id": "osc1_wave_btn",
+   "x": 469.9,
+   "y": 622.6,
+   "w": 62,
+   "h": 26,
+   "label": "Wave",
+   "bind": "cycle:osc1_wave",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "osc1_me2",
+   "x": 579.1,
+   "y": 576.4,
+   "label": "Mod Env 2 Depth",
+   "bind": "osc1_modenv2_to_pitch",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "osc1_lfo2",
+   "x": 698.8,
+   "y": 578.6,
+   "label": "LFO 2 Depth",
+   "bind": "osc1_lfo2_to_pitch",
+   "big": false
+  },
+  {
+   "type": "bracket",
+   "id": "osc1_pitch",
+   "x": 574.5,
+   "x1": 696.8,
+   "y": 651.6,
+   "label": "Pitch"
+  },
+  {
+   "type": "knob",
+   "id": "osc1_shape",
+   "x": 824.0,
+   "y": 578.0,
+   "label": "Shape Amount",
+   "bind": "osc1_manual_shape@osc1_shape_source=0|osc1_modenv1_to_shape@osc1_shape_source=1|osc1_lfo1_to_shape@osc1_shape_source=2",
+   "big": false
+  },
+  {
+   "type": "led",
+   "id": "osc1_src_0",
+   "x": 906.8,
+   "y": 540.2,
+   "label": "Manual",
+   "bind": "osc1_shape_source",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "osc1_src_1",
+   "x": 906.9,
+   "y": 561.2,
+   "label": "Mod Env 1",
+   "bind": "osc1_shape_source",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "osc1_src_2",
+   "x": 906.9,
+   "y": 582.2,
+   "label": "LFO 1",
+   "bind": "osc1_shape_source",
+   "value": 2
+  },
+  {
+   "type": "button",
+   "id": "osc1_source_btn",
+   "x": 928.7,
+   "y": 622.1,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "cycle:osc1_shape_source",
+   "style": "dark"
+  },
+  {
+   "type": "bracket",
+   "id": "osc1_source",
+   "x": 819.9,
+   "x1": 895.0,
+   "y": 651.3,
+   "label": ""
+  },
+  {
+   "type": "text",
+   "id": "osc1_source_label",
+   "x": 929.0,
+   "y": 651.2,
+   "label": "Source",
+   "size": 13,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "arrow",
+   "id": "osc1_more",
+   "x": 984.8,
+   "y": 517.1,
+   "bind": "menu:Oscillator 1"
+  },
+  {
+   "type": "led",
+   "id": "osc2_range_16",
+   "x": 109.1,
+   "y": 734.9,
+   "label": "16'",
+   "bind": "osc2_range",
+   "value": 63
+  },
+  {
+   "type": "led",
+   "id": "osc2_range_8",
+   "x": 109.1,
+   "y": 756.0,
+   "label": "8'",
+   "bind": "osc2_range",
+   "value": 64
+  },
+  {
+   "type": "led",
+   "id": "osc2_range_4",
+   "x": 152.7,
+   "y": 734.8,
+   "label": "4'",
+   "bind": "osc2_range",
+   "value": 65
+  },
+  {
+   "type": "led",
+   "id": "osc2_range_2",
+   "x": 152.7,
+   "y": 755.9,
+   "label": "2'",
+   "bind": "osc2_range",
+   "value": 66
+  },
+  {
+   "type": "button",
+   "id": "osc2_range_btn",
+   "x": 135.6,
+   "y": 795.3,
+   "w": 62,
+   "h": 26,
+   "label": "Range",
+   "bind": "cycle:osc2_range",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "osc2_coarse",
+   "x": 242.1,
+   "y": 751.7,
+   "label": "Coarse",
+   "bind": "osc2_coarse",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "osc2_fine",
+   "x": 363.6,
+   "y": 751.9,
+   "label": "Fine",
+   "bind": "osc2_fine",
+   "big": false
+  },
+  {
+   "type": "led",
+   "id": "osc2_wave_0",
+   "x": 446.1,
+   "y": 714.3,
+   "label": "~sine",
+   "bind": "osc2_wave",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "osc2_wave_1",
+   "x": 446.1,
+   "y": 735.3,
+   "label": "~tri",
+   "bind": "osc2_wave",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "osc2_wave_2",
+   "x": 446.2,
+   "y": 756.4,
+   "label": "~saw",
+   "bind": "osc2_wave",
+   "value": 2
+  },
+  {
+   "type": "led",
+   "id": "osc2_wave_3",
+   "x": 488.3,
+   "y": 714.2,
+   "label": "~pulse",
+   "bind": "osc2_wave",
+   "value": 3
+  },
+  {
+   "type": "led",
+   "id": "osc2_wave_4",
+   "x": 488.3,
+   "y": 735.3,
+   "label": "more",
+   "bind": "osc2_wave",
+   "value": 4
+  },
+  {
+   "type": "button",
+   "id": "osc2_wave_btn",
+   "x": 470.0,
+   "y": 795.6,
+   "w": 62,
+   "h": 26,
+   "label": "Wave",
+   "bind": "cycle:osc2_wave",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "osc2_me2",
+   "x": 577.8,
+   "y": 751.7,
+   "label": "Mod Env 2 Depth",
+   "bind": "osc2_modenv2_to_pitch",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "osc2_lfo2",
+   "x": 700.2,
+   "y": 752.7,
+   "label": "LFO 2 Depth",
+   "bind": "osc2_lfo2_to_pitch",
+   "big": false
+  },
+  {
+   "type": "bracket",
+   "id": "osc2_pitch",
+   "x": 574.7,
+   "x1": 697.0,
+   "y": 825.2,
+   "label": "Pitch"
+  },
+  {
+   "type": "knob",
+   "id": "osc2_shape",
+   "x": 824.7,
+   "y": 750.8,
+   "label": "Shape Amount",
+   "bind": "osc2_manual_shape@osc2_shape_source=0|osc2_modenv1_to_shape@osc2_shape_source=1|osc2_lfo1_to_shape@osc2_shape_source=2",
+   "big": false
+  },
+  {
+   "type": "led",
+   "id": "osc2_src_0",
+   "x": 907.0,
+   "y": 713.7,
+   "label": "Manual",
+   "bind": "osc2_shape_source",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "osc2_src_1",
+   "x": 907.1,
+   "y": 734.7,
+   "label": "Mod Env 1",
+   "bind": "osc2_shape_source",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "osc2_src_2",
+   "x": 907.1,
+   "y": 755.7,
+   "label": "LFO 1",
+   "bind": "osc2_shape_source",
+   "value": 2
+  },
+  {
+   "type": "button",
+   "id": "osc2_source_btn",
+   "x": 928.9,
+   "y": 794.9,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "cycle:osc2_shape_source",
+   "style": "dark"
+  },
+  {
+   "type": "bracket",
+   "id": "osc2_source",
+   "x": 820.1,
+   "x1": 895.1,
+   "y": 824.9,
+   "label": ""
+  },
+  {
+   "type": "text",
+   "id": "osc2_source_label",
+   "x": 929.2,
+   "y": 824.7,
+   "label": "Source",
+   "size": 13,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "arrow",
+   "id": "osc2_more",
+   "x": 985.0,
+   "y": 690.6,
+   "bind": "menu:Oscillator 2"
+  },
+  {
+   "type": "led",
+   "id": "osc3_range_16",
+   "x": 109.0,
+   "y": 909.2,
+   "label": "16'",
+   "bind": "osc3_range",
+   "value": 63
+  },
+  {
+   "type": "led",
+   "id": "osc3_range_8",
+   "x": 109.0,
+   "y": 930.3,
+   "label": "8'",
+   "bind": "osc3_range",
+   "value": 64
+  },
+  {
+   "type": "led",
+   "id": "osc3_range_4",
+   "x": 152.6,
+   "y": 909.0,
+   "label": "4'",
+   "bind": "osc3_range",
+   "value": 65
+  },
+  {
+   "type": "led",
+   "id": "osc3_range_2",
+   "x": 152.6,
+   "y": 930.1,
+   "label": "2'",
+   "bind": "osc3_range",
+   "value": 66
+  },
+  {
+   "type": "button",
+   "id": "osc3_range_btn",
+   "x": 135.4,
+   "y": 968.9,
+   "w": 62,
+   "h": 26,
+   "label": "Range",
+   "bind": "cycle:osc3_range",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "osc3_coarse",
+   "x": 240.9,
+   "y": 924.8,
+   "label": "Coarse",
+   "bind": "osc3_coarse",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "osc3_fine",
+   "x": 363.3,
+   "y": 923.6,
+   "label": "Fine",
+   "bind": "osc3_fine",
+   "big": false
+  },
+  {
+   "type": "led",
+   "id": "osc3_wave_0",
+   "x": 446.2,
+   "y": 888.1,
+   "label": "~sine",
+   "bind": "osc3_wave",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "osc3_wave_1",
+   "x": 446.2,
+   "y": 909.1,
+   "label": "~tri",
+   "bind": "osc3_wave",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "osc3_wave_2",
+   "x": 446.2,
+   "y": 930.2,
+   "label": "~saw",
+   "bind": "osc3_wave",
+   "value": 2
+  },
+  {
+   "type": "led",
+   "id": "osc3_wave_3",
+   "x": 488.4,
+   "y": 888.0,
+   "label": "~pulse",
+   "bind": "osc3_wave",
+   "value": 3
+  },
+  {
+   "type": "led",
+   "id": "osc3_wave_4",
+   "x": 488.4,
+   "y": 909.0,
+   "label": "more",
+   "bind": "osc3_wave",
+   "value": 4
+  },
+  {
+   "type": "button",
+   "id": "osc3_wave_btn",
+   "x": 470.0,
+   "y": 968.7,
+   "w": 62,
+   "h": 26,
+   "label": "Wave",
+   "bind": "cycle:osc3_wave",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "osc3_me2",
+   "x": 577.7,
+   "y": 924.4,
+   "label": "Mod Env 2 Depth",
+   "bind": "osc3_modenv2_to_pitch",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "osc3_lfo2",
+   "x": 701.3,
+   "y": 924.8,
+   "label": "LFO 2 Depth",
+   "bind": "osc3_lfo2_to_pitch",
+   "big": false
+  },
+  {
+   "type": "bracket",
+   "id": "osc3_pitch",
+   "x": 574.7,
+   "x1": 697.0,
+   "y": 999.0,
+   "label": "Pitch"
+  },
+  {
+   "type": "knob",
+   "id": "osc3_shape",
+   "x": 822.8,
+   "y": 922.8,
+   "label": "Shape Amount",
+   "bind": "osc3_manual_shape@osc3_shape_source=0|osc3_modenv1_to_shape@osc3_shape_source=1|osc3_lfo1_to_shape@osc3_shape_source=2",
+   "big": false
+  },
+  {
+   "type": "led",
+   "id": "osc3_src_0",
+   "x": 907.2,
+   "y": 887.3,
+   "label": "Manual",
+   "bind": "osc3_shape_source",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "osc3_src_1",
+   "x": 907.2,
+   "y": 908.3,
+   "label": "Mod Env 1",
+   "bind": "osc3_shape_source",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "osc3_src_2",
+   "x": 907.2,
+   "y": 929.3,
+   "label": "LFO 1",
+   "bind": "osc3_shape_source",
+   "value": 2
+  },
+  {
+   "type": "button",
+   "id": "osc3_source_btn",
+   "x": 929.0,
+   "y": 967.8,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "cycle:osc3_shape_source",
+   "style": "dark"
+  },
+  {
+   "type": "bracket",
+   "id": "osc3_source",
+   "x": 820.2,
+   "x1": 895.3,
+   "y": 998.5,
+   "label": ""
+  },
+  {
+   "type": "text",
+   "id": "osc3_source_label",
+   "x": 929.3,
+   "y": 998.3,
+   "label": "Source",
+   "size": 13,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "arrow",
+   "id": "osc3_more",
+   "x": 985.2,
+   "y": 864.1,
+   "bind": "menu:Oscillator 3"
+  },
+  {
+   "type": "text",
+   "id": "oxford",
+   "x": 69.9,
+   "y": 1070.3,
+   "label": "OXFORD OSCILLATORS",
+   "size": 20,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "knob",
+   "id": "mix_osc1",
+   "x": 1063.9,
+   "y": 577.4,
+   "label": "Osc 1",
+   "bind": "mix_osc1",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "mix_osc2",
+   "x": 1063.6,
+   "y": 750.5,
+   "label": "Osc 2",
+   "bind": "mix_osc2",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "mix_osc3",
+   "x": 1063.5,
+   "y": 923.8,
+   "label": "Osc 3",
+   "bind": "mix_osc3",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "vca_gain",
+   "x": 1186.9,
+   "y": 577.6,
+   "label": "VCA Gain",
+   "bind": "vca_gain",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "ring",
+   "x": 1187.0,
+   "y": 751.6,
+   "label": "Ring 1\u20222",
+   "bind": "ring_1_2",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "noise",
+   "x": 1188.1,
+   "y": 922.9,
+   "label": "Noise",
+   "bind": "noise_level",
+   "big": false
+  },
+  {
+   "type": "arrow",
+   "id": "vca_more",
+   "x": 1234.8,
+   "y": 516.8,
+   "bind": "menu:Voice"
+  },
+  {
+   "type": "frame",
+   "id": "vca_frame",
+   "x": 1117.8,
+   "y": 507.0,
+   "x1": 1248.0,
+   "y1": 664.8,
+   "style": "u"
+  },
+  {
+   "type": "knob",
+   "id": "flt_lfo1",
+   "x": 1321.5,
+   "y": 577.7,
+   "label": "LFO 1 Depth",
+   "bind": "lfo1_to_filter",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "flt_osc3",
+   "x": 1444.2,
+   "y": 576.9,
+   "label": "Osc 3 Filter Mod",
+   "bind": "osc3_to_filter",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "flt_track",
+   "x": 1566.2,
+   "y": 577.0,
+   "label": "Key Tracking",
+   "bind": "filter_key_track",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "flt_env",
+   "x": 1321.5,
+   "y": 752.0,
+   "label": "Env Depth",
+   "bind": "ampenv_to_filter@filter_env_select=0|modenv1_to_filter@filter_env_select=1",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "flt_res",
+   "x": 1443.7,
+   "y": 750.3,
+   "label": "Resonance",
+   "bind": "filter_resonance",
+   "big": false
+  },
+  {
+   "type": "frame",
+   "id": "flt_env_bracket",
+   "x": 1272.2,
+   "y": 811.8,
+   "x1": 1282.3,
+   "y1": 916.9,
+   "style": "left"
+  },
+  {
+   "type": "knob",
+   "id": "flt_od",
+   "x": 1565.8,
+   "y": 750.7,
+   "label": "Overdrive",
+   "bind": "filter_overdrive",
+   "big": false
+  },
+  {
+   "type": "led",
+   "id": "flt_src_amp",
+   "x": 1297.2,
+   "y": 831.8,
+   "label": "Amp Env",
+   "bind": "filter_env_select",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "flt_src_mod",
+   "x": 1297.3,
+   "y": 852.8,
+   "label": "Mod Env 1",
+   "bind": "filter_env_select",
+   "value": 1
+  },
+  {
+   "type": "button",
+   "id": "flt_source_btn",
+   "x": 1319.4,
+   "y": 891.6,
+   "w": 62,
+   "h": 26,
+   "label": "",
+   "bind": "cycle:filter_env_select",
+   "style": "dark"
+  },
+  {
+   "type": "text",
+   "id": "flt_source_label",
+   "x": 1320.4,
+   "y": 920.8,
+   "label": "Source",
+   "size": 12,
+   "align": "centre",
+   "bold": false
+  },
+  {
+   "type": "led",
+   "id": "flt_slope_12",
+   "x": 1297.4,
+   "y": 941.9,
+   "label": "12 dB",
+   "bind": "filter_slope",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "flt_slope_24",
+   "x": 1297.4,
+   "y": 961.9,
+   "label": "24 dB",
+   "bind": "filter_slope",
+   "value": 1
+  },
+  {
+   "type": "button",
+   "id": "flt_slope_btn",
+   "x": 1319.6,
+   "y": 999.3,
+   "w": 62,
+   "h": 26,
+   "label": "Slope",
+   "bind": "cycle:filter_slope",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "flt_freq",
+   "x": 1443.6,
+   "y": 924.2,
+   "label": "Frequency",
+   "bind": "filter_frequency",
+   "big": true
+  },
+  {
+   "type": "led",
+   "id": "flt_lp",
+   "x": 1541.7,
+   "y": 918.7,
+   "label": "LP",
+   "bind": "filter_shape",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "flt_bp",
+   "x": 1541.7,
+   "y": 939.7,
+   "label": "BP",
+   "bind": "filter_shape",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "flt_hp",
+   "x": 1541.8,
+   "y": 960.8,
+   "label": "HP",
+   "bind": "filter_shape",
+   "value": 2
+  },
+  {
+   "type": "button",
+   "id": "flt_shape_btn",
+   "x": 1562.9,
+   "y": 999.2,
+   "w": 62,
+   "h": 26,
+   "label": "Shape",
+   "bind": "cycle:filter_shape",
+   "style": "dark"
+  },
+  {
+   "type": "arrow",
+   "id": "flt_more",
+   "x": 1615.3,
+   "y": 516.3,
+   "bind": "menu:Filter"
+  },
+  {
+   "type": "knob",
+   "id": "dist_level",
+   "x": 1693.7,
+   "y": 577.4,
+   "label": "Level",
+   "bind": "distortion_level",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "chorus_rate",
+   "x": 1830.9,
+   "y": 577.5,
+   "label": "Rate",
+   "bind": "chorus_rate",
+   "big": false
+  },
+  {
+   "type": "led",
+   "id": "chorus_type_0",
+   "x": 1920.1,
+   "y": 542.7,
+   "label": "1",
+   "bind": "chorus_type",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "reverb_type_0",
+   "x": 1920.6,
+   "y": 885.7,
+   "label": "1",
+   "bind": "reverb_type",
+   "value": 0
+  },
+  {
+   "type": "led",
+   "id": "chorus_type_1",
+   "x": 1920.1,
+   "y": 563.8,
+   "label": "2",
+   "bind": "chorus_type",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "reverb_type_1",
+   "x": 1920.7,
+   "y": 906.8,
+   "label": "2",
+   "bind": "reverb_type",
+   "value": 1
+  },
+  {
+   "type": "led",
+   "id": "chorus_type_2",
+   "x": 1920.1,
+   "y": 584.8,
+   "label": "3",
+   "bind": "chorus_type",
+   "value": 2
+  },
+  {
+   "type": "led",
+   "id": "reverb_type_2",
+   "x": 1920.7,
+   "y": 927.8,
+   "label": "3",
+   "bind": "reverb_type",
+   "value": 2
+  },
+  {
+   "type": "button",
+   "id": "chorus_type_btn",
+   "x": 1938.7,
+   "y": 624.9,
+   "w": 62,
+   "h": 26,
+   "label": "Type",
+   "bind": "cycle:chorus_type",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "chorus_level",
+   "x": 2056.7,
+   "y": 577.6,
+   "label": "Level",
+   "bind": "chorus_level",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "delay_fb",
+   "x": 1694.1,
+   "y": 751.5,
+   "label": "Feedback",
+   "bind": "delay_feedback",
+   "big": false
+  },
+  {
+   "type": "knob",
+   "id": "delay_time",
+   "x": 1830.4,
+   "y": 749.7,
+   "label": "Time",
+   "bind": "delay_time@delay_sync=0|delay_sync_time@delay_sync=1",
+   "big": false
+  },
+  {
+   "type": "button",
+   "id": "delay_sync",
+   "x": 1938.9,
+   "y": 752.7,
+   "w": 62,
+   "h": 26,
+   "label": "Sync",
+   "bind": "delay_sync",
+   "style": "toggle"
+  },
+  {
+   "type": "bracket",
+   "id": "delay_time_sync",
+   "x": 1874.0,
+   "x1": 1959.8,
+   "y": 809.5,
+   "label": ""
+  },
+  {
+   "type": "knob",
+   "id": "delay_level",
+   "x": 2058.3,
+   "y": 751.1,
+   "label": "Level",
+   "bind": "delay_level",
+   "big": false
+  },
+  {
+   "type": "button",
+   "id": "fx_bypass",
+   "x": 1689.7,
+   "y": 925.4,
+   "w": 62,
+   "h": 26,
+   "label": "Bypass",
+   "bind": "fx_bypass",
+   "style": "toggle"
+  },
+  {
+   "type": "knob",
+   "id": "reverb_time",
+   "x": 1830.3,
+   "y": 923.6,
+   "label": "Time",
+   "bind": "reverb_time",
+   "big": false
+  },
+  {
+   "type": "button",
+   "id": "reverb_type_btn",
+   "x": 1939.5,
+   "y": 966.5,
+   "w": 62,
+   "h": 26,
+   "label": "Type",
+   "bind": "cycle:reverb_type",
+   "style": "dark"
+  },
+  {
+   "type": "knob",
+   "id": "reverb_level",
+   "x": 2059.0,
+   "y": 924.5,
+   "label": "Level",
+   "bind": "reverb_level",
+   "big": false
+  },
+  {
+   "type": "text",
+   "id": "eight_voice",
+   "x": 2131.3,
+   "y": 1071.1,
+   "label": "EIGHT-VOICE POLYPHONIC SYNTHESISER",
+   "size": 20,
+   "align": "right",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_master",
+   "x": 67.7,
+   "y": 89.4,
+   "label": "MASTER",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_patch",
+   "x": 208.1,
+   "y": 90.2,
+   "label": "PATCH",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_menu",
+   "x": 383.0,
+   "y": 90.9,
+   "label": "MENU",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_arp",
+   "x": 1010.3,
+   "y": 91.5,
+   "label": "ARP",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_lfo_1",
+   "x": 1126.4,
+   "y": 91.3,
+   "label": "LFO 1",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_lfo_2",
+   "x": 1636.6,
+   "y": 90.0,
+   "label": "LFO 2",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_animate",
+   "x": 69.1,
+   "y": 282.1,
+   "label": "ANIMATE",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_glide",
+   "x": 1126.6,
+   "y": 282.8,
+   "label": "GLIDE",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_amp_envelope",
+   "x": 1263.7,
+   "y": 282.6,
+   "label": "AMP ENVELOPE",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_mod_envelopes",
+   "x": 1636.4,
+   "y": 282.8,
+   "label": "MOD ENVELOPES",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_oscillator_1",
+   "x": 67.1,
+   "y": 518.5,
+   "label": "OSCILLATOR 1",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_oscillator_2",
+   "x": 67.4,
+   "y": 691.3,
+   "label": "OSCILLATOR 2",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_oscillator_3",
+   "x": 67.4,
+   "y": 866.1,
+   "label": "OSCILLATOR 3",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_mixer",
+   "x": 1010.8,
+   "y": 518.1,
+   "label": "MIXER",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_filter",
+   "x": 1263.9,
+   "y": 517.8,
+   "label": "FILTER",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_distortion",
+   "x": 1636.4,
+   "y": 518.2,
+   "label": "DISTORTION",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_chorus",
+   "x": 1761.9,
+   "y": 518.0,
+   "label": "CHORUS",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_delay",
+   "x": 1636.6,
+   "y": 691.4,
+   "label": "DELAY",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_effects",
+   "x": 1636.8,
+   "y": 864.6,
+   "label": "EFFECTS",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  },
+  {
+   "type": "text",
+   "id": "title_reverb",
+   "x": 1762.4,
+   "y": 864.6,
+   "label": "REVERB",
+   "size": 15,
+   "align": "left",
+   "bold": true
+  }
+ ]
+}

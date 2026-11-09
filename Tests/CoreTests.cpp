@@ -1,6 +1,7 @@
 // Minimal self-contained tests for the JUCE-free core. Run: ./build/PeakCoreTests
 #include "peak/core/MidiDescribe.h"
 #include "peak/core/Nrpn.h"
+#include "peak/core/ParamFormat.h"
 #include "peak/core/ParamMidi.h"
 #include "peak/core/Patch.h"
 #include "peak/core/Sysex.h"
@@ -267,6 +268,29 @@ int main()
         dec.feed (0, 0xB0, 98, 121);
         const auto n = dec.feed (0, 0xB0, 6, 1);
         CHECK (n && n->param == findParam ("arp_on") && n->value == 1);
+    });
+
+    test ("display formatting", [] {
+        const auto f = [] (const char* id, int v) { return formatValue (*findParam (id), v); };
+        CHECK (f ("osc1_range", 63) == "16'");
+        CHECK (f ("osc1_range", 66) == "2'");
+        CHECK (f ("osc1_coarse", 128) == "0");
+        CHECK (f ("osc1_coarse", 140) == "+12");
+        CHECK (f ("osc2_fine", 28) == "-100");
+        CHECK (f ("osc3_wave", 2) == "Sawtooth");
+        CHECK (f ("osc1_modenv1_to_shape", 0) == "-64");
+        CHECK (f ("pre_glide", 64) == "Off");
+        CHECK (f ("osc1_bend_range", 76) == "+12");
+        CHECK (f ("glide_on", 1) == "On");
+        CHECK (f ("lfo1_phase", 0) == "Free");
+        CHECK (f ("lfo1_phase", 61) == "180\u00b0");
+        CHECK (f ("filter_shape", 1) == "BP");
+        CHECK (f ("filter_frequency", 200) == "200");
+        CHECK (defaultValue (*findParam ("osc1_coarse")) == 128);
+        CHECK (defaultValue (*findParam ("filter_resonance")) == 0);
+        for (const auto& p : allParams())
+            for (int v = p.min; v <= p.max; ++v)
+                CHECK (! formatValue (p, v).empty());
     });
 
     std::printf (failures == 0 ? "\nAll tests passed\n" : "\n%d failure(s)\n", failures);

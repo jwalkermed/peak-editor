@@ -32,6 +32,7 @@ void PeakModel::set (const peak::ParamDef& def, int value)
     else
         unstoredValues[(size_t) peak::indexOf (def)] = value;
 
+    lastTouched = &def;
     pendingSends[peak::indexOf (def)] = value;
     if (! isTimerRunning())
         startTimer (sendIntervalMs);
@@ -75,6 +76,7 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
             patch.set (*c.param, c.value);
         else
             unstoredValues[(size_t) peak::indexOf (*c.param)] = c.value;
+        lastTouched = c.param;
     }
 
     if (! dumps.empty())

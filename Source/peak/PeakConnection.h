@@ -14,7 +14,8 @@
 // The single CoreMIDI connection to the Peak, shared by every plugin instance
 // and the standalone app in a process (use via juce::SharedResourcePointer).
 // Plugins talk to the hardware directly rather than through host MIDI routing.
-class PeakConnection final : private juce::AsyncUpdater
+class PeakConnection final : private juce::AsyncUpdater,
+                             private juce::MidiKeyboardState::Listener
 {
 public:
     struct LogEntry
@@ -52,6 +53,15 @@ public:
     // Sends a long run of CC/NRPN messages spaced out so DIN/network bridges keep up.
     bool sendPaced (const std::vector<peak::ShortMessage>& messages, double msBetween = 2.0);
 
+    // Notes for the Peak. Anything that presses keys here (the on-screen keyboard,
+    // a computer keyboard, or the hardware keyboard input) is played on the Peak.
+    juce::MidiKeyboardState keyboardState;
+
+    // An extra MIDI input (e.g. a controller keyboard) whose notes, bend, mod wheel,
+    // aftertouch and sustain are forwarded to the Peak on its channel.
+    void openKeyboardInput (const juce::String& identifier);
+    juce::String getKeyboardInputIdentifier() const;
+
     // Parameter changes and patch dumps received from the Peak since the last call.
     void takeIncoming (std::vector<peak::ParamChange>& changes, std::vector<peak::Bytes>& dumps);
 
@@ -70,6 +80,9 @@ public:
 private:
     void handleIncoming (const uint8_t* data, size_t size); // CoreMIDI thread
     void handleAsyncUpdate() override; // device list changed
+    void handleKeyboardInput (const uint8_t* data, size_t size); // CoreMIDI thread
+    void handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int note, float velocity) override;
+    void handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int note, float velocity) override;
     void addToLog (bool outgoing, const juce::uint8* data, int size);
 
     static constexpr size_t maxLogEntries = 5000;
@@ -78,6 +91,7 @@ private:
     juce::ApplicationProperties settings;
 
     CoreMidiTransport transport;
+    CoreMidiTransport keyboardTransport; // input only
 
     mutable juce::CriticalSection logLock;
     std::deque<LogEntry> log;
