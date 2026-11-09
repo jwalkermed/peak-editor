@@ -1,0 +1,284 @@
+[
+ {
+  "name": "Filter Slope",
+  "kind": "nrpn",
+  "num": [
+   0,
+   45
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   0,
+   1,
+   0
+  ]
+ },
+ {
+  "name": "ModEnv1 Trigger",
+  "kind": "nrpn",
+  "num": [
+   0,
+   61
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   0,
+   0,
+   1
+  ]
+ },
+ {
+  "name": "LFO1 Range",
+  "kind": "nrpn",
+  "num": [
+   0,
+   68
+  ],
+  "lo": 0,
+  "hi": 2,
+  "values": [
+   0,
+   2,
+   1
+  ]
+ },
+ {
+  "name": "AmpEnv Trigger",
+  "kind": "nrpn",
+  "num": [
+   0,
+   56
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   1,
+   1,
+   0
+  ]
+ },
+ {
+  "name": "ModEnv2 Trigger",
+  "kind": "nrpn",
+  "num": [
+   0,
+   65
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   1,
+   0,
+   1
+  ]
+ },
+ {
+  "name": "Filter Env Select",
+  "kind": "nrpn",
+  "num": [
+   0,
+   47
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   0,
+   1,
+   0
+  ]
+ },
+ {
+  "name": "Arp On",
+  "kind": "nrpn",
+  "num": [
+   0,
+   121
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   0,
+   0,
+   1
+  ]
+ },
+ {
+  "name": "LFO1 One Shot",
+  "kind": "nrpn",
+  "num": [
+   0,
+   75
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   1,
+   1,
+   0
+  ]
+ },
+ {
+  "name": "LFO2 Common",
+  "kind": "nrpn",
+  "num": [
+   0,
+   85
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   1,
+   0,
+   1
+  ]
+ },
+ {
+  "name": "Reverb Type",
+  "kind": "nrpn",
+  "num": [
+   0,
+   101
+  ],
+  "lo": 0,
+  "hi": 2,
+  "values": [
+   1,
+   2,
+   1
+  ]
+ },
+ {
+  "name": "LFO1 Common",
+  "kind": "nrpn",
+  "num": [
+   0,
+   76
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   0,
+   1,
+   0
+  ]
+ },
+ {
+  "name": "FX Bypass",
+  "kind": "nrpn",
+  "num": [
+   0,
+   88
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   0,
+   0,
+   1
+  ]
+ },
+ {
+  "name": "LFO2 One Shot",
+  "kind": "nrpn",
+  "num": [
+   0,
+   84
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   1,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Arp Key Latch",
+  "kind": "nrpn",
+  "num": [
+   0,
+   122
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   1,
+   0,
+   1
+  ]
+ },
+ {
+  "name": "Arp Key Sync",
+  "kind": "nrpn",
+  "num": [
+   0,
+   123
+  ],
+  "lo": 0,
+  "hi": 1,
+  "values": [
+   1,
+   1,
+   0
+  ]
+ },
+ {
+  "name": "Osc3 Fine",
+  "kind": "pair",
+  "num": 21,
+  "lo": 28,
+  "hi": 228,
+  "values": [
+   131,
+   45,
+   200
+  ]
+ },
+ {
+  "name": "FM Osc3>1",
+  "kind": "nrpn",
+  "num": [
+   25,
+   13
+  ],
+  "lo": 0,
+  "hi": 127,
+  "values": [
+   72,
+   100,
+   20
+  ]
+ },
+ {
+  "name": "FM Osc1>2",
+  "kind": "nrpn",
+  "num": [
+   25,
+   17
+  ],
+  "lo": 0,
+  "hi": 127,
+  "values": [
+   19,
+   21,
+   101
+  ]
+ },
+ {
+  "name": "FM Osc2>3",
+  "kind": "nrpn",
+  "num": [
+   25,
+   21
+  ],
+  "lo": 0,
+  "hi": 127,
+  "values": [
+   14,
+   60,
+   7
+  ]
+ }
+]
