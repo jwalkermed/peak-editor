@@ -26,6 +26,7 @@ set(PEAK_CORE_SOURCES
     Source/peak/core/Params.cpp
     Source/peak/core/ParamTable.cpp
     Source/peak/core/ParamMidi.cpp
+    Source/peak/core/ParamFormat.cpp
     Source/peak/core/Patch.cpp)
 
 juce_add_plugin(PeakEditor
@@ -52,7 +53,11 @@ target_sources(PeakEditor PRIVATE
     Source/peak/PeakConnection.cpp
     Source/peak/PeakModel.cpp
     Source/ui/MidiMonitorPanel.cpp
-    Source/ui/ParameterListPanel.cpp)
+    Source/ui/ParameterListPanel.cpp
+    Source/ui/ParamRows.cpp
+    Source/ui/PanelLayout.cpp
+    Source/ui/FrontPanel.cpp
+    Source/ui/KeyboardStrip.cpp)
 
 target_include_directories(PeakEditor PRIVATE Source)
 
@@ -76,3 +81,18 @@ add_executable(PeakCoreTests Tests/CoreTests.cpp ${PEAK_CORE_SOURCES})
 target_include_directories(PeakCoreTests PRIVATE Source Tests)
 target_compile_definitions(PeakCoreTests PRIVATE PEAK_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/Tests/fixtures")
 add_test(NAME PeakCoreTests COMMAND PeakCoreTests)
+
+# Renders the front panel to PNG (visual check against docs/reference/peak-front-panel.png)
+juce_add_console_app(PanelSnapshot PRODUCT_NAME "PanelSnapshot")
+target_sources(PanelSnapshot PRIVATE
+    Tests/PanelSnapshot.cpp
+    ${PEAK_CORE_SOURCES}
+    Source/peak/CoreMidiTransport.mm
+    Source/peak/PeakConnection.cpp
+    Source/peak/PeakModel.cpp
+    Source/ui/ParamRows.cpp
+    Source/ui/PanelLayout.cpp
+    Source/ui/FrontPanel.cpp)
+target_include_directories(PanelSnapshot PRIVATE Source)
+target_compile_definitions(PanelSnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+target_link_libraries(PanelSnapshot PRIVATE juce::juce_gui_basics juce::juce_audio_basics "-framework CoreMIDI")

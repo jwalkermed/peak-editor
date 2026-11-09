@@ -32,6 +32,10 @@ public:
     juce::String getSource() const { return source; }
     bool hasPatch() const noexcept { return loaded; }
 
+    // The parameter most recently changed from either side, for the panel display.
+    const peak::ParamDef* getLastTouched() const noexcept { return lastTouched; }
+    void setLastTouched (const peak::ParamDef* p) { lastTouched = p; changed.sendChangeMessage(); }
+
     juce::ChangeBroadcaster changed;
 
 private:
@@ -44,6 +48,7 @@ private:
     std::map<int, int> pendingSends; // param index -> latest value
     juce::String source { "No patch loaded" };
     bool loaded = false;
+    const peak::ParamDef* lastTouched = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PeakModel)
 };

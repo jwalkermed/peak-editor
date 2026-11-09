@@ -1,6 +1,7 @@
 #pragma once
 
 #include "peak/PeakModel.h"
+#include "ui/ParamRows.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -18,9 +19,6 @@ public:
     void resized() override;
 
 private:
-    struct Row;
-    class Content;
-
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
     void refresh();
     void importSyx();
@@ -30,7 +28,7 @@ private:
     juce::Label patchLabel, hintLabel;
     juce::TextButton sendButton { "Send patch to Peak" }, importButton { "Import .syx…" }, exportButton { "Export .syx…" };
     juce::Viewport viewport;
-    std::unique_ptr<Content> content;
+    std::unique_ptr<ParamRows> content;
     std::unique_ptr<juce::FileChooser> chooser;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ParameterListPanel)
