@@ -6,7 +6,6 @@
 #include "ui/LibraryDrawer.h"
 #include "ui/ModMatrixDrawer.h"
 #include "ui/MidiMonitorPanel.h"
-#include "ui/ParameterListPanel.h"
 
 class PeakEditorEditor final : public juce::AudioProcessorEditor,
                                private juce::ChangeListener

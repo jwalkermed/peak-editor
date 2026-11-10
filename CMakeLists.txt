@@ -58,7 +58,6 @@ target_sources(PeakEditor PRIVATE
     Source/peak/PeakModel.cpp
     Source/peak/PatchLibrary.cpp
     Source/ui/MidiMonitorPanel.cpp
-    Source/ui/ParameterListPanel.cpp
     Source/ui/ParamRows.cpp
     Source/ui/PanelLayout.cpp
     Source/ui/FrontPanel.cpp
