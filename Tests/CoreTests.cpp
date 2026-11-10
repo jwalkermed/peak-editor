@@ -271,7 +271,7 @@ int main()
     });
 
     test ("bank dumps carry slot locations; edit-buffer dumps do not", [] {
-        for (const auto& [file, bank] : { std::pair { "bank-a.syx", 0 }, std::pair { "bank-b.syx", 1 } })
+        for (const auto& [file, bank] : { std::pair { "bank-a.syx", 0 }, std::pair { "bank-b.syx", 1 }, std::pair { "bank-c.syx", 2 }, std::pair { "bank-d.syx", 3 } })
         {
             const auto msgs = splitSysex (readFixture (file));
             CHECK (msgs.size() == 128);
@@ -304,6 +304,14 @@ int main()
         const auto init = Patch::fromSysex (readFixture ("current-init-patch.syx"));
         CHECK (init.has_value() && init->name() == "Init Patch" && ! init->location().has_value());
         CHECK (init->get (*findParam ("patch_category")) == 0);
+    });
+
+    test ("FX mod slots have a Source B (second byte, NRPN n:1)", [] {
+        const auto p = *Patch::fromSysex (readFixture ("current-fx-sourceb.syx"));
+        CHECK (p.get (*findParam ("fxmod2_source")) == 13);
+        CHECK (p.get (*findParam ("fxmod2_source2")) == 16);
+        CHECK (findParam ("fxmod2_source2")->number == ((18 << 7) | 1));
+        CHECK (formatValue (*findParam ("fxmod2_source2"), 16) == "Noise");
     });
 
     test ("moving within Peak memory swaps instead of overwriting", [] {
@@ -344,6 +352,21 @@ int main()
         CHECK (f ("filter_shape", 1) == "BP");
         CHECK (f ("filter_frequency", 200) == "200");
         CHECK (categoryNames().size() == 15); // matches the parameter's 0-14 range
+        CHECK (modSourceNames().size() == 24 && modDestinationNames().size() == 48);
+        CHECK (fxSourceNames().size() == 17 && fxDestinationNames().size() == 24);
+        CHECK (f ("mod1_source1", 14) == "Animate 1");
+        CHECK (f ("mod3_dest", 18) == "Filter Freq");
+        CHECK (f ("mod3_dest", 37) == "Pan Position");
+        CHECK (f ("mod3_dest", 47) == "Mod Env 2 Sustain");
+        CHECK (f ("mod1_source2", 23) == "Noise");
+        CHECK (f ("fxmod2_dest", 9) == "Reverb Time");
+        CHECK (f ("fxmod2_dest", 10) == "Reverb Low Damp");
+        CHECK (f ("fxmod2_dest", 15) == "Delay Slew");
+        CHECK (f ("fxmod2_dest", 23) == "Noise HPF");
+        CHECK (f ("mod1_depth", 64) == "0");
+        for (const auto& p : allParams()) // each mod list names every value its parameter can take
+            if (std::string (p.section).find ("Mod Matrix") != std::string::npos && std::string (p.id).find ("depth") == std::string::npos)
+                CHECK (f (p.id, p.max) != std::to_string (p.max));
         CHECK (f ("patch_category", 0) == "None");
         CHECK (f ("patch_category", 8) == "Motion");
         CHECK (f ("patch_category", 14) == "User 2");

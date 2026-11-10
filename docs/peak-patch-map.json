@@ -1977,10 +1977,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 266,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod1 Source2",
@@ -1990,10 +1991,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 267,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod1 Depth",
@@ -2016,10 +2018,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 269,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod2 Source1",
@@ -2029,10 +2032,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 270,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod2 Source2",
@@ -2042,10 +2046,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 271,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod2 Depth",
@@ -2068,10 +2073,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 273,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod3 Source1",
@@ -2081,10 +2087,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 274,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod3 Source2",
@@ -2094,10 +2101,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 275,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod3 Depth",
@@ -2120,10 +2128,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 277,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod4 Source1",
@@ -2133,10 +2142,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 278,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod4 Source2",
@@ -2146,10 +2156,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 279,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod4 Depth",
@@ -2172,10 +2183,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 281,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod5 Source1",
@@ -2185,10 +2197,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 282,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod5 Source2",
@@ -2198,10 +2211,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 283,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod5 Depth",
@@ -2224,10 +2238,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 285,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod6 Source1",
@@ -2237,10 +2252,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 286,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod6 Source2",
@@ -2250,10 +2266,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 287,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod6 Depth",
@@ -2276,10 +2293,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 289,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod7 Source1",
@@ -2289,10 +2307,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 290,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod7 Source2",
@@ -2302,10 +2321,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 291,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod7 Depth",
@@ -2328,10 +2348,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 293,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod8 Source1",
@@ -2341,10 +2362,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 294,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod8 Source2",
@@ -2354,10 +2376,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 295,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod8 Depth",
@@ -2380,10 +2403,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 297,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod9 Source1",
@@ -2393,10 +2417,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 298,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod9 Source2",
@@ -2406,10 +2431,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 299,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod9 Depth",
@@ -2432,10 +2458,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 301,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod10 Source1",
@@ -2445,10 +2472,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 302,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod10 Source2",
@@ -2458,10 +2486,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 303,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod10 Depth",
@@ -2484,10 +2513,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 305,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod11 Source1",
@@ -2497,10 +2527,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 306,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod11 Source2",
@@ -2510,10 +2541,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 307,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod11 Depth",
@@ -2536,10 +2568,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 309,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod12 Source1",
@@ -2549,10 +2582,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 310,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod12 Source2",
@@ -2562,10 +2596,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 311,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod12 Depth",
@@ -2588,10 +2623,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 313,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod13 Source1",
@@ -2601,10 +2637,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 314,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod13 Source2",
@@ -2614,10 +2651,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 315,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod13 Depth",
@@ -2640,10 +2678,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 317,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod14 Source1",
@@ -2653,10 +2692,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 318,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod14 Source2",
@@ -2666,10 +2706,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 319,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod14 Depth",
@@ -2692,10 +2733,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 321,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod15 Source1",
@@ -2705,10 +2747,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 322,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod15 Source2",
@@ -2718,10 +2761,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 323,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod15 Depth",
@@ -2744,10 +2788,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 325,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Mod16 Source1",
@@ -2757,10 +2802,11 @@
     0
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 326,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod16 Source2",
@@ -2770,10 +2816,11 @@
     1
    ],
    "lo": 0,
-   "hi": 16,
+   "hi": 23,
    "offset": 327,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-23, in the Peak's menu order (verified 2026-11-10): ... CV +/- (16), LFO 3/4 (17-20), Bend Wheel +/- (21-22), Noise (23)."
   },
   {
    "name": "Mod16 Depth",
@@ -2796,10 +2843,11 @@
     3
    ],
    "lo": 0,
-   "hi": 36,
+   "hi": 47,
    "offset": 329,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified",
+   "note": "0-47, in the Peak's menu order (verified 2026-11-10); 37-47 are the 2.x additions Pan Posn ... MEnv2Sus."
   },
   {
    "name": "Tuning Table",
@@ -3290,11 +3338,10 @@
     0
    ],
    "lo": 0,
-   "hi": 127,
+   "hi": 16,
    "offset": 330,
    "encoding": "byte",
-   "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "status": "verified"
   },
   {
    "name": "FXMod1 Depth",
@@ -3307,8 +3354,7 @@
    "hi": 127,
    "offset": 332,
    "encoding": "byte",
-   "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "status": "verified"
   },
   {
    "name": "FXMod1 Dest",
@@ -3318,11 +3364,10 @@
     3
    ],
    "lo": 0,
-   "hi": 127,
+   "hi": 23,
    "offset": 333,
    "encoding": "byte",
-   "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "status": "verified"
   },
   {
    "name": "FXMod2 Source",
@@ -3332,11 +3377,10 @@
     0
    ],
    "lo": 0,
-   "hi": 127,
+   "hi": 16,
    "offset": 334,
    "encoding": "byte",
-   "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "status": "verified"
   },
   {
    "name": "FXMod2 Depth",
@@ -3349,8 +3393,7 @@
    "hi": 127,
    "offset": 336,
    "encoding": "byte",
-   "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "status": "verified"
   },
   {
    "name": "FXMod2 Dest",
@@ -3360,11 +3403,10 @@
     3
    ],
    "lo": 0,
-   "hi": 127,
+   "hi": 23,
    "offset": 337,
    "encoding": "byte",
-   "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "status": "verified"
   },
   {
    "name": "FXMod3 Source",
@@ -3374,11 +3416,10 @@
     0
    ],
    "lo": 0,
-   "hi": 127,
+   "hi": 16,
    "offset": 338,
    "encoding": "byte",
-   "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "status": "verified"
   },
   {
    "name": "FXMod3 Depth",
@@ -3391,8 +3432,7 @@
    "hi": 127,
    "offset": 340,
    "encoding": "byte",
-   "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "status": "verified"
   },
   {
    "name": "FXMod3 Dest",
@@ -3402,11 +3442,10 @@
     3
    ],
    "lo": 0,
-   "hi": 127,
+   "hi": 23,
    "offset": 341,
    "encoding": "byte",
-   "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "status": "verified"
   },
   {
    "name": "FXMod4 Source",
@@ -3416,11 +3455,10 @@
     0
    ],
    "lo": 0,
-   "hi": 127,
+   "hi": 16,
    "offset": 342,
    "encoding": "byte",
-   "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "status": "verified"
   },
   {
    "name": "FXMod4 Depth",
@@ -3433,8 +3471,7 @@
    "hi": 127,
    "offset": 344,
    "encoding": "byte",
-   "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "status": "verified"
   },
   {
    "name": "FXMod4 Dest",
@@ -3444,11 +3481,66 @@
     3
    ],
    "lo": 0,
-   "hi": 127,
+   "hi": 23,
    "offset": 345,
    "encoding": "byte",
+   "status": "verified"
+  },
+  {
+   "name": "FXMod1 Source2",
+   "kind": "nrpn",
+   "num": [
+    17,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 331,
+   "encoding": "byte",
    "status": "verified",
-   "note": "Range not documented; upper bound is a placeholder until checked on hardware."
+   "note": "Verified 2026-11-10: NRPN 18:1 stepped 1-16 on the Peak; Current dump showed FX slot 2 byte +1 = 16."
+  },
+  {
+   "name": "FXMod2 Source2",
+   "kind": "nrpn",
+   "num": [
+    18,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 335,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Verified 2026-11-10: NRPN 18:1 stepped 1-16 on the Peak; Current dump showed FX slot 2 byte +1 = 16."
+  },
+  {
+   "name": "FXMod3 Source2",
+   "kind": "nrpn",
+   "num": [
+    19,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 339,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Verified 2026-11-10: NRPN 18:1 stepped 1-16 on the Peak; Current dump showed FX slot 2 byte +1 = 16."
+  },
+  {
+   "name": "FXMod4 Source2",
+   "kind": "nrpn",
+   "num": [
+    20,
+    1
+   ],
+   "lo": 0,
+   "hi": 16,
+   "offset": 343,
+   "encoding": "byte",
+   "status": "verified",
+   "note": "Verified 2026-11-10: NRPN 18:1 stepped 1-16 on the Peak; Current dump showed FX slot 2 byte +1 = 16."
   }
  ]
 }

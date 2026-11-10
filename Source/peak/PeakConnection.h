@@ -65,8 +65,14 @@ public:
     void openKeyboardInput (const juce::String& identifier);
     juce::String getKeyboardInputIdentifier() const;
 
-    // Parameter changes and patch dumps received from the Peak since the last call.
-    void takeIncoming (std::vector<peak::ParamChange>& changes, std::vector<peak::Bytes>& dumps);
+    // Selects a memory slot on the Peak the way it does itself: CC 32 = bank (A = 1), then
+    // Program Change = slot (verified on firmware 2.2).
+    bool sendPatchSelect (int bank, int slot);
+
+    // Parameter changes, patch dumps and patch selections (bank 0-3, slot) received from
+    // the Peak since the last call.
+    void takeIncoming (std::vector<peak::ParamChange>& changes, std::vector<peak::Bytes>& dumps,
+                       std::vector<std::pair<int, int>>& patchSelections);
 
     // Monitor log and captured incoming SysEx (thread-safe snapshots).
     std::vector<LogEntry> getLog() const;
@@ -103,6 +109,8 @@ private:
     peak::ParamMidiDecoder decoder; // MIDI thread only
     std::vector<peak::ParamChange> pendingChanges;
     std::vector<peak::Bytes> pendingDumps;
+    std::vector<std::pair<int, int>> pendingSelections;
+    int lastBankSelect = 1; // CC 32 from the Peak (MIDI thread only)
 
     std::atomic<int> channel { 0 }; // read on the MIDI thread
 

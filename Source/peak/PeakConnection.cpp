@@ -228,13 +228,23 @@ bool PeakConnection::sendPaced (const std::vector<peak::ShortMessage>& messages,
     return true; // paced messages are not added to the monitor log
 }
 
-void PeakConnection::takeIncoming (std::vector<peak::ParamChange>& changes, std::vector<peak::Bytes>& dumps)
+bool PeakConnection::sendPatchSelect (int bank, int slot)
+{
+    const auto ch = channel.load() + 1;
+    return send (juce::MidiMessage::controllerEvent (ch, 32, juce::jlimit (0, 3, bank) + 1))
+        && send (juce::MidiMessage::programChange (ch, juce::jlimit (0, 127, slot)));
+}
+
+void PeakConnection::takeIncoming (std::vector<peak::ParamChange>& changes, std::vector<peak::Bytes>& dumps,
+                                   std::vector<std::pair<int, int>>& patchSelections)
 {
     const juce::ScopedLock sl (logLock);
     changes.swap (pendingChanges);
     dumps.swap (pendingDumps);
+    patchSelections.swap (pendingSelections);
     pendingChanges.clear();
     pendingDumps.clear();
+    pendingSelections.clear();
 }
 
 void PeakConnection::handleIncoming (const uint8_t* data, size_t size)
@@ -242,8 +252,21 @@ void PeakConnection::handleIncoming (const uint8_t* data, size_t size)
     addToLog (false, data, (int) size);
 
     bool notify = false;
+    const auto onOurChannel = size >= 2 && (data[0] & 0x0F) == channel.load();
 
-    if (size == 3)
+    // Patch selection on the Peak: CC 32 (bank, A = 1) then Program Change (slot).
+    if (onOurChannel && (data[0] & 0xF0) == 0xB0 && data[1] == 32 && size == 3)
+        lastBankSelect = data[2];
+    else if (onOurChannel && (data[0] & 0xF0) == 0xC0)
+    {
+        if (lastBankSelect >= 1 && lastBankSelect <= 4)
+        {
+            const juce::ScopedLock sl (logLock);
+            pendingSelections.emplace_back (lastBankSelect - 1, data[1]);
+            notify = true;
+        }
+    }
+    else if (size == 3)
     {
         if (const auto change = decoder.feed (channel.load(), data[0], data[1], data[2]))
         {
