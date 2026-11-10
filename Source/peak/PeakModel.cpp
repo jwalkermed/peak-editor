@@ -32,6 +32,7 @@ void PeakModel::set (const peak::ParamDef& def, int value)
     else
         unstoredValues[(size_t) peak::indexOf (def)] = value;
 
+    comparing = false; // editing ends a compare, as on the hardware
     lastTouched = &def;
     pendingSends[peak::indexOf (def)] = value;
     if (! isTimerRunning())
@@ -51,7 +52,11 @@ void PeakModel::timerCallback()
 
 void PeakModel::loadPatch (const peak::Patch& newPatch, const juce::String& newSource)
 {
+    originalLocation = newPatch.location();
     patch = newPatch;
+    patch.setLocation (std::nullopt); // the editor always works on the current sound
+    reference = patch;
+    comparing = false;
     source = newSource;
     loaded = true;
     pendingSends.clear();
@@ -60,8 +65,52 @@ void PeakModel::loadPatch (const peak::Patch& newPatch, const juce::String& newS
 
 bool PeakModel::sendPatchToPeak()
 {
+    // A dump without a location replaces the current sound without saving (verified on hardware).
     pendingSends.clear();
-    return connection->sendPaced (peak::encodePatch (patch, connection->getChannel()));
+    auto current = patch;
+    current.setLocation (std::nullopt);
+    return connection->sendSysex (current.toSysex());
+}
+
+bool PeakModel::audition (const peak::Patch& p, const juce::String& newSource)
+{
+    loadPatch (p, newSource);
+    return sendPatchToPeak();
+}
+
+void PeakModel::toggleCompare()
+{
+    if (! loaded)
+        return;
+
+    if (comparing)
+        patch = editedWhileComparing;
+    else
+    {
+        editedWhileComparing = patch;
+        patch = reference;
+    }
+    comparing = ! comparing;
+    sendPatchToPeak();
+    changed.sendChangeMessage();
+}
+
+bool PeakModel::writeToSlot (peak::Patch::Location where)
+{
+    if (comparing)
+        toggleCompare(); // write the edited sound, not the reference
+
+    auto stored = patch;
+    stored.setLocation (where);
+    if (! connection->sendSysex (stored.toSysex()))
+        return false;
+
+    library->storePeakSlot (stored);
+    reference = patch;
+    originalLocation = where;
+    source = "Saved to " + juce::String (where.name());
+    changed.sendChangeMessage();
+    return true;
 }
 
 void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
@@ -79,9 +128,14 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
         lastTouched = c.param;
     }
 
-    if (! dumps.empty())
-        if (const auto p = peak::Patch::fromSysex (dumps.back()))
-            loadPatch (*p, "Received from Peak at " + juce::Time::getCurrentTime().toString (false, true, false));
+    for (const auto& d : dumps)
+        if (const auto p = peak::Patch::fromSysex (d))
+        {
+            if (p->location())
+                library->storePeakSlot (*p); // bank dumps fill the Peak memory view
+            else
+                loadPatch (*p, "Received from Peak at " + juce::Time::getCurrentTime().toString (false, true, false));
+        }
 
     if (! changes.empty())
         changed.sendChangeMessage();

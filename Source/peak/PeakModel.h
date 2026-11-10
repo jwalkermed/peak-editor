@@ -1,5 +1,6 @@
 #pragma once
 
+#include "peak/PatchLibrary.h"
 #include "peak/PeakConnection.h"
 #include "peak/core/Patch.h"
 
@@ -8,7 +9,8 @@
 // The editor's view of the Peak's edit buffer, shared by every editor window in
 // the process (use via juce::SharedResourcePointer). Message thread only.
 // Keeps itself in sync with knob moves and patch dumps coming from the Peak, and
-// sends user edits as throttled CC/NRPN.
+// sends user edits as throttled CC/NRPN. Located (bank) dumps from the Peak go to
+// the library's view of Peak memory; current-sound dumps load into the editor.
 class PeakModel final : private juce::ChangeListener,
                         private juce::Timer
 {
@@ -17,6 +19,7 @@ public:
     ~PeakModel() override;
 
     PeakConnection& getConnection() { return *connection; }
+    PatchLibrary& getLibrary() { return *library; }
 
     const peak::Patch& getPatch() const noexcept { return patch; }
     int get (const peak::ParamDef&) const;
@@ -24,9 +27,23 @@ public:
     // A user edit: updates the model and sends it to the Peak (coalesced while dragging).
     void set (const peak::ParamDef&, int value);
 
-    // Replaces the whole patch. Sending is explicit: it overwrites the Peak's edit buffer.
+    // Replaces the whole patch in the editor. Sending is explicit.
     void loadPatch (const peak::Patch&, const juce::String& source);
+    // Replaces the Peak's current sound with the editor's patch (SysEx, nothing saved).
     bool sendPatchToPeak();
+    // loadPatch + sendPatchToPeak.
+    bool audition (const peak::Patch&, const juce::String& source);
+
+    // Compare: toggles between the edited patch and the one originally loaded.
+    void toggleCompare();
+    bool isComparing() const noexcept { return comparing; }
+    bool isModified() const { return patch.body() != reference.body(); }
+
+    // Overwrites a memory slot on the Peak with the editor's patch. Callers confirm
+    // with the user and back up the bank first (see LibraryPanel).
+    bool writeToSlot (peak::Patch::Location);
+    // Where the loaded patch came from on the Peak, if anywhere: the default Save target.
+    std::optional<peak::Patch::Location> getOriginalLocation() const { return originalLocation; }
 
     // Where the current patch came from, e.g. "Received from Peak at 14:38".
     juce::String getSource() const { return source; }
@@ -43,7 +60,10 @@ private:
     void timerCallback() override;
 
     juce::SharedResourcePointer<PeakConnection> connection;
-    peak::Patch patch;
+    juce::SharedResourcePointer<PatchLibrary> library;
+    peak::Patch patch, reference, editedWhileComparing;
+    std::optional<peak::Patch::Location> originalLocation;
+    bool comparing = false;
     std::vector<int> unstoredValues; // parameters the dump doesn't hold (e.g. Animate Hold)
     std::map<int, int> pendingSends; // param index -> latest value
     juce::String source { "No patch loaded" };

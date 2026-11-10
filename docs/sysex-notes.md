@@ -95,3 +95,20 @@ Found by walking every Osc/Env/LFO/Arp/Voice/FX menu page (each value nudged up 
 
 ### Bytes not yet identified (patch area 0x20–0x20D)
 0x022–0x02F, 0x038, 0x051–0x052, 0x066–0x067, 0x07B–0x07C, 0x09A–0x09B, 0x09E–0x09F, 0x0A8, 0x0C6, 0x0D4, 0x0D6, 0x0D9, 0x0E5–0x0E6, 0x0F2, 0x0FB–0x0FC, 0x106–0x109, 0x14B, 0x14F, 0x153, 0x157, 0x15A–0x169, 0x171–0x187, 0x198–0x20D
+
+## Patch location header (verified 2026-11-09, firmware 2.2)
+Bank A and bank B dumps from the Backup page (`Tests/fixtures/bank-a.syx`, `bank-b.syx`) plus a Current dump:
+
+| Byte | Stored patch (bank dump) | Current / edit buffer |
+|---|---|---|
+| 8 | `01` | `00` |
+| 12 | bank: A = `01`, B = `02` (C = `03`, D = `04` inferred, **unverified**) | `00` |
+| 13 | slot `00`–`7F` | `00` |
+
+- A bank dump is 128 separate 527-byte messages in slot order. Nothing else is sent.
+- The Current dump of Tardis (A001) matched A001 byte for byte apart from the header, except for Filter Slope (just toggled on the panel) and Arp Chance. That confirms the dump is the **edited** sound, not the stored one.
+- **Writing a slot (verified 2026-11-09):** sending a stored-patch dump overwrites the slot named in its header. A127 was renamed to "Organic Tones *" and the Peak showed it; the original bytes were then sent back and A127 was restored.
+- **Loading the current sound (verified 2026-11-09):** sending a dump with byte 8 = `00` (and bytes 12/13 = 0) replaces the Peak's current sound immediately, without saving. The screen showed the sent name "Audition Test", and A000 was unchanged. The editor uses this for Audition and Send to Peak instead of CC/NRPN, because it carries every byte, including unmapped ones.
+
+## Patch category / genre names
+Byte 0x20 (Patch Category, NRPN 0:0, 0-14) and 0x21 (Genre, 0:1, 0-9) hold numbers only. Factory patches in bank A use categories 1-12, and every one has genre 0. The User Guide gives no names, and the Peak's own patch menu showed "All" for factory patches, so the editor shows the numbers. Names suggested by example patches (1 Arp: Logarhythm, 2 Bass: Major Bass, 3 Bell: Bells, 5 Drum: Digi Timps, 9 Pad, 10 Poly, 11 SFX) are **unverified**.
