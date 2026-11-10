@@ -22,6 +22,9 @@ public:
     void mouseDoubleClick (const juce::MouseEvent&) override;
     void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
 
+    // Asks the editor to show one of its tabs ("Mod Matrix", "Settings").
+    std::function<void (const juce::String& tab)> onShowTab;
+
     // Panel area in reference-photo pixels, including the wooden end cheeks.
     static juce::Rectangle<float> designBounds();
 

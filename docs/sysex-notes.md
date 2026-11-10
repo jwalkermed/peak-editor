@@ -131,3 +131,8 @@ Read from the Peak's Mod menu by stepping through each list. Value = position in
   - Sources 0-16: as the main list, but without the LFO 1/2 and envelope entries.
   - Destinations 0-23: Dist Lev, Chor Lev, ChorRate, Chor Dep, Chor FB, Del Lev, Del Time, Del FB, Rev Lev, Rev Time, RevLdamp, RevHdamp, Rev Size, RevLpass, RevHpass, Del Slew, DelLdamp, DelHdamp, DelWidth, DelRatio, Lfo3Rate, Lfo4Rate, NoiseLPF, NoiseHPF.
   - The User Guide's Rev LPF/HPF (10/11) now read RevLdamp/RevHdamp.
+
+## Sending settings to the Peak (verified 2026-11-10, firmware 2.2)
+- The Peak **sends** NRPN 64:n when a setting changes on its panel, but it **ignores** incoming NRPN 64:n (Brightness 64:11 = 5 had no effect).
+- A Settings dump (header byte 8 = 0x04, value of setting n at byte 16 + n) sent back to the Peak **is applied** at once (Brightness changed). The editor sends its whole cached dump after an edit, so every setting takes the cached value.
+- TuningMode (64:30) is 0 = Note, 1 = Octave.

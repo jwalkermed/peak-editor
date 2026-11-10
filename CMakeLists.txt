@@ -27,6 +27,7 @@ set(PEAK_CORE_SOURCES
     Source/peak/core/ParamTable.cpp
     Source/peak/core/ParamMidi.cpp
     Source/peak/core/ParamFormat.cpp
+    Source/peak/core/Settings.cpp
     Source/peak/core/Patch.cpp)
 
 juce_add_plugin(PeakEditor
@@ -65,7 +66,8 @@ target_sources(PeakEditor PRIVATE
     Source/ui/SlotWriter.cpp
     Source/ui/DrawerStyle.cpp
     Source/ui/LibraryDrawer.cpp
-    Source/ui/ModMatrixDrawer.cpp)
+    Source/ui/ModMatrixDrawer.cpp
+    Source/ui/SettingsDrawer.cpp)
 
 target_include_directories(PeakEditor PRIVATE Source)
 
@@ -106,7 +108,8 @@ target_sources(PanelSnapshot PRIVATE
     Source/ui/FrontPanel.cpp
     Source/ui/DrawerStyle.cpp
     Source/ui/LibraryDrawer.cpp
-    Source/ui/ModMatrixDrawer.cpp)
+    Source/ui/ModMatrixDrawer.cpp
+    Source/ui/SettingsDrawer.cpp)
 target_include_directories(PanelSnapshot PRIVATE Source)
 target_compile_definitions(PanelSnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
 target_link_libraries(PanelSnapshot PRIVATE PeakAssets juce::juce_gui_basics juce::juce_audio_basics "-framework CoreMIDI")

@@ -391,6 +391,18 @@ void FrontPanel::press (Control& c)
 {
     const auto& e = *c.e;
 
+    if (c.menu == "Patch") // as on the Peak: the display shows the current patch
+    {
+        message.clear();
+        model.setLastTouched (nullptr);
+        return;
+    }
+    if (c.menu == "Mod" || c.menu == "Settings") // these have their own tabs
+    {
+        if (onShowTab)
+            onShowTab (c.menu == "Mod" ? "Mod Matrix" : "Settings");
+        return;
+    }
     if (c.menu.isNotEmpty())
     {
         openMenu (c.menu, e);
@@ -835,10 +847,19 @@ void FrontPanel::drawDisplay (juce::Graphics& g, const PanelElement& e) const
     const auto* p = model.getLastTouched();
     if (p == nullptr)
     {
+        // The current patch: slot, name, category, and whether it has been edited.
         const auto where = model.getOriginalLocation();
         line (0, "PATCH", where ? juce::String (where->name()) : juce::String(), false);
-        line (1, model.hasPatch() ? juce::String (model.getPatch().name()) : "No patch loaded", {}, false);
-        line (2, model.hasPatch() ? "" : "Backup page > Go", {}, false);
+        if (! model.hasPatch())
+        {
+            line (1, "No patch loaded", {}, false);
+            line (2, "Backup page > Go", {}, false);
+            return;
+        }
+        const auto& category = *peak::findParam ("patch_category");
+        line (1, juce::String (model.getPatch().name()), {}, false);
+        line (2, "Category", juce::String (peak::formatValue (category, model.get (category))), false);
+        line (3, model.isComparing() ? "Comparing" : model.isModified() ? "Edited" : "As saved", {}, false);
         return;
     }
 

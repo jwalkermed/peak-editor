@@ -5,6 +5,7 @@
 #include "ui/KeyboardStrip.h"
 #include "ui/LibraryDrawer.h"
 #include "ui/ModMatrixDrawer.h"
+#include "ui/SettingsDrawer.h"
 #include "ui/MidiMonitorPanel.h"
 
 class PeakEditorEditor final : public juce::AudioProcessorEditor,

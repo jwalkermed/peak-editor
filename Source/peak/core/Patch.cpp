@@ -20,7 +20,7 @@ Patch::Patch()
 
 bool Patch::looksLikePatchDump (const uint8_t* data, size_t size)
 {
-    return size == dumpSize && isNovationSysex (data, size) && data[size - 1] == 0xF7
+    return size == dumpSize && isNovationSysex (data, size) && data[size - 1] == 0xF7 && data[8] <= 1
         && std::all_of (data + 1, data + size - 1, [] (uint8_t b) { return b < 0x80; });
 }
 

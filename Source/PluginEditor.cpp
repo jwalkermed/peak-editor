@@ -10,8 +10,9 @@ constexpr int headerHeight = 44;
 class PanelPage final : public juce::Component
 {
 public:
-    explicit PanelPage (PeakModel& model) : panel (model), keys (model.getConnection())
+    PanelPage (PeakModel& model, std::function<void (const juce::String&)> showTab) : panel (model), keys (model.getConnection())
     {
+        panel.onShowTab = std::move (showTab);
         addAndMakeVisible (panel);
         addAndMakeVisible (keys);
     }
@@ -55,9 +56,14 @@ PeakEditorEditor::PeakEditorEditor (PeakEditorProcessor& p)
     peakProcessor.projectPatchChanged.addChangeListener (this);
 
     const auto tabColour = MidiMonitorPanel::panelColour;
-    tabs.addTab ("Front Panel", tabColour, new PanelPage (p.getModel()), true);
+    tabs.addTab ("Front Panel", tabColour, new PanelPage (p.getModel(), [this] (const juce::String& name) {
+        const auto names = tabs.getTabNames();
+        if (names.contains (name))
+            tabs.setCurrentTabIndex (names.indexOf (name));
+    }), true);
     tabs.addTab ("Library", DrawerStyle::background, new LibraryDrawer (p.getModel()), true);
     tabs.addTab ("Mod Matrix", DrawerStyle::background, new ModMatrixDrawer (p.getModel()), true);
+    tabs.addTab ("Settings", DrawerStyle::background, new SettingsDrawer (p.getModel()), true);
     tabs.addTab ("MIDI Monitor", tabColour, new MidiMonitorPanel (p.getModel().getConnection()), true);
     tabs.setTabBarDepth (30);
     tabs.setOutline (0);
