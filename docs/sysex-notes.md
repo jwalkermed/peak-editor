@@ -111,4 +111,10 @@ Bank A and bank B dumps from the Backup page (`Tests/fixtures/bank-a.syx`, `bank
 - **Loading the current sound (verified 2026-11-09):** sending a dump with byte 8 = `00` (and bytes 12/13 = 0) replaces the Peak's current sound immediately, without saving. The screen showed the sent name "Audition Test", and A000 was unchanged. The editor uses this for Audition and Send to Peak instead of CC/NRPN, because it carries every byte, including unmapped ones.
 
 ## Patch category / genre names
-Byte 0x20 (Patch Category, NRPN 0:0, 0-14) and 0x21 (Genre, 0:1, 0-9) hold numbers only. Factory patches in bank A use categories 1-12, and every one has genre 0. The User Guide gives no names, and the Peak's own patch menu showed "All" for factory patches, so the editor shows the numbers. Names suggested by example patches (1 Arp: Logarhythm, 2 Bass: Major Bass, 3 Bell: Bells, 5 Drum: Digi Timps, 9 Pad, 10 Poly, 11 SFX) are **unverified**.
+Byte 0x20 holds Patch Category (NRPN 0:0, 0-14), and byte 0x21 holds Genre (0:1, 0-9).
+
+**Category names (verified 2026-11-09)** come from the Peak's own category list, captured by the user. They are in the same order as the values:
+0 None, 1 Arp, 2 Bass, 3 Bell, 4 Classic, 5 Drum, 6 Keyboard, 7 Lead, 8 Motion, 9 Pad, 10 Poly, 11 SFX, 12 String, 13 User 1, 14 User 2.
+That's 15 names for the 0-14 range. Novation Components shows A089 "E. StringMachine" as String, which confirms 12 = String (and so 13/14 = User 1/User 2). They also agree with factory bank A: Logarhythm = Arp, Major Bass = Bass, Bells = Bell, Digi Timps = Drum, Tardis = Motion, Utopian Streams = Pad, Phat Poly = Poly, Tech Noise = SFX. The editor shows them, filters by them, and lets you change them. On a Peak slot, a change rewrites the slot.
+
+Genre names are still unknown. Every factory bank A patch has genre 0.

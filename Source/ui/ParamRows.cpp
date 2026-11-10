@@ -38,7 +38,7 @@ ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& pa
         row.slider->setTooltip (juce::String (p.kind == peak::MidiKind::nrpn
                                                   ? "NRPN " + juce::String (p.number >> 7) + ":" + juce::String (p.number & 0x7F)
                                                   : "CC " + juce::String (p.number) + (p.kind == peak::MidiKind::ccPair ? "/" + juce::String (p.number + 32) : ""))
-                                + (p.isStored() ? "  ·  dump byte 0x" + juce::String::toHexString (p.offset).toUpperCase() : ""));
+                                + (p.isStored() ? juce::String::fromUTF8 ("  ·  dump byte 0x") + juce::String::toHexString (p.offset).toUpperCase() : ""));
         row.slider->onValueChange = [this, def = row.def, s = row.slider.get()] {
             if (! updating)
                 model.set (*def, (int) s->getValue());

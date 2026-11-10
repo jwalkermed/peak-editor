@@ -51,7 +51,7 @@ private:
     juce::TextButton sendSysexButton { "Send SysEx" };
 
     juce::ToggleButton showRealtime { "Show clock / sensing" }, pauseButton { "Pause" };
-    juce::TextButton clearButton { "Clear log" }, saveButton { "Save captured SysEx…" }, forgetButton { "Discard captured" };
+    juce::TextButton clearButton { "Clear log" }, saveButton { juce::String::fromUTF8 ("Save captured SysEx…") }, forgetButton { "Discard captured" };
     juce::Label capturedLabel, statusLabel;
 
     juce::ListBox logList { "MIDI log", this };

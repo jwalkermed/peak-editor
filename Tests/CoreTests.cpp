@@ -300,6 +300,33 @@ int main()
             CHECK (edited[i] == stored[i]); // same header as a real Current dump
     });
 
+    test ("captured Init Patch is a valid current-sound dump", [] {
+        const auto init = Patch::fromSysex (readFixture ("current-init-patch.syx"));
+        CHECK (init.has_value() && init->name() == "Init Patch" && ! init->location().has_value());
+        CHECK (init->get (*findParam ("patch_category")) == 0);
+    });
+
+    test ("moving within Peak memory swaps instead of overwriting", [] {
+        using L = Patch::Location;
+        const auto applied = [] (std::vector<std::string> slots, const std::vector<L>& src, const std::vector<L>& dst) {
+            const auto before = slots;
+            for (const auto& [to, from] : Patch::planSwap (src, dst))
+                slots[(size_t) to.slot] = before[(size_t) from.slot];
+            return slots;
+        };
+        const std::vector<std::string> bank { "a", "b", "c", "d", "e", "f" };
+        // One patch: a plain swap.
+        CHECK ((applied (bank, { { 0, 1 } }, { { 0, 4 } }) == std::vector<std::string> { "a", "e", "c", "d", "b", "f" }));
+        // A block onto a block that doesn't overlap: pairwise swap.
+        CHECK ((applied (bank, { { 0, 0 }, { 0, 1 } }, { { 0, 3 }, { 0, 4 } }) == std::vector<std::string> { "d", "e", "c", "a", "b", "f" }));
+        // Overlapping: shift a block down one; the displaced patch moves into the gap.
+        CHECK ((applied (bank, { { 0, 0 }, { 0, 1 }, { 0, 2 } }, { { 0, 1 }, { 0, 2 }, { 0, 3 } }) == std::vector<std::string> { "d", "a", "b", "c", "e", "f" }));
+        // Nothing is lost or duplicated.
+        auto shuffled = applied (bank, { { 0, 2 }, { 0, 5 } }, { { 0, 0 }, { 0, 1 } });
+        std::sort (shuffled.begin(), shuffled.end());
+        CHECK (shuffled == bank);
+    });
+
     test ("display formatting", [] {
         const auto f = [] (const char* id, int v) { return formatValue (*findParam (id), v); };
         CHECK (f ("osc1_range", 63) == "16'");
@@ -316,6 +343,17 @@ int main()
         CHECK (f ("lfo1_phase", 61) == "180\u00b0");
         CHECK (f ("filter_shape", 1) == "BP");
         CHECK (f ("filter_frequency", 200) == "200");
+        CHECK (categoryNames().size() == 15); // matches the parameter's 0-14 range
+        CHECK (f ("patch_category", 0) == "None");
+        CHECK (f ("patch_category", 8) == "Motion");
+        CHECK (f ("patch_category", 14) == "User 2");
+        // Factory bank A agrees: A009 Logarhythm = Arp, A004 Major Bass = Bass, A000 Utopian Streams = Pad.
+        const auto bank = splitSysex (readFixture ("bank-a.syx"));
+        const auto cat = [&] (int slot) { return f ("patch_category", Patch::fromSysex (bank[(size_t) slot])->get (*findParam ("patch_category"))); };
+        CHECK (cat (9) == "Arp");
+        CHECK (cat (4) == "Bass");
+        CHECK (cat (0) == "Pad");
+        CHECK (cat (3) == "Poly");
         CHECK (defaultValue (*findParam ("osc1_coarse")) == 128);
         CHECK (defaultValue (*findParam ("filter_resonance")) == 0);
         for (const auto& p : allParams())

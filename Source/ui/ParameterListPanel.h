@@ -26,7 +26,7 @@ private:
 
     PeakModel& model;
     juce::Label patchLabel, hintLabel;
-    juce::TextButton sendButton { "Send patch to Peak" }, importButton { "Import .syx…" }, exportButton { "Export .syx…" };
+    juce::TextButton sendButton { "Send patch to Peak" }, importButton { juce::String::fromUTF8 ("Import .syx…") }, exportButton { juce::String::fromUTF8 ("Export .syx…") };
     juce::Viewport viewport;
     std::unique_ptr<ParamRows> content;
     std::unique_ptr<juce::FileChooser> chooser;

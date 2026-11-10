@@ -188,12 +188,18 @@ bool PeakConnection::send (const juce::MidiMessage& message)
     return true;
 }
 
-bool PeakConnection::sendSysex (const peak::Bytes& message)
+bool PeakConnection::sendSysex (const peak::Bytes& message, double delayMs)
 {
     if (message.size() < 2 || message.front() != 0xF0 || message.back() != 0xF7)
         return false;
 
-    return send (juce::MidiMessage (message.data(), (int) message.size()));
+    if (delayMs <= 0.0)
+        return send (juce::MidiMessage (message.data(), (int) message.size()));
+
+    if (! transport.send (message.data(), message.size(), delayMs))
+        return false;
+    addToLog (true, message.data(), (int) message.size());
+    return true;
 }
 
 bool PeakConnection::sendParam (const peak::ParamDef& def, int value)

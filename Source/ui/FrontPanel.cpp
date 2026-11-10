@@ -147,6 +147,12 @@ juce::Rectangle<float> FrontPanel::designBounds()
     return juce::Rectangle<float>::leftTopRightBottom (p[0] - woodWidth, p[1] - 6.0f, p[2] + woodWidth, p[3] + 6.0f);
 }
 
+juce::Rectangle<float> FrontPanel::leftCheekArea() const
+{
+    const auto d = designBounds();
+    return juce::Rectangle<float>::leftTopRightBottom (d.getX(), d.getY(), PanelLayout::get().panel[0] - 2.0f, d.getBottom()).transformedBy (designToScreen());
+}
+
 FrontPanel::FrontPanel (PeakModel& m) : model (m)
 {
     for (const auto& e : PanelLayout::get().elements)

@@ -45,6 +45,10 @@ juce_add_plugin(PeakEditor
     VST3_CATEGORIES Instrument Tools
     COPY_PLUGIN_AFTER_BUILD ${PEAK_COPY_PLUGINS})
 
+juce_add_binary_data(PeakAssets SOURCES
+    Resources/Fonts/Exo2-Bold.ttf
+    Resources/InitPatch.syx)
+
 target_sources(PeakEditor PRIVATE
     ${PEAK_CORE_SOURCES}
     Source/PluginProcessor.cpp
@@ -60,7 +64,8 @@ target_sources(PeakEditor PRIVATE
     Source/ui/FrontPanel.cpp
     Source/ui/KeyboardStrip.cpp
     Source/ui/SlotWriter.cpp
-    Source/ui/LibraryPanel.cpp)
+    Source/ui/DrawerStyle.cpp
+    Source/ui/LibraryDrawer.cpp)
 
 target_include_directories(PeakEditor PRIVATE Source)
 
@@ -71,6 +76,7 @@ target_compile_definitions(PeakEditor PUBLIC
 
 target_link_libraries(PeakEditor
     PRIVATE
+        PeakAssets
         juce::juce_audio_utils
         "-framework CoreMIDI"
     PUBLIC
@@ -97,7 +103,18 @@ target_sources(PanelSnapshot PRIVATE
     Source/ui/SlotWriter.cpp
     Source/ui/ParamRows.cpp
     Source/ui/PanelLayout.cpp
-    Source/ui/FrontPanel.cpp)
+    Source/ui/FrontPanel.cpp
+    Source/ui/DrawerStyle.cpp
+    Source/ui/LibraryDrawer.cpp)
 target_include_directories(PanelSnapshot PRIVATE Source)
 target_compile_definitions(PanelSnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
-target_link_libraries(PanelSnapshot PRIVATE juce::juce_gui_basics juce::juce_audio_basics "-framework CoreMIDI")
+target_link_libraries(PanelSnapshot PRIVATE PeakAssets juce::juce_gui_basics juce::juce_audio_basics "-framework CoreMIDI")
+
+# Library tests (My Banks, NOT SENT, undo/redo) in a temporary folder
+juce_add_console_app(LibraryTests PRODUCT_NAME "LibraryTests")
+target_sources(LibraryTests PRIVATE Tests/LibraryTests.cpp ${PEAK_CORE_SOURCES} Source/peak/PatchLibrary.cpp)
+target_include_directories(LibraryTests PRIVATE Source)
+target_compile_definitions(LibraryTests PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0
+    PEAK_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/Tests/fixtures")
+target_link_libraries(LibraryTests PRIVATE juce::juce_data_structures juce::juce_events)
+add_test(NAME LibraryTests COMMAND LibraryTests)

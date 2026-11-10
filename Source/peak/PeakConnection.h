@@ -48,7 +48,7 @@ public:
     void setChannel (int newChannel);
 
     bool send (const juce::MidiMessage& message);
-    bool sendSysex (const peak::Bytes& message); // must include F0 ... F7
+    bool sendSysex (const peak::Bytes& message, double delayMs = 0.0); // must include F0 ... F7; CoreMIDI schedules delayed sends
     bool sendParam (const peak::ParamDef&, int value);
     // Sends a long run of CC/NRPN messages spaced out so DIN/network bridges keep up.
     bool sendPaced (const std::vector<peak::ShortMessage>& messages, double msBetween = 2.0);
