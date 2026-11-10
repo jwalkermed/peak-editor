@@ -7,16 +7,26 @@
 #include "ui/MidiMonitorPanel.h"
 #include "ui/ParameterListPanel.h"
 
-class PeakEditorEditor final : public juce::AudioProcessorEditor
+class PeakEditorEditor final : public juce::AudioProcessorEditor,
+                               private juce::ChangeListener
 {
 public:
     explicit PeakEditorEditor (PeakEditorProcessor&);
+    ~PeakEditorEditor() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
+    void changeListenerCallback (juce::ChangeBroadcaster*) override; // project patch offered/cleared
+
+    PeakEditorProcessor& peakProcessor;
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
+    juce::ToggleButton forwardMidi { juce::String::fromUTF8 ("Track MIDI \xe2\x86\x92 Peak") };
+
+    // Shown when the DAW project holds a patch that differs from the editor's.
+    juce::Label projectMessage;
+    juce::TextButton sendProjectPatch { "Send to Peak" }, loadProjectPatch { "Load in editor only" }, dismissProject { "Ignore" };
     juce::TooltipWindow tooltips { this, 400 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PeakEditorEditor)

@@ -221,6 +221,32 @@ std::string CoreMidiTransport::getOutputId() const
     return impl->destinationId;
 }
 
+namespace
+{
+MIDITimeStamp hostTimeAfter (double delayMs)
+{
+    static const auto timebase = [] {
+        mach_timebase_info_data_t tb;
+        mach_timebase_info (&tb);
+        return tb;
+    }();
+    return delayMs > 0.0 ? mach_absolute_time() + (MIDITimeStamp) (delayMs * 1.0e6 * timebase.denom / timebase.numer) : 0;
+}
+} // namespace
+
+bool CoreMidiTransport::sendShort (const uint8_t* data, size_t size, double delayMs)
+{
+    if (size == 0 || size > 3)
+        return false;
+
+    Byte buffer[64]; // a packet list with one short packet fits easily
+    auto* list = reinterpret_cast<MIDIPacketList*> (buffer);
+    auto* packet = MIDIPacketListAdd (list, sizeof (buffer), MIDIPacketListInit (list), hostTimeAfter (delayMs), size, data);
+
+    const std::scoped_lock sl (impl->lock);
+    return packet != nullptr && impl->destination != 0 && MIDISend (impl->outPort, impl->destination, list) == noErr;
+}
+
 bool CoreMidiTransport::send (const uint8_t* data, size_t size, double delayMs)
 {
     const std::scoped_lock sl (impl->lock);
