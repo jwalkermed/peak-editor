@@ -91,6 +91,28 @@ void Patch::setLocation (std::optional<Location> loc)
     raw[slotByte] = loc ? static_cast<uint8_t> (std::clamp (loc->slot, 0, 127)) : 0;
 }
 
+std::vector<std::pair<Patch::Location, Patch::Location>> Patch::planSwap (const std::vector<Location>& src, const std::vector<Location>& dst)
+{
+    const auto contains = [] (const std::vector<Location>& v, Location l) { return std::find (v.begin(), v.end(), l) != v.end(); };
+
+    std::vector<std::pair<Location, Location>> moves;
+    for (size_t i = 0; i < src.size() && i < dst.size(); ++i)
+        moves.emplace_back (dst[i], src[i]);
+
+    std::vector<Location> vacated, displaced;
+    for (size_t i = 0; i < src.size() && i < dst.size(); ++i)
+    {
+        if (! contains (dst, src[i]))
+            vacated.push_back (src[i]);
+        if (! contains (src, dst[i]))
+            displaced.push_back (dst[i]);
+    }
+    for (size_t i = 0; i < vacated.size() && i < displaced.size(); ++i)
+        moves.emplace_back (vacated[i], displaced[i]);
+
+    return moves;
+}
+
 std::string_view Patch::body() const
 {
     return { reinterpret_cast<const char*> (raw.data()) + nameOffset, dumpSize - nameOffset - 1 };

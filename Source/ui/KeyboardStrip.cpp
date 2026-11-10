@@ -158,7 +158,7 @@ void KeyboardStrip::shiftOctave (int delta)
     lowestKey = juce::jlimit (0, 127 - 12 * visibleOctaves, lowestKey + 12 * delta);
     keyboard.setLowestVisibleKey (lowestKey);
     keyboard.setKeyPressBaseOctave (lowestKey / 12 + 1);
-    octaveLabel.setText ("C" + juce::String (lowestKey / 12 - 2) + " – C" + juce::String (lowestKey / 12 - 2 + visibleOctaves),
+    octaveLabel.setText ("C" + juce::String (lowestKey / 12 - 2) + juce::String::fromUTF8 (" – C") + juce::String (lowestKey / 12 - 2 + visibleOctaves),
                          juce::dontSendNotification);
 }
 

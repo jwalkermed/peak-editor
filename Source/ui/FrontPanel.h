@@ -24,6 +24,8 @@ public:
 
     // Panel area in reference-photo pixels, including the wooden end cheeks.
     static juce::Rectangle<float> designBounds();
+    // The left walnut cheek in this component's coordinates (drawer tabs sit on it).
+    juce::Rectangle<float> leftCheekArea() const;
 
 private:
     // Where a selector value lives: a patch parameter or panel-only UI state.

@@ -7,6 +7,8 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 namespace peak
 {
@@ -57,6 +59,11 @@ public:
     void setName (std::string_view); // non-printable characters become spaces, padded/truncated to 16
 
     bool operator== (const Patch&) const = default;
+
+    // Moving patches within Peak memory swaps rather than overwrites: patch i goes from
+    // src[i] to dst[i], and the patches displaced from dst fill the slots src leaves
+    // empty, in order. Returns (to, from) pairs: "slot `to` receives what was in `from`".
+    static std::vector<std::pair<Location, Location>> planSwap (const std::vector<Location>& src, const std::vector<Location>& dst);
 
 private:
     Raw raw {};

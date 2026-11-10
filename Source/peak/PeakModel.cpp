@@ -106,6 +106,7 @@ bool PeakModel::writeToSlot (peak::Patch::Location where)
         return false;
 
     library->storePeakSlot (stored);
+    library->discardUnsent (where); // written directly: a staged change for this slot no longer applies
     reference = patch;
     originalLocation = where;
     source = "Saved to " + juce::String (where.name());

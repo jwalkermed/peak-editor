@@ -61,7 +61,7 @@ MidiMonitorPanel::MidiMonitorPanel (PeakConnection& c) : connection (c)
     sendCcButton.onClick = [this] { sendCc(); };
 
     sysexText.setFont (mono());
-    sysexText.setTextToShowWhenEmpty ("F0 00 20 29 … F7   (raw hex — sending arbitrary SysEx can overwrite patches)", juce::Colours::grey);
+    sysexText.setTextToShowWhenEmpty (juce::String::fromUTF8 ("F0 00 20 29 … F7   (raw hex — sending arbitrary SysEx can overwrite patches)"), juce::Colours::grey);
     sysexText.onReturnKey = [this] { sendSysexText(); };
     sendSysexButton.onClick = [this] { sendSysexText(); };
 
@@ -163,7 +163,7 @@ void MidiMonitorPanel::refreshPorts()
     channelBox.setSelectedId (connection.getChannel() + 1, juce::dontSendNotification);
 
     if (! connection.isInputOpen() || ! connection.isOutputOpen())
-        setStatus ("Peak not connected — choose its USB ports", true);
+        setStatus (juce::String::fromUTF8 ("Peak not connected — choose its USB ports"), true);
     else
         setStatus ("Connected");
 }
@@ -208,7 +208,7 @@ void MidiMonitorPanel::paintListBoxItem (int row, juce::Graphics& g, int width, 
     g.drawText (juce::String (seconds, 3), 6, 0, 80, height, juce::Justification::centredRight);
 
     g.setColour (e.outgoing ? accentColour : ledColour);
-    g.drawText (e.outgoing ? "OUT →" : "IN  ←", 96, 0, 60, height, juce::Justification::centredLeft);
+    g.drawText (e.outgoing ? juce::String::fromUTF8 ("OUT →") : juce::String::fromUTF8 ("IN  ←"), 96, 0, 60, height, juce::Justification::centredLeft);
 
     g.setColour (juce::Colours::white.withAlpha (0.9f));
     g.drawText (peak::describeMidi (e.bytes.data(), e.bytes.size()), 160, 0, width - 166, height, juce::Justification::centredLeft);

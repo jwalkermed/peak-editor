@@ -34,11 +34,13 @@ int centreOf (const ParamDef& p)
 struct Names
 {
     const char* pattern;
-    std::array<const char*, 6> names;
+    std::array<const char*, 16> names;
 };
 
-// Only names confirmed by the User Guide / firmware addendum.
+// Only names confirmed by the User Guide, the firmware addendum or the Peak itself.
 const Names enumNames[] {
+    // From the Peak's own category list (2026-11-09); matches the factory bank A patches.
+    { "^patch_category$", { "None", "Arp", "Bass", "Bell", "Classic", "Drum", "Keyboard", "Lead", "Motion", "Pad", "Poly", "SFX", "String", "User 1", "User 2" } },
     { "^osc\\d_range$", { "16'", "8'", "4'", "2'" } }, // raw 63-66
     { "^osc\\d_wave$", { "Sine", "Triangle", "Sawtooth", "Pulse", "More" } },
     { "^osc\\d_shape_source$", { "Manual", "Mod Env 1", "LFO 1" } },
@@ -92,6 +94,18 @@ const Format& formatFor (const ParamDef& p)
     return formats[(size_t) indexOf (p)];
 }
 } // namespace
+
+const std::vector<std::string>& categoryNames()
+{
+    static const std::vector<std::string> names = [] {
+        std::vector<std::string> v;
+        for (const auto* n : enumNames[0].names)
+            if (n != nullptr)
+                v.emplace_back (n);
+        return v;
+    }();
+    return names;
+}
 
 int defaultValue (const ParamDef& p)
 {

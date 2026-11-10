@@ -30,7 +30,7 @@ private:
     juce::Slider pitchWheel { juce::Slider::LinearVertical, juce::Slider::NoTextBox };
     juce::Slider modWheel { juce::Slider::LinearVertical, juce::Slider::NoTextBox };
     juce::Slider velocity { juce::Slider::LinearHorizontal, juce::Slider::TextBoxRight };
-    juce::TextButton octaveDown { "Oct –" }, octaveUp { "Oct +" }, panic { "Panic" };
+    juce::TextButton octaveDown { juce::String::fromUTF8 ("Oct –") }, octaveUp { "Oct +" }, panic { "Panic" };
     juce::Label octaveLabel, velocityLabel { {}, "Velocity" }, inputLabel { {}, "Keyboard in" };
     juce::ComboBox inputBox;
     int lowestKey = 36; // C2 on screen

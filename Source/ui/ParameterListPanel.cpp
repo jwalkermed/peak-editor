@@ -16,7 +16,7 @@ ParameterListPanel::ParameterListPanel (PeakModel& m) : model (m), content (std:
     sendButton.setTooltip ("Replaces the Peak's current sound with this patch (SysEx). No memory slot is written.");
     sendButton.onClick = [this] {
         if (! model.sendPatchToPeak())
-            hintLabel.setText ("No MIDI output — choose the Peak's port on the MIDI Monitor tab", juce::dontSendNotification);
+            hintLabel.setText (juce::String::fromUTF8 ("No MIDI output — choose the Peak's port on the MIDI Monitor tab"), juce::dontSendNotification);
     };
     importButton.onClick = [this] { importSyx(); };
     exportButton.onClick = [this] { exportSyx(); };
@@ -65,7 +65,7 @@ void ParameterListPanel::refresh()
 {
     patchLabel.setText (model.hasPatch() ? juce::String (model.getPatch().name()) : "(no patch)", juce::dontSendNotification);
     hintLabel.setText (model.hasPatch() ? model.getSource()
-                                        : "To load the Peak's current sound: Settings → Backup page, Select = Current, press Go",
+                                        : juce::String::fromUTF8 ("To load the Peak's current sound: Settings → Backup page, Select = Current, press Go"),
                        juce::dontSendNotification);
     content->refresh();
 }
