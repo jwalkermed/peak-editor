@@ -38,12 +38,21 @@ public:
     void toggleCompare();
     bool isComparing() const noexcept { return comparing; }
     bool isModified() const { return patch.body() != reference.body(); }
+    // A parameter's value in the patch as it was loaded (Revert / Restore go back to it).
+    int getStored (const peak::ParamDef& def) const { return def.isStored() ? reference.get (def) : get (def); }
 
     // Overwrites a memory slot on the Peak with the editor's patch. Callers confirm
     // with the user and back up the bank first (see LibraryPanel).
     bool writeToSlot (peak::Patch::Location);
-    // Where the loaded patch came from on the Peak, if anywhere: the default Save target.
+    // Where the loaded patch came from on the Peak, if anywhere: the default Save target,
+    // and the slot Patch -/+ step from.
     std::optional<peak::Patch::Location> getOriginalLocation() const { return originalLocation; }
+
+    // Selects a slot on the Peak (Program Change) and loads its sound from the library's
+    // copy of Peak memory; if that bank hasn't been read, only the location is shown.
+    bool selectPeakSlot (peak::Patch::Location);
+    // Patch -/+: the next/previous slot, across banks (D127 wraps to A000).
+    bool stepPeakSlot (int delta);
 
     // Where the current patch came from, e.g. "Received from Peak at 14:38".
     juce::String getSource() const { return source; }
@@ -58,6 +67,7 @@ public:
 private:
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
     void timerCallback() override;
+    void followPeakSlot (peak::Patch::Location); // the Peak changed patch (or we told it to)
 
     juce::SharedResourcePointer<PeakConnection> connection;
     juce::SharedResourcePointer<PatchLibrary> library;

@@ -65,7 +65,8 @@ target_sources(PeakEditor PRIVATE
     Source/ui/KeyboardStrip.cpp
     Source/ui/SlotWriter.cpp
     Source/ui/DrawerStyle.cpp
-    Source/ui/LibraryDrawer.cpp)
+    Source/ui/LibraryDrawer.cpp
+    Source/ui/ModMatrixDrawer.cpp)
 
 target_include_directories(PeakEditor PRIVATE Source)
 
@@ -105,7 +106,8 @@ target_sources(PanelSnapshot PRIVATE
     Source/ui/PanelLayout.cpp
     Source/ui/FrontPanel.cpp
     Source/ui/DrawerStyle.cpp
-    Source/ui/LibraryDrawer.cpp)
+    Source/ui/LibraryDrawer.cpp
+    Source/ui/ModMatrixDrawer.cpp)
 target_include_directories(PanelSnapshot PRIVATE Source)
 target_compile_definitions(PanelSnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
 target_link_libraries(PanelSnapshot PRIVATE PeakAssets juce::juce_gui_basics juce::juce_audio_basics "-framework CoreMIDI")

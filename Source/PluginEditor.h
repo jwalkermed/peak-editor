@@ -4,6 +4,7 @@
 #include "ui/FrontPanel.h"
 #include "ui/KeyboardStrip.h"
 #include "ui/LibraryDrawer.h"
+#include "ui/ModMatrixDrawer.h"
 #include "ui/MidiMonitorPanel.h"
 #include "ui/ParameterListPanel.h"
 

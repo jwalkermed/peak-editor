@@ -6,38 +6,14 @@ namespace
 {
 constexpr int headerHeight = 44;
 
-// A drawer tab on the walnut cheek, as in the TEO-5 and OB-6 editors.
-struct DrawerTab final : juce::Component, juce::SettableTooltipClient
-{
-    explicit DrawerTab (juce::String t) : text (std::move (t)) {}
-    void paint (juce::Graphics& g) override { DrawerStyle::drawCheekTab (g, getLocalBounds().toFloat(), text, open); }
-    void mouseUp (const juce::MouseEvent&) override
-    {
-        if (onClick)
-            onClick();
-    }
-    juce::String text;
-    std::function<void()> onClick;
-    bool open = false;
-};
-
-// Front panel with the playable keyboard strip underneath, and the library drawer
-// that slides out over the panel from its LIBRARY tab.
+// Front panel with the playable keyboard strip underneath.
 class PanelPage final : public juce::Component
 {
 public:
-    explicit PanelPage (PeakModel& model) : panel (model), keys (model.getConnection()), library (model)
+    explicit PanelPage (PeakModel& model) : panel (model), keys (model.getConnection())
     {
         addAndMakeVisible (panel);
         addAndMakeVisible (keys);
-        addChildComponent (library);
-        libraryTab.setTooltip ("Library: your patches and the Peak's banks");
-        libraryTab.onClick = [this] {
-            library.setVisible (! library.isVisible());
-            libraryTab.open = library.isVisible();
-            libraryTab.repaint();
-        };
-        addAndMakeVisible (libraryTab);
     }
 
     void resized() override
@@ -45,19 +21,11 @@ public:
         auto r = getLocalBounds();
         keys.setBounds (r.removeFromBottom (KeyboardStrip::preferredHeight));
         panel.setBounds (r);
-
-        const auto cheek = panel.leftCheekArea().translated ((float) panel.getX(), (float) panel.getY());
-        const int tabW = juce::jmax (14, juce::roundToInt (cheek.getWidth() * 0.62f)), tabH = juce::roundToInt (cheek.getHeight() * 0.24f);
-        libraryTab.setBounds (juce::Rectangle<int> (tabW, tabH).withCentre (cheek.getCentre().toInt()));
-        const int x = juce::roundToInt (cheek.getRight());
-        library.setBounds (x, r.getY(), juce::jmin (900, juce::roundToInt ((float) getWidth() * 0.58f)), r.getHeight());
     }
 
 private:
     FrontPanel panel;
     KeyboardStrip keys;
-    LibraryDrawer library;
-    DrawerTab libraryTab { "LIBRARY" };
 };
 } // namespace
 
@@ -88,7 +56,8 @@ PeakEditorEditor::PeakEditorEditor (PeakEditorProcessor& p)
 
     const auto tabColour = MidiMonitorPanel::panelColour;
     tabs.addTab ("Front Panel", tabColour, new PanelPage (p.getModel()), true);
-    tabs.addTab ("Parameters", tabColour, new ParameterListPanel (p.getModel()), true);
+    tabs.addTab ("Library", DrawerStyle::background, new LibraryDrawer (p.getModel()), true);
+    tabs.addTab ("Mod Matrix", DrawerStyle::background, new ModMatrixDrawer (p.getModel()), true);
     tabs.addTab ("MIDI Monitor", tabColour, new MidiMonitorPanel (p.getModel().getConnection()), true);
     tabs.setTabBarDepth (30);
     tabs.setOutline (0);

@@ -2,6 +2,7 @@
 
 #include "peak/core/ParamFormat.h"
 #include "ui/ParamRows.h"
+#include "ui/DrawerStyle.h"
 #include "ui/SlotWriter.h"
 
 #include <cstring>
@@ -145,12 +146,6 @@ juce::Rectangle<float> FrontPanel::designBounds()
 {
     const auto& p = PanelLayout::get().panel;
     return juce::Rectangle<float>::leftTopRightBottom (p[0] - woodWidth, p[1] - 6.0f, p[2] + woodWidth, p[3] + 6.0f);
-}
-
-juce::Rectangle<float> FrontPanel::leftCheekArea() const
-{
-    const auto d = designBounds();
-    return juce::Rectangle<float>::leftTopRightBottom (d.getX(), d.getY(), PanelLayout::get().panel[0] - 2.0f, d.getBottom()).transformedBy (designToScreen());
 }
 
 FrontPanel::FrontPanel (PeakModel& m) : model (m)
@@ -300,6 +295,12 @@ void FrontPanel::mouseDown (const juce::MouseEvent& ev)
     {
         // The data encoder edits whatever the display is showing, as on the hardware.
         dragParam = dragging->action == "data_encoder" ? model.getLastTouched() : resolve (*dragging);
+        if (dragging->action == "patch_encoder")
+        {
+            dragStartY = ev.position.y;
+            patchStepsApplied = 0;
+            return;
+        }
         if (dragParam == nullptr)
         {
             if (dragging->action.isNotEmpty() && dragging->action != "data_encoder")
@@ -320,6 +321,18 @@ void FrontPanel::mouseDown (const juce::MouseEvent& ev)
 
 void FrontPanel::mouseDrag (const juce::MouseEvent& ev)
 {
+    // Patch encoder: one patch per 14 px of vertical drag.
+    if (dragging != nullptr && dragging->action == "patch_encoder")
+    {
+        const auto steps = juce::roundToInt ((dragStartY - ev.position.y) / 14.0f);
+        if (steps != patchStepsApplied)
+        {
+            model.stepPeakSlot (steps - patchStepsApplied);
+            patchStepsApplied = steps;
+        }
+        return;
+    }
+
     if (dragging == nullptr || dragParam == nullptr)
         return;
 
@@ -359,6 +372,12 @@ void FrontPanel::mouseWheelMove (const juce::MouseEvent& ev, const juce::MouseWh
     auto* c = controlAt (toDesign (ev.position));
     if (c == nullptr || (c->e->type != PanelElement::knob && c->e->type != PanelElement::fader))
         return;
+
+    if (c->action == "patch_encoder")
+    {
+        model.stepPeakSlot (wheel.deltaY > 0 ? 1 : -1);
+        return;
+    }
 
     if (const auto* p = c->action == "data_encoder" ? model.getLastTouched() : resolve (*c))
     {
@@ -430,6 +449,17 @@ void FrontPanel::press (Control& c)
             });
         else
             showMessage ("Choose a slot on the Library tab");
+    }
+    else if (c.action == "patch_up" || c.action == "patch_down")
+    {
+        if (! model.stepPeakSlot (c.action == "patch_up" ? 1 : -1))
+            showMessage ("No MIDI output to the Peak");
+    }
+    else if (c.action == "initialise")
+    {
+        // As the Peak's own Initialise: the Init Patch becomes the current sound (nothing saved).
+        if (! model.audition (DrawerStyle::emptyPatch(), "Init Patch (not saved)"))
+            showMessage ("No MIDI output to the Peak");
     }
     else if (c.action.isNotEmpty())
         showMessage ("Not available yet");
@@ -648,8 +678,12 @@ void FrontPanel::drawKnob (juce::Graphics& g, const Control& c) const
     g.drawEllipse (cap, 1.0f);
 
     const auto* p = resolve (c);
-    const auto norm = p != nullptr ? normalised (*p, model.get (*p)) : 0.5f;
-    const auto a = -sweep + 2.0f * sweep * norm;
+    auto a = -sweep + 2.0f * sweep * (p != nullptr ? normalised (*p, model.get (*p)) : 0.5f);
+    if (c.action == "patch_encoder") // endless: turns 15 degrees per patch, following the Peak's slot
+    {
+        const auto where = model.getOriginalLocation().value_or (peak::Patch::Location {});
+        a = (float) (where.bank * 128 + where.slot) * juce::MathConstants<float>::twoPi / 24.0f;
+    }
     g.setColour (juce::Colour (0xff111111));
     g.drawLine (juce::Line<float> (centre.getPointOnCircumference (capR * 0.15f, a), centre.getPointOnCircumference (capR * 0.92f, a)), 3.2f * s);
 
@@ -801,7 +835,8 @@ void FrontPanel::drawDisplay (juce::Graphics& g, const PanelElement& e) const
     const auto* p = model.getLastTouched();
     if (p == nullptr)
     {
-        line (0, "PATCH", {}, false);
+        const auto where = model.getOriginalLocation();
+        line (0, "PATCH", where ? juce::String (where->name()) : juce::String(), false);
         line (1, model.hasPatch() ? juce::String (model.getPatch().name()) : "No patch loaded", {}, false);
         line (2, model.hasPatch() ? "" : "Backup page > Go", {}, false);
         return;

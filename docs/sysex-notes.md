@@ -102,7 +102,7 @@ Bank A and bank B dumps from the Backup page (`Tests/fixtures/bank-a.syx`, `bank
 | Byte | Stored patch (bank dump) | Current / edit buffer |
 |---|---|---|
 | 8 | `01` | `00` |
-| 12 | bank: A = `01`, B = `02` (C = `03`, D = `04` inferred, **unverified**) | `00` |
+| 12 | bank: A = `01`, B = `02`, C = `03`, D = `04` (all verified) | `00` |
 | 13 | slot `00`–`7F` | `00` |
 
 - A bank dump is 128 separate 527-byte messages in slot order. Nothing else is sent.
@@ -118,3 +118,16 @@ Byte 0x20 holds Patch Category (NRPN 0:0, 0-14), and byte 0x21 holds Genre (0:1,
 That's 15 names for the 0-14 range. Novation Components shows A089 "E. StringMachine" as String, which confirms 12 = String (and so 13/14 = User 1/User 2). They also agree with factory bank A: Logarhythm = Arp, Major Bass = Bass, Bells = Bell, Digi Timps = Drum, Tardis = Motion, Utopian Streams = Pad, Phat Poly = Poly, Tech Noise = SFX. The editor shows them, filters by them, and lets you change them. On a Peak slot, a change rewrites the slot.
 
 Genre names are still unknown. Every factory bank A patch has genre 0.
+
+## Patch selection (verified 2026-11-09, firmware 2.2)
+When the patch changes on the Peak (Patch +/-, the encoder), it sends **CC 32 (Bank Select LSB) = bank** (A = 1 ... D = 4), then **Program Change = slot** (0-127), on its MIDI channel. No CC 0 is sent. Going from A127 to B000 sent CC 32 = 2 with PC 0. The editor sends the same pair for Patch +/-, and follows the Peak when it changes patch.
+
+## Mod matrix lists (verified 2026-11-10, firmware 2.2)
+Read from the Peak's Mod menu by stepping through each list. Value = position in the list.
+- **Sources (0-23):** Direct, ModWheel, AftTouch, ExprPED1, BrthPED2, Velocity, Keyboard, Lfo1+, Lfo1+/-, Lfo2+, Lfo2+/-, AmpEnv, ModEnv1, ModEnv2, Animate1, Animate2, CV+/-, Lfo3+, Lfo3+/-, Lfo4+, Lfo4+/-, BndWhl+, BndWhl-, Noise. Factory banks use 0-20; for example, bank C uses LFO 3/4.
+- **Destinations (0-47):** the 37 in the User Guide (O123Ptch ... Ns>FiltF), then Pan Posn, O123Shpe, AEnv Del, AEnv Hld, AEnv Sus, MEnv1Del, MEnv1Hld, MEnv1Sus, MEnv2Del, MEnv2Hld, MEnv2Sus. Across all 512 patches, destination 18 (FiltFreq) is the most used.
+- **FX matrix (verified 2026-11-10):**
+  - Each FX slot is [Source A, Source B, Depth, Destination] at 0x14A + 4n. Source B is NRPN `n:1`, verified by stepping 18:1 and by a Current dump.
+  - Sources 0-16: as the main list, but without the LFO 1/2 and envelope entries.
+  - Destinations 0-23: Dist Lev, Chor Lev, ChorRate, Chor Dep, Chor FB, Del Lev, Del Time, Del FB, Rev Lev, Rev Time, RevLdamp, RevHdamp, Rev Size, RevLpass, RevHpass, Del Slew, DelLdamp, DelHdamp, DelWidth, DelRatio, Lfo3Rate, Lfo4Rate, NoiseLPF, NoiseHPF.
+  - The User Guide's Rev LPF/HPF (10/11) now read RevLdamp/RevHdamp.

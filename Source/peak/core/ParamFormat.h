@@ -16,4 +16,10 @@ int defaultValue (const ParamDef&);
 
 // Patch Category names (NRPN 0:0, byte 0x20), as listed in the Peak's patch menu.
 const std::vector<std::string>& categoryNames();
+
+// Mod matrix lists in the Peak's menu order (value = index), verified on firmware 2.2.
+const std::vector<std::string>& modSourceNames();      // 0-23
+const std::vector<std::string>& modDestinationNames(); // 0-47
+const std::vector<std::string>& fxSourceNames();       // 0-16
+const std::vector<std::string>& fxDestinationNames();  // 0-23
 } // namespace peak

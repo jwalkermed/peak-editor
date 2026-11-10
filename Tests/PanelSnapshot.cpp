@@ -3,6 +3,7 @@
 #include "peak/PeakModel.h"
 #include "ui/FrontPanel.h"
 #include "ui/LibraryDrawer.h"
+#include "ui/ModMatrixDrawer.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -29,7 +30,7 @@ int main (int argc, char** argv)
                 model->loadPatch (*p, "snapshot");
     }
 
-    // "library" as the width renders the library drawer instead of the panel.
+    // "library" or "modmatrix" as the width renders that drawer instead of the panel.
     std::unique_ptr<juce::Component> view;
     if (juce::String (argc > 2 ? argv[2] : "") == "library")
     {
@@ -37,6 +38,11 @@ int main (int argc, char** argv)
         drawer->setSize (900, 640);
         drawer->setAllExpanded (true);
         view = std::move (drawer);
+    }
+    else if (juce::String (argc > 2 ? argv[2] : "") == "modmatrix")
+    {
+        view = std::make_unique<ModMatrixDrawer> (*model);
+        view->setSize (900, 760);
     }
     else
     {

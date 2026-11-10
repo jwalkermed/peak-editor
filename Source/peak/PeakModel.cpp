@@ -95,6 +95,35 @@ void PeakModel::toggleCompare()
     changed.sendChangeMessage();
 }
 
+bool PeakModel::selectPeakSlot (peak::Patch::Location where)
+{
+    if (! connection->sendPatchSelect (where.bank, where.slot))
+        return false;
+    followPeakSlot (where);
+    return true;
+}
+
+bool PeakModel::stepPeakSlot (int delta)
+{
+    const auto from = originalLocation.value_or (peak::Patch::Location { 0, 0 });
+    const auto index = ((from.bank * 128 + from.slot + delta) % 512 + 512) % 512;
+    return selectPeakSlot ({ index / 128, index % 128 });
+}
+
+void PeakModel::followPeakSlot (peak::Patch::Location where)
+{
+    // The Peak plays what is stored in the slot (not any NOT SENT change to it).
+    if (const auto& stored = library->syncedSlot (where))
+        loadPatch (*stored, "Peak " + juce::String (where.name()));
+    else
+    {
+        originalLocation = where;
+        source = "Peak " + juce::String (where.name()) + " (bank not read: Backup page, Go)";
+        changed.sendChangeMessage();
+    }
+    lastTouched = nullptr; // the display shows the patch
+}
+
 bool PeakModel::writeToSlot (peak::Patch::Location where)
 {
     if (comparing)
@@ -118,7 +147,11 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
 {
     std::vector<peak::ParamChange> changes;
     std::vector<peak::Bytes> dumps;
-    connection->takeIncoming (changes, dumps);
+    std::vector<std::pair<int, int>> selections;
+    connection->takeIncoming (changes, dumps, selections);
+
+    for (const auto& [bank, slot] : selections)
+        followPeakSlot ({ bank, slot });
 
     for (const auto& c : changes)
     {
