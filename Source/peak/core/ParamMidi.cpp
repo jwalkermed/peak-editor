@@ -97,8 +97,7 @@ std::optional<ParamChange> ParamMidiDecoder::feed (int channel, uint8_t status, 
     if (data1 == 99 || data1 == 98 || data1 == 6 || data1 == 101 || data1 == 100)
     {
         if (const auto e = nrpn.feed (status, data1, data2))
-            if (const auto* p = l.nrpn (e->param))
-                return ParamChange { p, e->dataMsb };
+            return ParamChange { l.nrpn (e->param), e->dataMsb, e->param };
         return std::nullopt;
     }
 

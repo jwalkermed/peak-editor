@@ -8,6 +8,16 @@ constexpr int sendIntervalMs = 15;
 PeakModel::PeakModel()
     : unstoredValues (peak::allParams().size(), 0)
 {
+    // The last Settings dump, so the Settings tab shows values before the next one arrives.
+    juce::MemoryBlock data;
+    if (settingsFile().loadFileAsData (data))
+    {
+        const auto* b = static_cast<const uint8_t*> (data.getData());
+        settings = peak::SettingsDump::fromSysex (peak::Bytes (b, b + data.getSize()));
+        if (settings)
+            settingsSource = "As last read from the Peak (" + settingsFile().getLastModificationTime().toString (true, true, false) + ")";
+    }
+
     connection->incoming.addChangeListener (this);
 }
 
@@ -95,6 +105,33 @@ void PeakModel::toggleCompare()
     changed.sendChangeMessage();
 }
 
+juce::File PeakModel::settingsFile() const
+{
+    return library->getRoot().getChildFile ("Peak Banks/settings.syx");
+}
+
+int PeakModel::getSetting (const peak::SettingDef& s) const
+{
+    return settings ? settings->get (s) : -1;
+}
+
+void PeakModel::setSetting (const peak::SettingDef& s, int value)
+{
+    if (s.readOnly)
+        return;
+    if (! settings)
+        return;
+    settings->set (s, juce::jlimit (s.min, s.max, value));
+    settingsFile().replaceWithData (settings->bytes().data(), settings->bytes().size());
+    sendSettingsSoon.startTimer (300); // one dump once a drag settles
+    changed.sendChangeMessage();
+}
+
+void PeakModel::setLocalControl (bool on)
+{
+    connection->send (juce::MidiMessage::controllerEvent (connection->getChannel() + 1, peak::localControlCc, on ? 127 : 0));
+}
+
 bool PeakModel::selectPeakSlot (peak::Patch::Location where)
 {
     if (! connection->sendPatchSelect (where.bank, where.slot))
@@ -155,6 +192,14 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
 
     for (const auto& c : changes)
     {
+        if (c.param == nullptr) // not a patch parameter: a global setting (NRPN 64:n) changed on the Peak
+        {
+            if (settings && (c.nrpn >> 7) == 64)
+                for (const auto& s : peak::allSettings())
+                    if (s.nrpn == (c.nrpn & 0x7F))
+                        settings->set (s, c.value);
+            continue;
+        }
         if (c.param->isStored())
             patch.set (*c.param, c.value);
         else
@@ -163,7 +208,14 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
     }
 
     for (const auto& d : dumps)
-        if (const auto p = peak::Patch::fromSysex (d))
+        if (const auto s = peak::SettingsDump::fromSysex (d))
+        {
+            settings = s;
+            settingsSource = "Read from the Peak at " + juce::Time::getCurrentTime().toString (false, true, false);
+            settingsFile().replaceWithData (d.data(), d.size());
+            changed.sendChangeMessage();
+        }
+        else if (const auto p = peak::Patch::fromSysex (d))
         {
             if (p->location())
                 library->storePeakSlot (*p); // bank dumps fill the Peak memory view

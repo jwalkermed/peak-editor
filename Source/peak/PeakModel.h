@@ -3,6 +3,7 @@
 #include "peak/PatchLibrary.h"
 #include "peak/PeakConnection.h"
 #include "peak/core/Patch.h"
+#include "peak/core/Settings.h"
 
 #include <map>
 
@@ -62,6 +63,15 @@ public:
     const peak::ParamDef* getLastTouched() const noexcept { return lastTouched; }
     void setLastTouched (const peak::ParamDef* p) { lastTouched = p; changed.sendChangeMessage(); }
 
+    // The Peak's global settings, from the last Settings dump (kept between sessions) and
+    // kept current by the NRPNs the Peak sends when a setting changes. -1 = not known yet.
+    // The Peak ignores incoming NRPN 64:n, so edits go back as a whole Settings dump.
+    int getSetting (const peak::SettingDef&) const;
+    bool hasSettings() const noexcept { return settings.has_value(); }
+    void setSetting (const peak::SettingDef&, int value); // sends a Settings dump
+    void setLocalControl (bool on);                        // CC 122
+    juce::String getSettingsSource() const { return settingsSource; }
+
     juce::ChangeBroadcaster changed;
 
 private:
@@ -72,6 +82,14 @@ private:
     juce::SharedResourcePointer<PeakConnection> connection;
     juce::SharedResourcePointer<PatchLibrary> library;
     peak::Patch patch, reference, editedWhileComparing;
+    std::optional<peak::SettingsDump> settings;
+    juce::String settingsSource;
+    juce::File settingsFile() const;
+    juce::TimedCallback sendSettingsSoon { [this] {
+        sendSettingsSoon.stopTimer();
+        if (settings)
+            connection->sendSysex (settings->bytes());
+    } };
     std::optional<peak::Patch::Location> originalLocation;
     bool comparing = false;
     std::vector<int> unstoredValues; // parameters the dump doesn't hold (e.g. Animate Hold)

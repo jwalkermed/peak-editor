@@ -2,6 +2,7 @@
 
 #include "peak/core/MidiDescribe.h"
 #include "peak/core/Patch.h"
+#include "peak/core/Settings.h"
 
 namespace
 {
@@ -275,7 +276,7 @@ void PeakConnection::handleIncoming (const uint8_t* data, size_t size)
             notify = true;
         }
     }
-    else if (peak::Patch::looksLikePatchDump (data, size))
+    else if (peak::Patch::looksLikePatchDump (data, size) || peak::SettingsDump::isSettingsDump (data, size))
     {
         const juce::ScopedLock sl (logLock);
         pendingDumps.emplace_back (data, data + size);

@@ -20,8 +20,9 @@ std::vector<ShortMessage> encodePatch (const Patch&, int channel);
 
 struct ParamChange
 {
-    const ParamDef* param = nullptr;
+    const ParamDef* param = nullptr; // null: an NRPN that isn't a patch parameter (see nrpn)
     int value = 0;
+    int nrpn = -1;                    // the NRPN number (msb << 7 | lsb), when it came as one
 };
 
 // Turns the Peak's outgoing CC/NRPN stream back into parameter changes.

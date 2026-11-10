@@ -4,6 +4,7 @@
 #include "ui/FrontPanel.h"
 #include "ui/LibraryDrawer.h"
 #include "ui/ModMatrixDrawer.h"
+#include "ui/SettingsDrawer.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -38,6 +39,11 @@ int main (int argc, char** argv)
         drawer->setSize (900, 640);
         drawer->setAllExpanded (true);
         view = std::move (drawer);
+    }
+    else if (juce::String (argc > 2 ? argv[2] : "") == "settings")
+    {
+        view = std::make_unique<SettingsDrawer> (*model);
+        view->setSize (900, 640);
     }
     else if (juce::String (argc > 2 ? argv[2] : "") == "modmatrix")
     {

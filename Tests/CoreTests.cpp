@@ -4,6 +4,7 @@
 #include "peak/core/ParamFormat.h"
 #include "peak/core/ParamMidi.h"
 #include "peak/core/Patch.h"
+#include "peak/core/Settings.h"
 #include "peak/core/Sysex.h"
 
 #include <cstdio>
@@ -333,6 +334,35 @@ int main()
         auto shuffled = applied (bank, { { 0, 2 }, { 0, 5 } }, { { 0, 0 }, { 0, 1 } });
         std::sort (shuffled.begin(), shuffled.end());
         CHECK (shuffled == bank);
+    });
+
+    test ("settings dump: every value matches the Peak's display (photos, 2026-11-10)", [] {
+        const auto bytes = readFixture ("settings-dump.syx");
+        const auto d = SettingsDump::fromSysex (bytes);
+        CHECK (d.has_value());
+        CHECK (! Patch::fromSysex (bytes).has_value()); // same size as a patch dump, but not one
+        const auto show = [&] (const char* id) { const auto* s = findSetting (id); return formatSetting (*s, d->get (*s)); };
+        CHECK (show ("protect") == "Off");
+        CHECK (show ("brightness") == "64");
+        CHECK (show ("msg_time") == "64");
+        CHECK (show ("tune_cents") == "0");
+        CHECK (show ("transpose") == "0");
+        CHECK (show ("midi_chan") == "1");
+        CHECK (show ("arp_to_midi") == "On");
+        CHECK (show ("cc_nrpn") == "Rec+Tran");
+        CHECK (show ("bank_patch") == "Rec+Tran");
+        CHECK (show ("ped1_sense") == "Auto");
+        CHECK (show ("ped2_mode") == "Animate2");
+        CHECK (show ("vol_range") == "-3dB");
+        CHECK (show ("initialise") == "IniPatch");
+        CHECK (show ("tuning_mode") == "Note");
+        CHECK (formatSetting (*findSetting ("tuning_mode"), 1) == "Octave");
+        CHECK (show ("patch_cue") == "Off");
+        CHECK (formatSetting (*findSetting ("transpose"), 76) == "+12");
+        CHECK (! SettingsDump::fromSysex (readFixture ("current-all-in-sync.syx")).has_value());
+        std::set<int> numbers;
+        for (const auto& s : allSettings())
+            CHECK (numbers.insert (s.nrpn).second && s.nrpn != 7 && s.nrpn != 8); // Backup Select / Send To stay off the tab
     });
 
     test ("display formatting", [] {
