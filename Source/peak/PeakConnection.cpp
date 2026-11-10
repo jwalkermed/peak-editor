@@ -202,6 +202,14 @@ bool PeakConnection::sendSysex (const peak::Bytes& message, double delayMs)
     return true;
 }
 
+void PeakConnection::sendPerformance (const uint8_t* data, size_t size, double delayMs)
+{
+    if (size == 0 || size > 3 || data[0] < 0x80 || data[0] >= 0xF0)
+        return;
+    uint8_t msg[3] { uint8_t ((data[0] & 0xF0) | channel.load()), size > 1 ? data[1] : uint8_t (0), size > 2 ? data[2] : uint8_t (0) };
+    transport.sendShort (msg, size, delayMs);
+}
+
 bool PeakConnection::sendParam (const peak::ParamDef& def, int value)
 {
     bool ok = true;

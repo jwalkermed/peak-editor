@@ -35,6 +35,10 @@ public:
     // Sends one message, optionally scheduled delayMs from now (CoreMIDI does the timing).
     bool send (const uint8_t* data, size_t size, double delayMs = 0.0);
 
+    // For the audio thread: a short (1-3 byte) message at an absolute delay, with no
+    // allocation. Used to forward a DAW track's MIDI with sample-accurate timing.
+    bool sendShort (const uint8_t* data, size_t size, double delayMs);
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl;

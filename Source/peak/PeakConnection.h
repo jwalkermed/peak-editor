@@ -50,6 +50,9 @@ public:
     bool send (const juce::MidiMessage& message);
     bool sendSysex (const peak::Bytes& message, double delayMs = 0.0); // must include F0 ... F7; CoreMIDI schedules delayed sends
     bool sendParam (const peak::ParamDef&, int value);
+    // Audio thread: a channel message from the DAW track, moved to the Peak's channel and
+    // scheduled delayMs ahead. No allocation and not logged (the monitor would allocate).
+    void sendPerformance (const uint8_t* data, size_t size, double delayMs);
     // Sends a long run of CC/NRPN messages spaced out so DIN/network bridges keep up.
     bool sendPaced (const std::vector<peak::ShortMessage>& messages, double msBetween = 2.0);
 
