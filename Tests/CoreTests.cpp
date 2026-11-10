@@ -378,6 +378,21 @@ int main()
         CHECK (f ("osc1_bend_range", 76) == "+12");
         CHECK (f ("glide_on", 1) == "On");
         CHECK (f ("lfo1_phase", 0) == "Free");
+        // Named lists, read back from the Peak's screen (2026-11-10) or fixed by Init Patch values.
+        CHECK (f ("arp_sync_rate", 3) == "16th");
+        CHECK (f ("delay_sync_time", 7) == "4th T");
+        CHECK (f ("delay_sync_time", 27) == "24 beats");
+        CHECK (f ("lfo1_sync_rate", 0) == "64 beats");
+        CHECK (f ("lfo2_sync_rate", 34) == "32nd T");
+        CHECK (f ("lfo3_ratesync", 1) == "64 beats");
+        CHECK (f ("lfo4_ratesync", 17) == "8 beats");
+        CHECK (f ("osc1_wave_more", 5) == "Random");
+        CHECK (f ("osc2_wave_more", 19) == "String");
+        CHECK (f ("osc3_wave_more", 63) == "Yeah");
+        CHECK (f ("voice_mode", 3) == "Poly");
+        CHECK (f ("voice_unison", 4) == "8");
+        CHECK (valueNames (*findParam ("fx_routing")).size() == 7);
+        CHECK (valueNames (*findParam ("filter_resonance")).empty());
         CHECK (f ("lfo1_phase", 61) == "180\u00b0");
         CHECK (f ("filter_shape", 1) == "BP");
         CHECK (f ("filter_frequency", 200) == "200");

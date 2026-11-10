@@ -5,6 +5,8 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include <deque>
+
 // The main editor view: a vector drawing of the Peak's front panel, laid out
 // from the lens- and parallax-corrected reference photo (PanelLayout), with each
 // control bound to the patch parameter it drives on the hardware.
@@ -27,6 +29,8 @@ public:
 
     // Panel area in reference-photo pixels, including the wooden end cheeks.
     static juce::Rectangle<float> designBounds();
+    // A menu button's page ("Osc", "Animate", ...), or nullptr if it has none.
+    static std::unique_ptr<juce::Component> createMenuPage (PeakModel&, const juce::String& menu);
 
 private:
     // Where a selector value lives: a patch parameter or panel-only UI state.
@@ -66,6 +70,7 @@ private:
     void press (Control&);
     void openMenu (const juce::String& name, const PanelElement& from);
     void stepLastTouched (int delta);
+    void selectSlotInBank (int slot); // the patch encoder
     void movePage (int delta);
     void showMessage (const juce::String&);
 
@@ -78,6 +83,7 @@ private:
 
     PeakModel& model;
     std::vector<Control> controls;
+    std::deque<PanelElement> changedElements; // the editor's departures from the hardware layout
     int modEnvSelect = 0;
     juce::String openMenuName, message;
 
@@ -85,7 +91,7 @@ private:
     const peak::ParamDef* dragParam = nullptr;
     int dragStartValue = 0;
     float dragStartY = 0;
-    int patchStepsApplied = 0; // patch encoder drags step through Peak memory
+    int patchStepsApplied = 0; // patch encoder: slots moved so far in this drag
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FrontPanel)
 };

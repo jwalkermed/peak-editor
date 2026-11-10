@@ -24,6 +24,8 @@ void drawCheekTab (juce::Graphics&, juce::Rectangle<float>, const juce::String& 
 // The Peak's Init Patch (Initialise, IniPatch mode; captured from firmware 2.2). The Peak
 // can't empty a slot, so an "empty" slot is one holding this patch.
 const peak::Patch& emptyPatch();
+// A parameter's value in the Init Patch: what double-click resets to.
+int initValue (const peak::ParamDef&);
 bool isEmpty (const peak::Patch&);
 
 // Applies the drawer colours to the usual widgets.

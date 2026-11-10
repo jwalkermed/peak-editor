@@ -34,14 +34,15 @@ int centreOf (const ParamDef& p)
 struct Names
 {
     const char* pattern;
-    std::array<const char*, 16> names;
+    std::vector<const char*> names;
+    int base = 0; // raw value of names[0]
 };
 
 // Only names confirmed by the User Guide, the firmware addendum or the Peak itself.
 const Names enumNames[] {
     // From the Peak's own category list (2026-11-09); matches the factory bank A patches.
     { "^patch_category$", { "None", "Arp", "Bass", "Bell", "Classic", "Drum", "Keyboard", "Lead", "Motion", "Pad", "Poly", "SFX", "String", "User 1", "User 2" } },
-    { "^osc\\d_range$", { "16'", "8'", "4'", "2'" } }, // raw 63-66
+    { "^osc\\d_range$", { "16'", "8'", "4'", "2'" }, 63 },
     { "^osc\\d_wave$", { "Sine", "Triangle", "Sawtooth", "Pulse", "More" } },
     { "^osc\\d_shape_source$", { "Manual", "Mod Env 1", "LFO 1" } },
     { "^lfo\\d_wave$", { "Triangle", "Sawtooth", "Square", "S+H" } },
@@ -57,6 +58,43 @@ const Names enumNames[] {
     { "^delay_output$", { "PreDamp", "PostDamp" } },
     { "^delay_timemode$", { "Normal", "Double", "Treble", "QuadLoFi", "HexVLoFi" } },
     { "^(chorus|reverb)_type$", { "1", "2", "3" } },
+    // User Guide menu descriptions; each Init Patch value matches its default.
+    { "^voice_mode$", { "Mono", "MonoLG", "Mono2", "Poly", "Poly2" } },
+    { "^voice_unison$", { "1", "2", "3", "4", "8" } },
+    { "^arp_type$", { "Up", "Down", "Up-Down 1", "Up-Down 2", "Played", "Random", "Chord" } },
+    { "^arp_octave$", { "1", "2", "3", "4", "5", "6" } },
+    { "^arp_rhythm$", { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17",
+                        "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33" } },
+    { "^fx_routing$", { "Parallel", "D>R>C", "D>C>R", "R>D>C", "R>C>D", "C>D>R", "C>R>D" } },
+    // Sync divisions fastest first, as the Init Patch's Arp SyncRate 16th (raw 3) shows; the guide lists them slowest first.
+    { "^arp_sync_rate$", { "32nd T", "32nd", "16th T", "16th", "8th T", "16th D", "8th", "4th T",
+                        "8th D", "4th", "1 + 1/3", "4th D", "2nd", "2 + 2/3", "3 beats", "4 beats",
+                        "5 + 1/3", "6 beats", "8 beats" } },
+    // Read from the Peak (2026-11-10): the LFO list, fastest first, up to 24 beats. Delay runs 0-27, not the chart's 0-18.
+    { "^delay_sync_time$", { "32nd T", "32nd", "16th T", "16th", "8th T", "16th D", "8th", "4th T",
+                        "8th D", "4th", "1 + 1/3", "4th D", "2nd", "2 + 2/3", "3 beats", "4 beats",
+                        "5 + 1/3", "6 beats", "8 beats", "10 + 2/3", "12 beats", "13 + 1/3", "16 beats", "18 beats",
+                        "18 + 2/3", "20 beats", "21 + 1/3", "24 beats" } },
+    // Read from the Peak (2026-11-10): slowest first, 0 = 64 beats; LFO 3/4 add Off at 0.
+    { "^lfo[12]_sync_rate$", { "64 beats", "48 beats", "42 beats", "36 beats", "32 beats", "30 beats", "28 beats", "24 beats",
+                        "21 + 1/3", "20 beats", "18 + 2/3", "18 beats", "16 beats", "13 + 1/3", "12 beats", "10 + 2/3",
+                        "8 beats", "6 beats", "5 + 1/3", "4 beats", "3 beats", "2 + 2/3", "2nd", "4th D",
+                        "1 + 1/3", "4th", "8th D", "4th T", "8th", "16th D", "8th T", "16th",
+                        "16th T", "32nd", "32nd T" } },
+    { "^lfo[34]_ratesync$", { "Off", "64 beats", "48 beats", "42 beats", "36 beats", "32 beats", "30 beats", "28 beats", "24 beats",
+                        "21 + 1/3", "20 beats", "18 + 2/3", "18 beats", "16 beats", "13 + 1/3", "12 beats", "10 + 2/3",
+                        "8 beats", "6 beats", "5 + 1/3", "4 beats", "3 beats", "2 + 2/3", "2nd", "4th D",
+                        "1 + 1/3", "4th", "8th D", "4th T", "8th", "16th D", "8th T", "16th",
+                        "16th T", "32nd", "32nd T" } },
+    // The 60 wavetables (User Guide p. 37, read down its columns; checked on the Peak 2026-11-10). Raw 4-63.
+    { "^osc\\d_wave_more$", { "BS sine", "Random", "Zing", "Tubey", "Octaves", "Wobbler", "Chords", "Didgery",
+                        "Harsh", "Organ", "E. Piano", "VoxOooEe", "VoxYahEe", "Winds", "SoftClav", "String",
+                        "BassOrgn", "Acid", "Buzzy", "Carousel", "Choral", "Climbing", "CoinFlip", "Deep",
+                        "Dub", "Eee", "Eris", "Flame", "Further", "GlassSaw", "Glassy", "Granular",
+                        "Grime", "Drow", "Heavy", "Hedge", "Hungry", "Ladders", "Lead", "Modeling",
+                        "Modem", "Monster", "Screech", "SeaBase", "Shmorgan", "Spirals", "Steel", "Sunrise",
+                        "Swell", "Thicker", "Thinner", "Tides", "Tokyo", "Tops", "V.Chord", "Variance",
+                        "Vocaloid", "Vowelled", "WeirdVox", "Yeah" }, 4 },
 };
 // Display rule for one parameter, worked out once from its id.
 struct Format
@@ -80,7 +118,7 @@ const Format& formatFor (const ParamDef& p)
                 if (matches (q, e.pattern))
                 {
                     f.names = &e;
-                    f.namesBase = matches (q, "^osc\\d_range$") ? 63 : 0;
+                    f.namesBase = e.base;
                     break;
                 }
             f.list = matches (q, "^mod\\d+_source[12]$") ? &modSourceNames()
@@ -100,6 +138,17 @@ const Format& formatFor (const ParamDef& p)
     return formats[(size_t) indexOf (p)];
 }
 } // namespace
+
+std::vector<std::string> valueNames (const ParamDef& p)
+{
+    const auto& f = formatFor (p);
+    std::vector<std::string> out;
+    if (f.list == nullptr && f.names == nullptr && ! f.onOff)
+        return out;
+    for (int v = p.min; v <= p.max; ++v)
+        out.push_back (formatValue (p, v));
+    return out;
+}
 
 const std::vector<std::string>& modSourceNames()
 {

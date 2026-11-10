@@ -136,3 +136,10 @@ Read from the Peak's Mod menu by stepping through each list. Value = position in
 - The Peak **sends** NRPN 64:n when a setting changes on its panel, but it **ignores** incoming NRPN 64:n (Brightness 64:11 = 5 had no effect).
 - A Settings dump (header byte 8 = 0x04, value of setting n at byte 16 + n) sent back to the Peak **is applied** at once (Brightness changed). The editor sends its whole cached dump after an edit, so every setting takes the cached value.
 - TuningMode (64:30) is 0 = Note, 1 = Octave.
+
+## Named value lists (verified 2026-11-10, firmware 2.2)
+Read from the Peak's screen after sending values, or fixed by the Init Patch's values:
+- **LFO 1/2 Sync Rate (0–34)** and **LFO 3/4 RateSync (0–35)** run slowest first: 0 = 64 beats … 34 = 32nd T. LFO 3/4 add Off at 0, so 1 = 64 beats.
+- **Arp SyncRate (0–18)** runs fastest first: 0 = 32nd T, 3 = 16th (Init), 18 = 8 beats.
+- **Delay SyncRate runs 0–27**, not 0–18 as the chart says. It's the LFO list fastest first, from 32nd T up to 24 beats (7 = 4th T, Init).
+- **WaveMore (4–63)**: the guide's 4-column wavetable grid reads down the columns (5 = Random, 19 = String).
