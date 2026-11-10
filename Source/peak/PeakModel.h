@@ -38,6 +38,8 @@ public:
     // Compare: toggles between the edited patch and the one originally loaded.
     void toggleCompare();
     bool isComparing() const noexcept { return comparing; }
+    // Revert: drops every edit, back to the patch as loaded, and sends it to the Peak.
+    bool revert();
     bool isModified() const { return patch.body() != reference.body(); }
     // A parameter's value in the patch as it was loaded (Revert / Restore go back to it).
     int getStored (const peak::ParamDef& def) const { return def.isStored() ? reference.get (def) : get (def); }

@@ -62,7 +62,7 @@ public:
 
     bool dimmed = false;
     std::optional<int> ghost;            // slot turned off: the depth it comes back with (dashed outline)
-    std::function<int()> storedValue;    // double-click: the patch's value
+    std::function<int()> initValue;      // double-click: the Init Patch's value
     std::function<void()> onContextMenu; // right-click: the slot's menu
     std::function<void()> onEditStart;   // just before a drag, double-click or wheel changes the depth
 
@@ -98,7 +98,7 @@ public:
     {
         if (onEditStart)
             onEditStart();
-        setValue (storedValue ? storedValue() : depthCentre, juce::sendNotificationSync);
+        setValue (initValue ? initValue() : depthCentre, juce::sendNotificationSync);
     }
 
     void paint (juce::Graphics& g) override
@@ -173,7 +173,7 @@ public:
             bindCombo (sourceB, slot.sourceB, "source B");
         bindCombo (destination, slot.destination, "destination");
 
-        amount.storedValue = [this, &peakModel] { return peakModel.getStored (*slot.depth); };
+        amount.initValue = [this] { return DrawerStyle::initValue (*slot.depth); };
         amount.onEditStart = [this] { owner.userEdit ("depth of slot " + slot.label); };
         amount.onContextMenu = [this] { showMenu(); };
         amount.onValueChange = [this, &peakModel] {

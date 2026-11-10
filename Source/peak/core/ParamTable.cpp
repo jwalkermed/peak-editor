@@ -165,7 +165,7 @@ const std::vector<ParamDef>& allParams()
     { "delay_lr_ratio", "Delay LR Ratio", "Delay", MidiKind::nrpn, 91, 0, 127, 220 },
     { "delay_width", "Delay Width", "Delay", MidiKind::nrpn, 92, 0, 127, 221 },
     { "delay_sync", "Delay Sync", "Delay", MidiKind::nrpn, 93, 0, 1, 222 },
-    { "delay_sync_time", "Delay Sync Time", "Delay", MidiKind::nrpn, 94, 0, 18, 223 },
+    { "delay_sync_time", "Delay Sync Time", "Delay", MidiKind::nrpn, 94, 0, 27, 223 },
     { "delay_feedback", "Delay Feedback", "Delay", MidiKind::cc, 110, 0, 127, 224 },
     { "delay_lp_damp", "Delay LP Damp", "Delay", MidiKind::nrpn, 95, 0, 127, 225 },
     { "delay_hp_damp", "Delay HP Damp", "Delay", MidiKind::nrpn, 96, 0, 127, 226 },

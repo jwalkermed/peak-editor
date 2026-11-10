@@ -31,7 +31,7 @@ int main (int argc, char** argv)
                 model->loadPatch (*p, "snapshot");
     }
 
-    // "library" or "modmatrix" as the width renders that drawer instead of the panel.
+    // "library", "settings", "modmatrix" or "menu:<button>" as the width renders that drawer instead of the panel.
     std::unique_ptr<juce::Component> view;
     if (juce::String (argc > 2 ? argv[2] : "") == "library")
     {
@@ -44,6 +44,10 @@ int main (int argc, char** argv)
     {
         view = std::make_unique<SettingsDrawer> (*model);
         view->setSize (900, 640);
+    }
+    else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("menu:"))
+    {
+        view = FrontPanel::createMenuPage (*model, juce::String (argv[2]).fromFirstOccurrenceOf ("menu:", false, false));
     }
     else if (juce::String (argc > 2 ? argv[2] : "") == "modmatrix")
     {
@@ -58,7 +62,13 @@ int main (int argc, char** argv)
         view = std::move (panel);
     }
 
-    const auto image = view->createComponentSnapshot (view->getLocalBounds(), true, 1.0f);
+    // Menu pages are drawn on the call-out's dark background.
+    juce::Image image (juce::Image::ARGB, view->getWidth(), view->getHeight(), true);
+    {
+        juce::Graphics g (image);
+        g.fillAll (juce::Colour (0xff1e1f22));
+        view->paintEntireComponent (g, true);
+    }
     juce::File out (juce::File::getCurrentWorkingDirectory().getChildFile (argv[1]));
     out.deleteFile();
     juce::FileOutputStream stream (out);

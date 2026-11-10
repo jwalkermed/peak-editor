@@ -11,6 +11,10 @@ namespace peak
 // display ranges from the User Guide chart and menu descriptions.
 std::string formatValue (const ParamDef&, int value);
 
+// The display text of every value from min to max, for parameters whose values are names
+// (a drop-down); empty for numeric parameters.
+std::vector<std::string> valueNames (const ParamDef&);
+
 // Raw value a double-click resets to: centre for bipolar parameters, else minimum.
 int defaultValue (const ParamDef&);
 

@@ -76,12 +76,13 @@ std::vector<const char*> menuSections (const juce::String& menu)
 {
     if (menu == "Osc") return { "Osc Common", "Oscillator 1", "Oscillator 2", "Oscillator 3" };
     if (menu.startsWith ("Oscillator")) return { "Oscillator 1", "Oscillator 2", "Oscillator 3", "Osc Common" };
-    if (menu == "Env") return { "Amp Envelope", "Mod Envelope 1", "Mod Envelope 2", "Animate" };
+    if (menu == "Env") return { "Amp Envelope", "Mod Envelope 1", "Mod Envelope 2" };
+    if (menu == "Animate") return { "Animate" };
     if (menu == "LFO") return { "LFO 1", "LFO 2", "LFO 3", "LFO 4" };
     if (menu == "Arp/Clock") return { "Arp" };
     if (menu == "Mod") return { "Mod Matrix" };
     if (menu == "Voice") return { "Voice", "Glide", "Mixer" };
-    if (menu == "FX") return { "Effects", "Chorus", "Delay", "Reverb", "FX Mod Matrix" };
+    if (menu == "FX") return { "Effects", "Chorus", "Delay", "Reverb" }; // the FX matrix is on the Mod Matrix tab
     if (menu == "Filter") return { "Filter" };
     if (menu == "Patch") return { "Patch" };
     return {};
@@ -142,6 +143,19 @@ private:
 };
 } // namespace
 
+std::unique_ptr<juce::Component> FrontPanel::createMenuPage (PeakModel& model, const juce::String& name)
+{
+    std::vector<const peak::ParamDef*> params;
+    for (const auto* section : menuSections (name))
+        for (const auto& p : peak::allParams())
+            if (std::strcmp (p.section, section) == 0)
+                params.push_back (&p);
+
+    if (params.empty())
+        return nullptr;
+    return std::make_unique<MenuPage> (model, name + " menu", params);
+}
+
 juce::Rectangle<float> FrontPanel::designBounds()
 {
     const auto& p = PanelLayout::get().panel;
@@ -150,10 +164,50 @@ juce::Rectangle<float> FrontPanel::designBounds()
 
 FrontPanel::FrontPanel (PeakModel& m) : model (m)
 {
+    // The editor has no page or value controls: the screen takes their place.
+    static const juce::StringArray replacedByScreen { "soft1", "soft2", "soft3", "page_prev", "page_next", "page_select",
+                                                      "data_encoder", "value_down", "value_up", "value_label", "menu_patch" };
     for (const auto& e : PanelLayout::get().elements)
     {
+        if (replacedByScreen.contains (e.id))
+            continue;
         Control c;
         c.e = &e;
+        if (e.type == PanelElement::display)
+        {
+            auto& screen = changedElements.emplace_back (e);
+            screen.x = 402.0f; // from the soft buttons' left edge to the Value buttons' right edge
+            screen.y = 238.0f;
+            screen.x1 = 988.0f;
+            screen.y1 = 470.0f;
+            c.e = &screen;
+        }
+        else if (std::strcmp (e.id, "patch_encoder") == 0)
+        {
+            auto& encoder = changedElements.emplace_back (e);
+            encoder.y = 290.0f; // up to make room for Bank -/+ below Patch -/+
+            c.e = &encoder;
+        }
+        else if (std::strcmp (e.id, "patch_down") == 0 || std::strcmp (e.id, "patch_up") == 0 || std::strcmp (e.id, "patch_pm_label") == 0)
+        {
+            auto& moved = changedElements.emplace_back (e);
+            moved.y -= 63.0f;
+            c.e = &moved;
+        }
+        else if (juce::String (e.bind).startsWith ("menu:") && e.type == PanelElement::button)
+        {
+            // The menu buttons line up with the screen's left edge.
+            auto& moved = changedElements.emplace_back (e);
+            moved.x -= 107.6f;
+            c.e = &moved;
+        }
+        else if (std::strcmp (e.id, "audition") == 0)
+        {
+            auto& revert = changedElements.emplace_back (e);
+            revert.label = "Revert";
+            revert.bind = "action:revert";
+            c.e = &revert;
+        }
         const juce::String bind (e.bind);
 
         if (bind.startsWith ("menu:"))
@@ -183,6 +237,27 @@ FrontPanel::FrontPanel (PeakModel& m) : model (m)
             }
         }
 
+        controls.push_back (std::move (c));
+    }
+
+    // Animate and Library to the right of Arp/Clock and Settings.
+    for (const auto& added : { PanelElement { PanelElement::button, "menu_animate", 769.8f, 134.7f, 0.0f, 0.0f, 62.0f, 26.0f, "Animate", "menu:Animate", 0, false, "white" },
+                               PanelElement { PanelElement::button, "menu_library", 769.9f, 193.7f, 0.0f, 0.0f, 62.0f, 26.0f, "Library", "menu:Library", 0, false, "white" } })
+    {
+        Control c;
+        c.e = &changedElements.emplace_back (added);
+        c.menu = juce::String (added.bind).fromFirstOccurrenceOf ("menu:", false, false);
+        controls.push_back (std::move (c));
+    }
+
+    // Bank -/+ below Patch -/+, where Patch -/+ sat on the hardware.
+    for (const auto& added : { PanelElement { PanelElement::button, "bank_down", 251.9f, 438.0f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_down", 0, false, "dark" },
+                               PanelElement { PanelElement::button, "bank_up", 336.3f, 438.1f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_up", 0, false, "dark" },
+                               PanelElement { PanelElement::text, "bank_pm_label", 290.7f, 471.4f, 0.0f, 0.0f, 12.0f, 0.0f, "–      Bank      +", "", 0, false, "centre" } })
+    {
+        Control c;
+        c.e = &changedElements.emplace_back (added);
+        c.action = juce::String (added.bind).fromFirstOccurrenceOf ("action:", false, false);
         controls.push_back (std::move (c));
     }
 
@@ -298,6 +373,7 @@ void FrontPanel::mouseDown (const juce::MouseEvent& ev)
         if (dragging->action == "patch_encoder")
         {
             dragStartY = ev.position.y;
+            dragStartValue = model.getOriginalLocation().value_or (peak::Patch::Location {}).slot;
             patchStepsApplied = 0;
             return;
         }
@@ -321,14 +397,14 @@ void FrontPanel::mouseDown (const juce::MouseEvent& ev)
 
 void FrontPanel::mouseDrag (const juce::MouseEvent& ev)
 {
-    // Patch encoder: one patch per 14 px of vertical drag.
+    // Patch encoder: one patch per 3 px of vertical drag, from 000 to 127 of the current bank.
     if (dragging != nullptr && dragging->action == "patch_encoder")
     {
-        const auto steps = juce::roundToInt ((dragStartY - ev.position.y) / 14.0f);
-        if (steps != patchStepsApplied)
+        const auto slot = juce::jlimit (0, 127, dragStartValue + juce::roundToInt ((dragStartY - ev.position.y) / 3.0f));
+        if (slot != patchStepsApplied + dragStartValue)
         {
-            model.stepPeakSlot (steps - patchStepsApplied);
-            patchStepsApplied = steps;
+            selectSlotInBank (slot);
+            patchStepsApplied = slot - dragStartValue;
         }
         return;
     }
@@ -362,9 +438,9 @@ void FrontPanel::mouseUp (const juce::MouseEvent&)
 
 void FrontPanel::mouseDoubleClick (const juce::MouseEvent& ev)
 {
-    if (auto* c = controlAt (toDesign (ev.position)); c != nullptr && c->e->type == PanelElement::knob)
+    if (auto* c = controlAt (toDesign (ev.position)); c != nullptr && (c->e->type == PanelElement::knob || c->e->type == PanelElement::fader))
         if (const auto* p = resolve (*c))
-            setParam (*p, peak::defaultValue (*p));
+            setParam (*p, DrawerStyle::initValue (*p));
 }
 
 void FrontPanel::mouseWheelMove (const juce::MouseEvent& ev, const juce::MouseWheelDetails& wheel)
@@ -375,7 +451,8 @@ void FrontPanel::mouseWheelMove (const juce::MouseEvent& ev, const juce::MouseWh
 
     if (c->action == "patch_encoder")
     {
-        model.stepPeakSlot (wheel.deltaY > 0 ? 1 : -1);
+        const auto slot = model.getOriginalLocation().value_or (peak::Patch::Location {}).slot;
+        selectSlotInBank (juce::jlimit (0, 127, slot + (wheel.deltaY > 0 ? 1 : -1)));
         return;
     }
 
@@ -397,10 +474,10 @@ void FrontPanel::press (Control& c)
         model.setLastTouched (nullptr);
         return;
     }
-    if (c.menu == "Mod" || c.menu == "Settings") // these have their own tabs
+    if (c.menu == "Mod" || c.menu == "Settings" || c.menu == "Library") // these have their own tabs
     {
         if (onShowTab)
-            onShowTab (c.menu == "Mod" ? "Mod Matrix" : "Settings");
+            onShowTab (c.menu == "Mod" ? "Mod Matrix" : c.menu);
         return;
     }
     if (c.menu.isNotEmpty())
@@ -447,20 +524,19 @@ void FrontPanel::press (Control& c)
         movePage (c.action.getLastCharacters (1).getIntValue() - 2); // soft buttons pick display rows 1-3
     else if (c.action == "compare")
         model.toggleCompare();
-    else if (c.action == "audition")
+    else if (c.action == "revert")
     {
-        if (! model.sendPatchToPeak())
+        if (! model.isModified())
+            showMessage ("No changes to revert");
+        else if (! model.revert())
             showMessage ("No MIDI output to the Peak");
     }
-    else if (c.action == "save")
+    else if (c.action == "bank_up" || c.action == "bank_down")
     {
-        if (const auto loc = model.getOriginalLocation())
-            SlotWriter::confirmAndWrite (model, *loc, this, [safe = juce::Component::SafePointer<FrontPanel> (this)] (const juce::String& result) {
-                if (safe != nullptr)
-                    safe->showMessage (result);
-            });
-        else
-            showMessage ("Choose a slot on the Library tab");
+        // The same patch number in the next/previous bank (D wraps to A).
+        const auto where = model.getOriginalLocation().value_or (peak::Patch::Location {});
+        if (! model.selectPeakSlot ({ (where.bank + (c.action == "bank_up" ? 1 : 3)) % 4, where.slot }))
+            showMessage ("No MIDI output to the Peak");
     }
     else if (c.action == "patch_up" || c.action == "patch_down")
     {
@@ -475,6 +551,13 @@ void FrontPanel::press (Control& c)
     }
     else if (c.action.isNotEmpty())
         showMessage ("Not available yet");
+}
+
+void FrontPanel::selectSlotInBank (int slot)
+{
+    const auto where = model.getOriginalLocation().value_or (peak::Patch::Location {});
+    if (slot != where.slot && ! model.selectPeakSlot ({ where.bank, slot }))
+        showMessage ("No MIDI output to the Peak");
 }
 
 void FrontPanel::stepLastTouched (int delta)
@@ -510,20 +593,15 @@ void FrontPanel::openMenu (const juce::String& name, const PanelElement& from)
         return;
     }
 
-    std::vector<const peak::ParamDef*> params;
-    for (const auto* section : menuSections (name))
-        for (const auto& p : peak::allParams())
-            if (std::strcmp (p.section, section) == 0)
-                params.push_back (&p);
-
-    if (params.empty())
+    auto page = createMenuPage (model, name);
+    if (page == nullptr)
         return;
 
     openMenuName = name;
     repaint();
 
     const auto area = juce::Rectangle<float> (from.w + 8, from.h + 8).withCentre ({ from.x, from.y }).transformedBy (designToScreen()).toNearestInt();
-    auto& box = juce::CallOutBox::launchAsynchronously (std::make_unique<MenuPage> (model, name + " menu", params), localAreaToGlobal (area), nullptr);
+    auto& box = juce::CallOutBox::launchAsynchronously (std::move (page), localAreaToGlobal (area), nullptr);
     box.setArrowSize (12.0f);
     box.addComponentListener (new MenuCloseWatcher ([safe = juce::Component::SafePointer<FrontPanel> (this)] {
         if (safe != nullptr)
@@ -691,11 +769,8 @@ void FrontPanel::drawKnob (juce::Graphics& g, const Control& c) const
 
     const auto* p = resolve (c);
     auto a = -sweep + 2.0f * sweep * (p != nullptr ? normalised (*p, model.get (*p)) : 0.5f);
-    if (c.action == "patch_encoder") // endless: turns 15 degrees per patch, following the Peak's slot
-    {
-        const auto where = model.getOriginalLocation().value_or (peak::Patch::Location {});
-        a = (float) (where.bank * 128 + where.slot) * juce::MathConstants<float>::twoPi / 24.0f;
-    }
+    if (c.action == "patch_encoder") // fully left = patch 000, fully right = 127, in the current bank
+        a = -sweep + 2.0f * sweep * (float) model.getOriginalLocation().value_or (peak::Patch::Location {}).slot / 127.0f;
     g.setColour (juce::Colour (0xff111111));
     g.drawLine (juce::Line<float> (centre.getPointOnCircumference (capR * 0.15f, a), centre.getPointOnCircumference (capR * 0.92f, a)), 3.2f * s);
 
@@ -823,6 +898,8 @@ void FrontPanel::drawDisplay (juce::Graphics& g, const PanelElement& e) const
     g.fillRoundedRectangle (r, 4.0f);
 
     const auto lineH = r.getHeight() / 4.0f;
+    // About 22 characters fit across, as on the Peak's screen.
+    const auto textH = juce::jmin (lineH * 0.98f, (r.getWidth() - 16.0f) / 22.0f / 0.6f);
     auto line = [&] (int i, const juce::String& left, const juce::String& right, bool highlight) {
         const auto row = juce::Rectangle<float> (r.getX() + 8, r.getY() + 2 + lineH * (float) i, r.getWidth() - 16, lineH);
         if (highlight)
@@ -831,7 +908,7 @@ void FrontPanel::drawDisplay (juce::Graphics& g, const PanelElement& e) const
             g.fillRect (row);
         }
         g.setColour (colours::oled);
-        g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), lineH * 0.98f, juce::Font::plain)));
+        g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), textH, juce::Font::plain)));
         g.drawText (left, row, juce::Justification::centredLeft);
         g.drawText (right, row, juce::Justification::centredRight);
     };

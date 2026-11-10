@@ -6,7 +6,7 @@
 
 #include <deque>
 
-// Labelled sliders for a set of parameters, grouped under section headers and
+// Labelled sliders (or drop-downs for named values) for a set of parameters, grouped under section headers and
 // flowed into columns. Used by the Parameters tab and the menu pop-overs.
 class ParamRows final : public juce::Component
 {
@@ -21,7 +21,9 @@ private:
     {
         const peak::ParamDef* def = nullptr;
         std::unique_ptr<juce::Label> label;
-        std::unique_ptr<juce::Slider> slider;
+        std::unique_ptr<juce::Slider> slider;   // numeric values
+        std::unique_ptr<juce::ComboBox> choices; // named values (item id = value - min + 1)
+        juce::Component& control() { return slider ? (juce::Component&) *slider : *choices; }
     };
 
     struct Item

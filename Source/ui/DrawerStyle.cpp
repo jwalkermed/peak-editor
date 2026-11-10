@@ -1,5 +1,7 @@
 #include "DrawerStyle.h"
 
+#include "peak/core/ParamFormat.h"
+
 #include "BinaryData.h"
 
 namespace DrawerStyle
@@ -19,6 +21,11 @@ const peak::Patch& emptyPatch()
         return p.value_or (peak::Patch());
     }();
     return patch;
+}
+
+int initValue (const peak::ParamDef& p)
+{
+    return p.isStored() ? emptyPatch().get (p) : peak::defaultValue (p);
 }
 
 bool isEmpty (const peak::Patch& p)

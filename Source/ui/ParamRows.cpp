@@ -1,6 +1,7 @@
 #include "ParamRows.h"
 
 #include "peak/core/ParamFormat.h"
+#include "ui/DrawerStyle.h"
 #include "ui/MidiMonitorPanel.h"
 
 #include <cstring>
@@ -30,15 +31,34 @@ ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& pa
         row.def = &p;
         row.label = std::make_unique<juce::Label> (juce::String(), juce::String (p.name) + (p.isStored() ? "" : "  (not saved)"));
         row.label->setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.75f));
+        const auto tooltip = juce::String (p.kind == peak::MidiKind::nrpn
+                                               ? "NRPN " + juce::String (p.number >> 7) + ":" + juce::String (p.number & 0x7F)
+                                               : "CC " + juce::String (p.number) + (p.kind == peak::MidiKind::ccPair ? "/" + juce::String (p.number + 32) : ""))
+                             + (p.isStored() ? juce::String::fromUTF8 ("  ·  dump byte 0x") + juce::String::toHexString (p.offset).toUpperCase() : "");
+        if (const auto names = peak::valueNames (p); ! names.empty())
+        {
+            row.choices = std::make_unique<juce::ComboBox>();
+            for (size_t i = 0; i < names.size(); ++i)
+                row.choices->addItem (juce::String::fromUTF8 (names[i].c_str()), (int) i + 1);
+            row.choices->setTooltip (tooltip);
+            row.choices->onChange = [this, def = row.def, c = row.choices.get()] {
+                if (! updating && c->getSelectedId() > 0)
+                    model.set (*def, def->min + c->getSelectedId() - 1);
+            };
+            addAndMakeVisible (*row.label);
+            addAndMakeVisible (*row.choices);
+            rows.push_back (std::move (row));
+            items.push_back ({ nullptr, &rows.back() });
+            continue;
+        }
+
         row.slider = std::make_unique<juce::Slider> (juce::Slider::LinearBar, juce::Slider::TextBoxRight);
         row.slider->setRange (p.min, p.max, 1);
         row.slider->textFromValueFunction = [def = row.def] (double v) { return juce::String (peak::formatValue (*def, (int) v)); };
-        row.slider->setDoubleClickReturnValue (true, peak::defaultValue (p));
+        row.slider->setDoubleClickReturnValue (true, DrawerStyle::initValue (p));
+        row.slider->setTextBoxIsEditable (false); // double-click resets instead of typing a value
         row.slider->setColour (juce::Slider::trackColourId, MidiMonitorPanel::accentColour.withAlpha (0.55f));
-        row.slider->setTooltip (juce::String (p.kind == peak::MidiKind::nrpn
-                                                  ? "NRPN " + juce::String (p.number >> 7) + ":" + juce::String (p.number & 0x7F)
-                                                  : "CC " + juce::String (p.number) + (p.kind == peak::MidiKind::ccPair ? "/" + juce::String (p.number + 32) : ""))
-                                + (p.isStored() ? juce::String::fromUTF8 ("  ·  dump byte 0x") + juce::String::toHexString (p.offset).toUpperCase() : ""));
+        row.slider->setTooltip (tooltip);
         row.slider->onValueChange = [this, def = row.def, s = row.slider.get()] {
             if (! updating)
                 model.set (*def, (int) s->getValue());
@@ -54,7 +74,12 @@ void ParamRows::refresh()
 {
     const juce::ScopedValueSetter<bool> svs (updating, true);
     for (auto& r : rows)
-        r.slider->setValue (model.get (*r.def), juce::dontSendNotification);
+    {
+        if (r.slider)
+            r.slider->setValue (model.get (*r.def), juce::dontSendNotification);
+        else
+            r.choices->setSelectedId (model.get (*r.def) - r.def->min + 1, juce::dontSendNotification);
+    }
 }
 
 // Lays out sections top-to-bottom, flowing into as many columns as fit.
@@ -83,7 +108,7 @@ void ParamRows::layout (int width, int columnWidth)
         {
             auto rr = r.reduced (0, 2);
             it.row->label->setBounds (rr.removeFromLeft (150));
-            it.row->slider->setBounds (rr);
+            it.row->control().setBounds (rr);
         }
         y += h;
         maxY = juce::jmax (maxY, y);

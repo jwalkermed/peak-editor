@@ -105,6 +105,16 @@ void PeakModel::toggleCompare()
     changed.sendChangeMessage();
 }
 
+bool PeakModel::revert()
+{
+    comparing = false;
+    patch = reference;
+    lastTouched = nullptr;
+    pendingSends.clear();
+    changed.sendChangeMessage();
+    return sendPatchToPeak();
+}
+
 juce::File PeakModel::settingsFile() const
 {
     return library->getRoot().getChildFile ("Peak Banks/settings.syx");
