@@ -270,6 +270,36 @@ int main()
         CHECK (n && n->param == findParam ("arp_on") && n->value == 1);
     });
 
+    test ("bank dumps carry slot locations; edit-buffer dumps do not", [] {
+        for (const auto& [file, bank] : { std::pair { "bank-a.syx", 0 }, std::pair { "bank-b.syx", 1 } })
+        {
+            const auto msgs = splitSysex (readFixture (file));
+            CHECK (msgs.size() == 128);
+            for (size_t i = 0; i < msgs.size(); ++i)
+            {
+                const auto p = Patch::fromSysex (msgs[i]);
+                CHECK (p && p->location() == (Patch::Location { bank, (int) i }));
+            }
+        }
+        const auto a = splitSysex (readFixture ("bank-a.syx"));
+        CHECK (Patch::fromSysex (a[0])->name() == "Utopian Streams");
+        CHECK (Patch::fromSysex (a[127])->location()->name() == "A127");
+
+        const auto current = *Patch::fromSysex (readFixture ("current-tardis-edited.syx"));
+        CHECK (! current.location().has_value());
+
+        // Moving a patch between slots / the edit buffer touches only the header.
+        auto moved = *Patch::fromSysex (a[1]);
+        moved.setLocation (Patch::Location { 3, 99 });
+        CHECK (moved.location()->name() == "D099");
+        CHECK (moved.body() == Patch::fromSysex (a[1])->body());
+        moved.setLocation (std::nullopt);
+        CHECK (! moved.location().has_value());
+        const auto edited = current.toSysex(), stored = moved.toSysex();
+        for (size_t i = 0; i < 16; ++i)
+            CHECK (edited[i] == stored[i]); // same header as a real Current dump
+    });
+
     test ("display formatting", [] {
         const auto f = [] (const char* id, int v) { return formatValue (*findParam (id), v); };
         CHECK (f ("osc1_range", 63) == "16'");

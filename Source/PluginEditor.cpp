@@ -32,6 +32,7 @@ PeakEditorEditor::PeakEditorEditor (PeakEditorProcessor& p)
 {
     const auto tabColour = MidiMonitorPanel::panelColour;
     tabs.addTab ("Front Panel", tabColour, new PanelPage (p.getModel()), true);
+    tabs.addTab ("Library", tabColour, new LibraryPanel (p.getModel()), true);
     tabs.addTab ("Parameters", tabColour, new ParameterListPanel (p.getModel()), true);
     tabs.addTab ("MIDI Monitor", tabColour, new MidiMonitorPanel (p.getModel().getConnection()), true);
     tabs.setTabBarDepth (30);

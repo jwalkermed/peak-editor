@@ -13,7 +13,7 @@ ParameterListPanel::ParameterListPanel (PeakModel& m) : model (m), content (std:
     patchLabel.setColour (juce::Label::textColourId, MidiMonitorPanel::ledColour);
     hintLabel.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.6f));
 
-    sendButton.setTooltip ("Loads this patch into the Peak's edit buffer via CC/NRPN. No memory slot is written.");
+    sendButton.setTooltip ("Replaces the Peak's current sound with this patch (SysEx). No memory slot is written.");
     sendButton.onClick = [this] {
         if (! model.sendPatchToPeak())
             hintLabel.setText ("No MIDI output — choose the Peak's port on the MIDI Monitor tab", juce::dontSendNotification);

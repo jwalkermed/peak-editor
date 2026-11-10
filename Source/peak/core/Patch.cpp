@@ -1,6 +1,7 @@
 #include "Patch.h"
 
 #include <algorithm>
+#include <cstdio>
 
 namespace peak
 {
@@ -62,6 +63,37 @@ void Patch::set (const ParamDef& def, int value)
     {
         raw[o] = static_cast<uint8_t> (value);
     }
+}
+
+namespace
+{
+constexpr size_t storedFlagByte = 8, bankByte = 12, slotByte = 13; // see docs/sysex-notes.md
+}
+
+std::string Patch::Location::name() const
+{
+    char s[8];
+    std::snprintf (s, sizeof (s), "%c%03d", 'A' + bank, slot);
+    return s;
+}
+
+std::optional<Patch::Location> Patch::location() const
+{
+    if (raw[storedFlagByte] == 0 || raw[bankByte] < 1 || raw[bankByte] > 4)
+        return std::nullopt;
+    return Location { raw[bankByte] - 1, raw[slotByte] };
+}
+
+void Patch::setLocation (std::optional<Location> loc)
+{
+    raw[storedFlagByte] = loc ? 1 : 0;
+    raw[bankByte] = loc ? static_cast<uint8_t> (std::clamp (loc->bank, 0, 3) + 1) : 0;
+    raw[slotByte] = loc ? static_cast<uint8_t> (std::clamp (loc->slot, 0, 127)) : 0;
+}
+
+std::string_view Patch::body() const
+{
+    return { reinterpret_cast<const char*> (raw.data()) + nameOffset, dumpSize - nameOffset - 1 };
 }
 
 std::string Patch::name() const

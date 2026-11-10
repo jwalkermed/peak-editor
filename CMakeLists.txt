@@ -52,12 +52,15 @@ target_sources(PeakEditor PRIVATE
     Source/peak/CoreMidiTransport.mm
     Source/peak/PeakConnection.cpp
     Source/peak/PeakModel.cpp
+    Source/peak/PatchLibrary.cpp
     Source/ui/MidiMonitorPanel.cpp
     Source/ui/ParameterListPanel.cpp
     Source/ui/ParamRows.cpp
     Source/ui/PanelLayout.cpp
     Source/ui/FrontPanel.cpp
-    Source/ui/KeyboardStrip.cpp)
+    Source/ui/KeyboardStrip.cpp
+    Source/ui/SlotWriter.cpp
+    Source/ui/LibraryPanel.cpp)
 
 target_include_directories(PeakEditor PRIVATE Source)
 
@@ -90,6 +93,8 @@ target_sources(PanelSnapshot PRIVATE
     Source/peak/CoreMidiTransport.mm
     Source/peak/PeakConnection.cpp
     Source/peak/PeakModel.cpp
+    Source/peak/PatchLibrary.cpp
+    Source/ui/SlotWriter.cpp
     Source/ui/ParamRows.cpp
     Source/ui/PanelLayout.cpp
     Source/ui/FrontPanel.cpp)

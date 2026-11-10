@@ -2,6 +2,7 @@
 
 #include "peak/core/ParamFormat.h"
 #include "ui/ParamRows.h"
+#include "ui/SlotWriter.h"
 
 #include <cstring>
 
@@ -407,8 +408,25 @@ void FrontPanel::press (Control& c)
         movePage (-1);
     else if (c.action.startsWith ("soft"))
         movePage (c.action.getLastCharacters (1).getIntValue() - 2); // soft buttons pick display rows 1-3
+    else if (c.action == "compare")
+        model.toggleCompare();
+    else if (c.action == "audition")
+    {
+        if (! model.sendPatchToPeak())
+            showMessage ("No MIDI output to the Peak");
+    }
+    else if (c.action == "save")
+    {
+        if (const auto loc = model.getOriginalLocation())
+            SlotWriter::confirmAndWrite (model, *loc, this, [safe = juce::Component::SafePointer<FrontPanel> (this)] (const juce::String& result) {
+                if (safe != nullptr)
+                    safe->showMessage (result);
+            });
+        else
+            showMessage ("Choose a slot on the Library tab");
+    }
     else if (c.action.isNotEmpty())
-        showMessage ("Patch memory functions arrive with the librarian");
+        showMessage ("Not available yet");
 }
 
 void FrontPanel::stepLastTouched (int delta)
@@ -647,6 +665,8 @@ void FrontPanel::drawButton (juce::Graphics& g, const Control& c) const
     bool on = false;
     if (c.menu.isNotEmpty())
         on = c.menu == openMenuName;
+    else if (c.action == "compare")
+        on = model.isComparing();
     else if (! c.cycle && ! c.alternatives.empty())
         if (const auto* p = resolve (c))
             on = model.get (*p) != 0;
