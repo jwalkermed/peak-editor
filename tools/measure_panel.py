@@ -55,10 +55,7 @@ button("menu_patch", 432, 165, "Patch", "menu:Patch", style="white")
 for i, (name, x, y) in enumerate([("Osc", 540, 133), ("Env", 624, 133), ("LFO", 708, 133), ("Arp/Clock", 793, 133),
                                   ("Mod", 540, 192), ("Voice", 624, 192), ("FX", 708, 192), ("Settings", 793, 192)]):
     button("menu_" + name.lower().replace("/", "_"), x, y, name, "menu:" + name, style="white")
-for i in range(8):
-    led(f"voice{i + 1}", 866 + 33.3 * (i % 4), 152 if i < 4 else 171, "", "voices", i)
-    text(f"voice{i + 1}_num", 866 + 33.3 * (i % 4), 131 if i < 4 else 191, str(i + 1), 11, "centre")
-text("active_voices", 916, 209, "Active Voices", 11, "centre")
+# The panel's Active Voices LEDs are left out: the editor can't know which voices the Peak uses.
 for i, y in enumerate((287, 342, 396)):
     button(f"soft{i + 1}", 432, y, "", f"action:soft{i + 1}")
 E.append(dict(type="display", id="display", x=497, y=278, x1=836, y1=382))
@@ -189,7 +186,7 @@ known_ids = set(re.findall(r'\{ "([a-z0-9_]+)", ', (ROOT / "Source/peak/core/Par
 for e in E:
     for part in e.get("bind", "").replace("cycle:", "").split("|"):
         for pid in re.split(r"[@=]", part)[::2]:
-            if pid and ":" not in pid and not pid.isdigit() and pid not in ("voices",) and pid not in known_ids:
+            if pid and ":" not in pid and not pid.isdigit() and pid not in known_ids:
                 raise SystemExit(f"{e['id']}: unknown parameter '{pid}'")
 
 # ------------------------------------------------------------ measurement
