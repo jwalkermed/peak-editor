@@ -45,6 +45,10 @@ int main (int argc, char** argv)
         view = std::make_unique<SettingsDrawer> (*model);
         view->setSize (900, 640);
     }
+    else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("wave:"))
+    {
+        view = FrontPanel::createWavePicker (*model, juce::String (argv[2]).getTrailingIntValue(), 2);
+    }
     else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("menu:"))
     {
         view = FrontPanel::createMenuPage (*model, juce::String (argv[2]).fromFirstOccurrenceOf ("menu:", false, false));

@@ -87,12 +87,14 @@ const Names enumNames[] {
                         "8 beats", "6 beats", "5 + 1/3", "4 beats", "3 beats", "2 + 2/3", "2nd", "4th D",
                         "1 + 1/3", "4th", "8th D", "4th T", "8th", "16th D", "8th T", "16th",
                         "16th T", "32nd", "32nd T" } },
-    // The 60 wavetables (User Guide p. 37, read down its columns; checked on the Peak 2026-11-10). Raw 4-63.
+    // The 60 wavetables (User Guide p. 37, read down its columns; checked on the Peak 2026-11-10). Raw 4-63;
+    // 64-73 are the user wavetables (userWavetableNames). The Peak spells two differently from the guide:
+    // "Grow" (guide: Drow) and "E.Piano".
     { "^osc\\d_wave_more$", { "BS sine", "Random", "Zing", "Tubey", "Octaves", "Wobbler", "Chords", "Didgery",
-                        "Harsh", "Organ", "E. Piano", "VoxOooEe", "VoxYahEe", "Winds", "SoftClav", "String",
+                        "Harsh", "Organ", "E.Piano", "VoxOooEe", "VoxYahEe", "Winds", "SoftClav", "String",
                         "BassOrgn", "Acid", "Buzzy", "Carousel", "Choral", "Climbing", "CoinFlip", "Deep",
                         "Dub", "Eee", "Eris", "Flame", "Further", "GlassSaw", "Glassy", "Granular",
-                        "Grime", "Drow", "Heavy", "Hedge", "Hungry", "Ladders", "Lead", "Modeling",
+                        "Grime", "Grow", "Heavy", "Hedge", "Hungry", "Ladders", "Lead", "Modeling",
                         "Modem", "Monster", "Screech", "SeaBase", "Shmorgan", "Spirals", "Steel", "Sunrise",
                         "Swell", "Thicker", "Thinner", "Tides", "Tokyo", "Tops", "V.Chord", "Variance",
                         "Vocaloid", "Vowelled", "WeirdVox", "Yeah" }, 4 },
@@ -103,7 +105,7 @@ struct Format
     int centre = -1;                  // bipolar: raw value shown as 0
     const Names* names = nullptr;     // enumerated names
     int namesBase = 0;                // raw value of names[0]
-    bool onOff = false, offAtZero = false, offAtCentre = false, percent = false, phase = false, bpm = false;
+    bool onOff = false, offAtZero = false, offAtCentre = false, percent = false, phase = false, bpm = false, wave = false;
     const std::vector<std::string>* list = nullptr; // mod matrix source/destination names
 };
 
@@ -132,6 +134,7 @@ const Format& formatFor (const ParamDef& p)
             f.phase = matches (q, "^lfo\\d_phase$");
             f.percent = matches (q, "^arp_(chance|swing)$");
             f.bpm = matches (q, "^clock_rate$");
+            f.wave = matches (q, "^osc\\d_wave_more$");
             f.onOff = q.min == 0 && q.max == 1 && f.names == nullptr && ! matches (q, "^(patch|mod\\d|fxmod)");
             all.push_back (f);
         }
@@ -215,9 +218,22 @@ int defaultValue (const ParamDef& p)
     return c >= p.min && c <= p.max ? c : p.min;
 }
 
+std::vector<std::string>& userWavetableNames()
+{
+    static std::vector<std::string> names = [] {
+        std::vector<std::string> v;
+        for (int i = 1; i <= 10; ++i)
+            v.push_back ("User " + std::to_string (i));
+        return v;
+    }();
+    return names;
+}
+
 std::string formatValue (const ParamDef& p, int v)
 {
     const auto& f = formatFor (p);
+    if (f.wave && v >= 64 && v - 64 < (int) userWavetableNames().size())
+        return userWavetableNames()[(size_t) (v - 64)];
 
     if (f.list != nullptr)
         return v >= 0 && v < (int) f.list->size() ? (*f.list)[(size_t) v] : std::to_string (v);

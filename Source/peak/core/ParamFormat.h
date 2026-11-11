@@ -11,6 +11,9 @@ namespace peak
 // display ranges from the User Guide chart and menu descriptions.
 std::string formatValue (const ParamDef&, int value);
 
+// The 10 user wavetables' names (WaveMore 64-73), "User 1".."User 10" until read from the Peak.
+std::vector<std::string>& userWavetableNames();
+
 // The display text of every value from min to max, for parameters whose values are names
 // (a drop-down); empty for numeric parameters.
 std::vector<std::string> valueNames (const ParamDef&);

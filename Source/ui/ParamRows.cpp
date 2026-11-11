@@ -1,18 +1,19 @@
 #include "ParamRows.h"
 
 #include "peak/core/ParamFormat.h"
+#include "ui/CardStyle.h"
 #include "ui/DrawerStyle.h"
-#include "ui/MidiMonitorPanel.h"
 
 #include <cstring>
 
 namespace
 {
-constexpr int rowHeight = 24, headerHeight = 30;
+constexpr int rowHeight = 30, headerHeight = 40, labelWidth = 150;
 }
 
 ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& params) : model (m)
 {
+    setLookAndFeel (&CardStyle::look());
     // Double-clicking a row's name puts its value back as saved in the patch (also for drop-downs).
     resetOnDoubleClick.onDoubleClick = [this] (juce::Component* c) {
         for (auto& r : rows)
@@ -27,8 +28,7 @@ ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& pa
         {
             lastSection = p.section;
             auto& h = headers.emplace_back (std::make_unique<juce::Label> (juce::String(), juce::String (p.section).toUpperCase()));
-            h->setColour (juce::Label::textColourId, juce::Colours::white);
-            h->setFont (juce::FontOptions (14.0f, juce::Font::bold));
+            CardStyle::styleHeading (*h); // small blue capitals, with a line drawn under (paint)
             addAndMakeVisible (*h);
             items.push_back ({ h.get(), nullptr });
         }
@@ -36,7 +36,9 @@ ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& pa
         Row row;
         row.def = &p;
         row.label = std::make_unique<juce::Label> (juce::String(), juce::String (p.name) + (p.isStored() ? "" : "  (not saved)"));
-        row.label->setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.75f));
+        row.label->setColour (juce::Label::textColourId, CardStyle::text);
+        row.label->setFont (juce::FontOptions (13.0f));
+        row.label->setBorderSize ({ 0, 0, 0, 0 });
         const auto tooltip = juce::String (p.kind == peak::MidiKind::nrpn
                                                ? "NRPN " + juce::String (p.number >> 7) + ":" + juce::String (p.number & 0x7F)
                                                : "CC " + juce::String (p.number) + (p.kind == peak::MidiKind::ccPair ? "/" + juce::String (p.number + 32) : ""))
@@ -66,7 +68,8 @@ ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& pa
         row.slider->textFromValueFunction = [def = row.def] (double v) { return juce::String (peak::formatValue (*def, (int) v)); };
         row.slider->setTextBoxIsEditable (false); // double-click resets instead of typing a value
         row.slider->setScrollWheelEnabled (false); // drag only: the wheel scrolls the page instead
-        row.slider->setColour (juce::Slider::trackColourId, MidiMonitorPanel::accentColour.withAlpha (0.55f));
+        if (const auto centre = peak::defaultValue (p); centre != p.min) // shown as -/+: the bar fills from the centre
+            row.slider->getProperties().set ("centre", centre);
         row.slider->setTooltip (tooltip);
         row.slider->onValueChange = [this, def = row.def, s = row.slider.get()] {
             if (! updating)
@@ -78,6 +81,12 @@ ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& pa
         rows.push_back (std::move (row));
         items.push_back ({ nullptr, &rows.back() });
     }
+    sendLookAndFeelChange(); // the sliders were made before they were children: rebuild their value boxes
+}
+
+ParamRows::~ParamRows()
+{
+    setLookAndFeel (nullptr);
 }
 
 void ParamRows::refresh()
@@ -90,6 +99,14 @@ void ParamRows::refresh()
         else
             r.choices->setSelectedId (model.get (*r.def) - r.def->min + 1, juce::dontSendNotification);
     }
+}
+
+void ParamRows::paint (juce::Graphics& g)
+{
+    // A line under each section heading, as in the wavetable picker.
+    g.setColour (CardStyle::line);
+    for (const auto& h : headers)
+        g.fillRect (h->getX(), h->getBottom() + 2, h->getWidth(), 1);
 }
 
 // Lays out sections top-to-bottom, flowing into as many columns as fit.
@@ -113,11 +130,11 @@ void ParamRows::layout (int width, int columnWidth)
         }
         const juce::Rectangle<int> r (col * colW + 8, y, colW - 16, h);
         if (it.header)
-            it.header->setBounds (r.withTrimmedTop (8));
+            it.header->setBounds (r.withTrimmedTop (12).withHeight (20));
         else
         {
-            auto rr = r.reduced (0, 2);
-            it.row->label->setBounds (rr.removeFromLeft (150));
+            auto rr = r.reduced (0, 3);
+            it.row->label->setBounds (rr.removeFromLeft (labelWidth));
             it.row->control().setBounds (rr);
         }
         y += h;

@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <utility>
 
 namespace peak
 {
@@ -21,6 +22,12 @@ inline constexpr uint8_t novationId[] { 0x00, 0x20, 0x29 };
 Bytes currentSoundRequest();
 Bytes slotRequest (int bank, int slot); // bank 0-3 (A-D), slot 0-127
 Bytes settingsRequest();
+// Wavetable names (verified 2026-11-11): command 0x47 with the wavetable number (WaveMore value,
+// 0-73) in byte 11. The reply has type 07, the number in byte 14 and up to 7 name characters from
+// byte 15. 64-73 are the user wavetables.
+Bytes wavetableNameRequest (int index);
+bool isWavetableName (const uint8_t* data, size_t size);
+std::optional<std::pair<int, std::string>> parseWavetableName (const Bytes&);
 
 std::vector<Bytes> splitSysex (const uint8_t* data, size_t size);
 inline std::vector<Bytes> splitSysex (const Bytes& b) { return splitSysex (b.data(), b.size()); }

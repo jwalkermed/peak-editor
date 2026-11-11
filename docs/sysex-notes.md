@@ -164,3 +164,9 @@ Stored patches hold **Arp Chance 0** where the same patch as the current sound r
 ## Reading memory directly (verified 2026-11-10/11)
 - Slot requests (`41`) answer in about 12 ms each over the network session, so a bank reads in about 2 s.
 - Nothing announces changes made to the Peak's memory from elsewhere (e.g. Components). The editor compares its copy with the Peak at startup and whenever the Peak selects a slot.
+
+## Wavetables (verified 2026-11-11, firmware 2.2)
+- **WaveMore runs 4–73**, not 4–63: 64–73 are the 10 user wavetables (loaded with Components).
+- **Name request:** `F0 00 20 29 01 10 00 7E 47 00 00 <n> 00 00 F7`, with n = the WaveMore number (0–73; 0–3 are Sine, Triangle, Sawtooth, Pulse). The reply has type 07, n in byte 14 and up to **7** name characters from byte 15 (e.g. `Noisia`, `User 2`).
+- Command **46** returns wavetable sample data (531 bytes); not used yet.
+- The Peak spells two factory tables differently from the User Guide: **Grow** (guide: Drow) and **E.Piano**.

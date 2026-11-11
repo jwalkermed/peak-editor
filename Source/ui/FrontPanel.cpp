@@ -2,10 +2,12 @@
 
 #include "peak/core/ParamFormat.h"
 #include "ui/ParamRows.h"
+#include "ui/CardStyle.h"
 #include "ui/DrawerStyle.h"
 #include "ui/SlotWriter.h"
 
 #include <cstring>
+#include <string_view>
 
 namespace
 {
@@ -88,20 +90,6 @@ std::vector<const char*> menuSections (const juce::String& menu)
     return {};
 }
 
-// Runs a callback when the menu call-out closes, then deletes itself.
-struct MenuCloseWatcher final : juce::ComponentListener
-{
-    explicit MenuCloseWatcher (std::function<void()> f) : onClose (std::move (f)) {}
-
-    void componentBeingDeleted (juce::Component& c) override
-    {
-        c.removeComponentListener (this);
-        onClose();
-        delete this;
-    }
-
-    std::function<void()> onClose;
-};
 
 // The Arp/Clock menu's Clock section: Clock Rate (in the patch, no MIDI: sent as a patch dump),
 // Source (a global setting, NRPN 64:6) and the status line the Peak shows (INT 97.00bpm).
@@ -111,11 +99,15 @@ class ClockRows final : public juce::Component,
 public:
     explicit ClockRows (PeakModel& m) : model (m)
     {
-        header.setFont (juce::FontOptions (14.0f, juce::Font::bold));
-        header.setColour (juce::Label::textColourId, juce::Colours::white);
+        setLookAndFeel (&CardStyle::look());
+        CardStyle::styleHeading (header);
         for (auto* l : { &rateLabel, &sourceLabel, &statusLabel })
-            l->setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.75f));
-        status.setColour (juce::Label::textColourId, juce::Colours::white);
+        {
+            l->setColour (juce::Label::textColourId, CardStyle::text);
+            l->setFont (juce::FontOptions (13.0f));
+            l->setBorderSize ({ 0, 0, 0, 0 });
+        }
+        status.setColour (juce::Label::textColourId, CardStyle::text);
         status.setFont (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), 14.0f, juce::Font::plain));
         status.setTooltip ("As the Peak shows it while no external clock is coming in");
 
@@ -125,7 +117,6 @@ public:
         rate.resetValue = [this, &p] { return model.getStored (p); };
         rate.setTextBoxIsEditable (false);
         rate.setScrollWheelEnabled (false); // drag only, as in the other menu rows
-        rate.setColour (juce::Slider::trackColourId, juce::Colour (0xff62a6dc).withAlpha (0.55f));
         rate.setTooltip ("Stored in the patch; the Peak has no MIDI message for it, so changes go as the whole patch");
         rate.onValueChange = [this, &p] { if (! updating) model.set (p, (int) rate.getValue()); };
 
@@ -137,10 +128,13 @@ public:
 
         for (auto* c : std::initializer_list<juce::Component*> { &header, &rateLabel, &rate, &sourceLabel, &source, &statusLabel, &status })
             addAndMakeVisible (c);
-        setSize (360, 30 + 3 * 24 + 6);
+        setSize (364, 40 + 3 * 30);
         refresh();
         startTimerHz (4); // the DAW's clock can start, stop or change tempo at any time
+        sendLookAndFeelChange(); // rebuild the rate bar's value box in the card style
     }
+
+    ~ClockRows() override { setLookAndFeel (nullptr); }
 
     void refresh()
     {
@@ -167,13 +161,19 @@ public:
     void resized() override
     {
         auto r = getLocalBounds().withTrimmedLeft (8).withTrimmedRight (8);
-        header.setBounds (r.removeFromTop (30).withTrimmedTop (8));
+        header.setBounds (r.removeFromTop (40).withTrimmedTop (12).withHeight (20));
         for (auto [label, control] : { std::pair<juce::Component*, juce::Component*> { &rateLabel, &rate }, { &sourceLabel, &source }, { &statusLabel, &status } })
         {
-            auto row = r.removeFromTop (24).reduced (0, 2);
+            auto row = r.removeFromTop (30).reduced (0, 3);
             label->setBounds (row.removeFromLeft (150));
             control->setBounds (row);
         }
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        g.setColour (CardStyle::line);
+        g.fillRect (header.getX(), header.getBottom() + 2, header.getWidth(), 1);
     }
 
 private:
@@ -186,18 +186,22 @@ private:
     bool updating = false;
 };
 
-// A menu page shown in a call-out: the section's parameters as sliders.
-class MenuPage final : public juce::Component,
+// A card over the panel with a Close button (see CardStyle::Overlay).
+struct ClosableCard : juce::Component
+{
+    std::function<void()> onClose;  // Close, or a click outside
+    std::function<void()> onEscape; // Esc (default: close)
+};
+
+// A white button's menu page, on a card: its sections' parameters as value cells and drop-downs.
+class MenuPage final : public ClosableCard,
                        private juce::ChangeListener
 {
 public:
-    MenuPage (PeakModel& m, const juce::String& title, std::vector<const peak::ParamDef*> params, bool withClock = false)
-        : model (m), rows (m, params)
+    MenuPage (PeakModel& m, const juce::String& titleText, std::vector<const peak::ParamDef*> params, bool withClock = false)
+        : model (m), title (titleText.toUpperCase()), rows (m, params)
     {
-        heading.setText (title.toUpperCase(), juce::dontSendNotification);
-        heading.setFont (font (16.0f, true));
-        heading.setColour (juce::Label::textColourId, colours::rule);
-        addAndMakeVisible (heading);
+        setLookAndFeel (&CardStyle::look());
         if (withClock)
         {
             clock = std::make_unique<ClockRows> (m);
@@ -205,25 +209,46 @@ public:
         }
         viewport.setViewedComponent (&rows, false);
         viewport.setScrollBarsShown (true, false);
+        viewport.setScrollBarThickness (8);
         addAndMakeVisible (viewport);
+        close.getProperties().set ("primary", true);
+        close.onClick = [this] { if (onClose) onClose(); };
+        addAndMakeVisible (close);
         rows.refresh();
-        rows.layout (720, 360);
-        setSize (740, juce::jmin (560, rows.getHeight() + 44 + (clock ? clock->getHeight() : 0)));
+        rows.layout (contentWidth, contentWidth / 2);
+        setSize (contentWidth + 2 * pad, juce::jmin (680, top + (clock ? clock->getHeight() : 0) + rows.getHeight() + footer));
         model.changed.addChangeListener (this);
     }
 
-    ~MenuPage() override { model.changed.removeChangeListener (this); }
+    ~MenuPage() override
+    {
+        model.changed.removeChangeListener (this);
+        setLookAndFeel (nullptr);
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        CardStyle::paintCard (g, getLocalBounds(), title, "Double-click a name or value: back to the saved patch");
+        g.setColour (CardStyle::dim);
+        g.setFont (juce::FontOptions (12.0f));
+        g.drawText ("Drag a value to change it; changes go straight to the Peak.", getLocalBounds().reduced (pad, 0).removeFromBottom (footer),
+                    juce::Justification::centredLeft);
+    }
 
     void resized() override
     {
-        auto r = getLocalBounds();
-        heading.setBounds (r.removeFromTop (30).withTrimmedLeft (8));
+        auto r = getLocalBounds().reduced (pad - 8, 0);
+        r.removeFromTop (top - 12);
+        auto bottom = r.removeFromBottom (footer);
+        close.setBounds (bottom.withTrimmedRight (8).removeFromRight (100).withSizeKeepingCentre (100, 30));
         if (clock)
-            clock->setBounds (r.removeFromTop (clock->getHeight()).withWidth (360));
+            clock->setBounds (r.removeFromTop (clock->getHeight()).withWidth (contentWidth / 2));
         viewport.setBounds (r);
     }
 
 private:
+    static constexpr int pad = 18, top = 52, footer = 56, contentWidth = 744;
+
     void changeListenerCallback (juce::ChangeBroadcaster*) override
     {
         rows.refresh();
@@ -232,10 +257,150 @@ private:
     }
 
     PeakModel& model;
-    juce::Label heading;
+    juce::String title;
     std::unique_ptr<ClockRows> clock;
     ParamRows rows;
     juce::Viewport viewport;
+    juce::TextButton close { "Close" };
+};
+
+// The wavetables for an oscillator's More setting: click one to hear it (it's sent to the Peak at
+// once); Close keeps it, Cancel or Esc goes back to the one it started with. The user wavetables'
+// names are read from the Peak (Refresh reads them again).
+class WavePicker final : public ClosableCard,
+                         private juce::ChangeListener
+{
+public:
+    WavePicker (PeakModel& m, int oscillator, int waveBefore)
+        : model (m), osc (oscillator), more (*peak::findParam ("osc" + std::to_string (oscillator) + "_wave_more")),
+          wave (*peak::findParam ("osc" + std::to_string (oscillator) + "_wave")), startWave (waveBefore), startMore (m.get (more))
+    {
+        setLookAndFeel (&CardStyle::look());
+        refresh.onClick = [this] { model.requestUserWavetableNames(); };
+        cancel.onClick = [this] { goBack(); };
+        close.onClick = [this] { if (onClose) onClose(); };
+        close.getProperties().set ("primary", true);
+        refresh.setTooltip ("Read the user wavetables' names from the Peak again (after loading new ones with Components)");
+        for (auto* b : { &refresh, &cancel, &close })
+            addAndMakeVisible (b);
+        onEscape = [this] { goBack(); };
+        model.changed.addChangeListener (this);
+        setSize (2 * pad + cols * cellW + (cols - 1) * gap, userTop() + 2 * (cellH + gap) + 66);
+    }
+
+    ~WavePicker() override
+    {
+        model.changed.removeChangeListener (this);
+        setLookAndFeel (nullptr);
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        const auto current = model.get (more);
+        const auto describe = [this] (int v) { return juce::String (peak::formatValue (more, v)) + " (" + label (v) + ")"; };
+        CardStyle::paintCard (g, getLocalBounds(), "OSCILLATOR " + juce::String (osc) + juce::String::fromUTF8 ("  \xc2\xb7  MORE WAVEFORMS"),
+                              current == startMore ? "Now: " + describe (current) : "Auditioning: " + describe (current) + "   was: " + describe (startMore));
+
+        for (int i = 0; i < 70; ++i)
+        {
+            const auto v = valueAt (i);
+            const auto r = cellBounds (i).toFloat();
+            const bool selected = v == current, hovered = i == hover;
+            g.setColour (hovered ? CardStyle::cellHover : CardStyle::cell);
+            g.fillRoundedRectangle (r, 5.0f);
+            g.setColour (selected ? CardStyle::amber : CardStyle::line);
+            g.drawRoundedRectangle (r.reduced (selected ? 1.0f : 0.5f), 5.0f, selected ? 2.0f : 1.0f);
+            g.setFont (juce::FontOptions (10.0f));
+            g.setColour (selected ? CardStyle::amber : CardStyle::dim);
+            g.drawText (label (v), r.withWidth (30.0f).withTrimmedLeft (8.0f), juce::Justification::centredLeft);
+            g.setFont (juce::FontOptions (13.0f));
+            g.setColour (selected ? CardStyle::amber : CardStyle::text);
+            g.drawFittedText (juce::String (peak::formatValue (more, v)), r.withTrimmedLeft (32.0f).withTrimmedRight (4.0f).toNearestInt(),
+                              juce::Justification::centredLeft, 1, 0.8f);
+        }
+
+        const auto y = userTop() - 32;
+        g.setColour (CardStyle::line);
+        g.fillRect (pad, y, getWidth() - 2 * pad, 1);
+        g.setColour (CardStyle::blue);
+        g.setFont (juce::FontOptions (12.0f));
+        g.drawText ("USER WAVETABLES  (names read from the Peak)", pad, y + 8, 400, 16, juce::Justification::centredLeft);
+
+        g.setColour (CardStyle::dim);
+        auto note = getLocalBounds().reduced (pad, 0).removeFromBottom (56).withWidth (300);
+        g.drawFittedText ("Click to hear it on the Peak. Close keeps it;\nEsc or Cancel goes back to where you started.", note,
+                          juce::Justification::centredLeft, 2);
+    }
+
+    void resized() override
+    {
+        auto r = getLocalBounds().reduced (pad, 0).removeFromBottom (56).withSizeKeepingCentre (getWidth() - 2 * pad, 30);
+        close.setBounds (r.removeFromRight (100));
+        r.removeFromRight (10);
+        cancel.setBounds (r.removeFromRight (100));
+        r.removeFromRight (10);
+        refresh.setBounds (r.removeFromRight (130));
+    }
+
+    void mouseMove (const juce::MouseEvent& e) override { setHover (cellAt (e.getPosition())); }
+    void mouseExit (const juce::MouseEvent&) override { setHover (-1); }
+
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        const auto i = cellAt (e.getPosition());
+        if (i < 0)
+            return;
+        // Audition: the wavetable goes to the Peak now (and the oscillator to More).
+        model.set (more, valueAt (i));
+        if (model.get (wave) != 4)
+            model.set (wave, 4);
+        repaint();
+    }
+
+private:
+    static constexpr int cols = 6, cellW = 118, cellH = 30, gap = 6, pad = 18, gridTop = 64;
+
+    static int valueAt (int i) { return i < 60 ? 4 + i : 64 + (i - 60); } // 60 factory, then 10 user
+    static juce::String label (int v) { return v >= 64 ? "U" + juce::String (v - 63) : juce::String (v - 3).paddedLeft ('0', 2); }
+    static int userTop() { return gridTop + 10 * (cellH + gap) + 40; }
+
+    static juce::Rectangle<int> cellBounds (int i)
+    {
+        const auto top = i < 60 ? gridTop : userTop();
+        const auto k = i < 60 ? i : i - 60;
+        return { pad + (k % cols) * (cellW + gap), top + (k / cols) * (cellH + gap), cellW, cellH };
+    }
+
+    static int cellAt (juce::Point<int> p)
+    {
+        for (int i = 0; i < 70; ++i)
+            if (cellBounds (i).contains (p))
+                return i;
+        return -1;
+    }
+
+    void setHover (int i)
+    {
+        if (std::exchange (hover, i) != i)
+            repaint();
+    }
+
+    void goBack()
+    {
+        model.set (more, startMore);
+        model.set (wave, startWave);
+        if (onClose)
+            onClose();
+    }
+
+    void changeListenerCallback (juce::ChangeBroadcaster*) override { repaint(); } // e.g. user names read
+
+    PeakModel& model;
+    const int osc;
+    const peak::ParamDef &more, &wave;
+    const int startWave, startMore;
+    int hover = -1;
+    juce::TextButton refresh { "Refresh user list" }, cancel { "Cancel" }, close { "Close" };
 };
 } // namespace
 
@@ -629,7 +794,12 @@ void FrontPanel::press (Control& c)
             const auto& p = *c.source.param;
             if (value > p.max || value < p.min)
                 value = p.min;
+            const auto before = model.get (p);
             setParam (p, value);
+            // An oscillator's Wave set to More (or More clicked again): choose the wavetable.
+            if (value == 4 && std::string_view (p.id).size() == 9 && std::string_view (p.id).substr (0, 3) == "osc"
+                && std::string_view (p.id).substr (4) == "_wave")
+                showCard (createWavePicker (model, p.id[3] - '0', before));
         }
         else if (c.source.ui != nullptr)
         {
@@ -991,17 +1161,37 @@ void FrontPanel::openMenu (const juce::String& name, const PanelElement& from)
 
     openMenuName = name;
     repaint();
+    showCard (std::move (page));
+}
 
-    const auto area = juce::Rectangle<float> (from.w + 8, from.h + 8).withCentre ({ from.x, from.y }).transformedBy (designToScreen()).toNearestInt();
-    auto& box = juce::CallOutBox::launchAsynchronously (std::move (page), localAreaToGlobal (area), nullptr);
-    box.setArrowSize (12.0f);
-    box.addComponentListener (new MenuCloseWatcher ([safe = juce::Component::SafePointer<FrontPanel> (this)] {
-        if (safe != nullptr)
-        {
-            safe->openMenuName.clear();
-            safe->repaint();
-        }
-    }));
+void FrontPanel::showCard (std::unique_ptr<juce::Component> card)
+{
+    auto* closable = dynamic_cast<ClosableCard*> (card.get());
+    overlay = std::make_unique<CardStyle::Overlay> (std::move (card), [this] {
+        overlay.reset();
+        openMenuName.clear();
+        repaint();
+    });
+    if (closable != nullptr)
+    {
+        closable->onClose = [this] { if (overlay) overlay->close(); };
+        if (closable->onEscape)
+            overlay->onEscape = closable->onEscape;
+    }
+    addAndMakeVisible (*overlay);
+    overlay->setBounds (getLocalBounds());
+    overlay->grabKeyboardFocus();
+}
+
+void FrontPanel::resized()
+{
+    if (overlay)
+        overlay->setBounds (getLocalBounds());
+}
+
+std::unique_ptr<juce::Component> FrontPanel::createWavePicker (PeakModel& model, int oscillator, int waveBefore)
+{
+    return std::make_unique<WavePicker> (model, oscillator, waveBefore);
 }
 
 //==============================================================================

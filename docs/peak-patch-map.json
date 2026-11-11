@@ -251,10 +251,10 @@
     15
    ],
    "lo": 4,
-   "hi": 63,
+   "hi": 73,
    "offset": 71,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified; 64-73 = the 10 user wavetables (read from the Peak 2026-11-11)"
   },
   {
    "name": "Osc1 Shape Source",
@@ -432,10 +432,10 @@
     24
    ],
    "lo": 4,
-   "hi": 63,
+   "hi": 73,
    "offset": 92,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified; 64-73 = the 10 user wavetables (read from the Peak 2026-11-11)"
   },
   {
    "name": "Osc2 Shape Source",
@@ -614,10 +614,10 @@
     33
    ],
    "lo": 4,
-   "hi": 63,
+   "hi": 73,
    "offset": 113,
    "encoding": "byte",
-   "status": "verified"
+   "status": "verified; 64-73 = the 10 user wavetables (read from the Peak 2026-11-11)"
   },
   {
    "name": "Osc3 Shape Source",
