@@ -57,6 +57,9 @@ public:
     // The editor's sound has been saved elsewhere (e.g. by Save all changes): it is the new
     // "as loaded" patch, at `where` if that is a Peak slot.
     void markSaved (std::optional<peak::Patch::Location> where, const juce::String& newSource);
+    // Changes a value in the editor's patch and in its saved version alike (it has been saved
+    // separately, e.g. the category from the screen), and sends it to the Peak.
+    void setSavedValue (const peak::ParamDef&, int value);
     // Where the loaded patch came from on the Peak, if anywhere: the default Save target,
     // and the slot Patch -/+ step from.
     std::optional<peak::Patch::Location> getOriginalLocation() const { return originalLocation; }

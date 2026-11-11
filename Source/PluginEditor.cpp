@@ -71,6 +71,8 @@ public:
                 settings->setValue ("showKeyboard", show);
             resized();
             repaint();
+            if (onLayoutChanged)
+                onLayoutChanged(); // the window's height follows
         };
         addAndMakeVisible (keyboardSwitch);
         setWantsKeyboardFocus (true);
@@ -118,6 +120,10 @@ public:
     }
 
     FrontPanel panel;
+    std::function<void()> onLayoutChanged;
+
+    // Everything under the panel: the bar, and the keyboard if it's shown.
+    int heightBelowPanel() const { return footerHeight + (keys.isVisible() ? KeyboardStrip::preferredHeight : 0); }
 
 private:
     static constexpr int footerHeight = 18;
@@ -210,18 +216,30 @@ PeakEditorEditor::PeakEditorEditor (PeakEditorProcessor& p)
     // Right-click modulation (panel controls and menu rows): a new slot, or an existing one, opens
     // on the Mod Matrix tab outlined, as in the TEO-5 editor.
     auto& model = p.getModel();
-    ModAssign::handler().add = [&model, modMatrix, page, showTab] (int source, int destination, bool fx) {
-        const auto& srcName = (fx ? peak::fxSourceNames() : peak::modSourceNames())[(size_t) source];
+    ModAssign::handler().add = [&model, modMatrix, page, showTab] (int source, int destination, bool fx, int sourceB) {
+        const auto& names = fx ? peak::fxSourceNames() : peak::modSourceNames();
+        const auto srcName = juce::String (names[(size_t) source])
+                           + (sourceB >= 0 ? juce::String::fromUTF8 (" \xc3\x97 ") + juce::String (names[(size_t) sourceB]) : juce::String());
         const auto& destName = (fx ? peak::fxDestinationNames() : peak::modDestinationNames())[(size_t) destination];
-        modMatrix->userEdit ("add " + juce::String (srcName) + " to " + juce::String (destName));
-        const auto slot = ModAssign::assign (model, source, destination, fx);
+        modMatrix->userEdit ("add " + srcName + " to " + juce::String (destName));
+        const auto slot = ModAssign::assign (model, source, destination, fx, sourceB);
         if (slot < 0)
             return;
         page->panel.closeCard();
         showTab ("Mod Matrix");
         modMatrix->focusSlot (fx ? 16 + slot : slot, "New in " + juce::String (fx ? "FX slot " : "slot ") + juce::String (slot + 1) + ": "
-                                                       + juce::String (srcName) + " to " + juce::String (destName)
+                                                       + srcName + " to " + juce::String (destName)
                                                        + ", depth 0 (no change yet). Drag the depth to set it.");
+    };
+    ModAssign::handler().scale = [&model, modMatrix, page, showTab] (int slot, bool fx, int source) {
+        const auto label = juce::String (fx ? "FX " : "") + juce::String (slot + 1);
+        modMatrix->userEdit ("source B of slot " + label);
+        ModAssign::setSourceB (model, slot, fx, source);
+        page->panel.closeCard();
+        showTab ("Mod Matrix");
+        modMatrix->focusSlot (fx ? 16 + slot : slot, ModAssign::describe (model, slot, fx) + ": "
+                                                       + juce::String ((fx ? peak::fxSourceNames() : peak::modSourceNames())[(size_t) source])
+                                                       + " now scales it (Source B).");
     };
     ModAssign::handler().show = [modMatrix, page, showTab] (int row, const juce::String& message) {
         page->panel.closeCard();
@@ -233,9 +251,19 @@ PeakEditorEditor::PeakEditorEditor (PeakEditorProcessor& p)
     tabs.setTabBarDepth (30);
     tabs.setOutline (0);
     addAndMakeVisible (tabs);
+    // Resizing keeps the front panel's proportions: the window's height follows its width (and
+    // the reverse when dragging the top or bottom edge), allowing for the bars above and below.
+    const auto design = FrontPanel::designBounds();
+    const auto fixedHeight = [this, page] {
+        return headerHeight + (projectMessage.isVisible() ? bannerHeight : 0) + tabs.getTabBarDepth() + page->heightBelowPanel();
+    };
+    aspect.heightFor = [fixedHeight, design] (int w) { return fixedHeight() + juce::roundToInt ((float) w * design.getHeight() / design.getWidth()); };
+    aspect.widthFor = [fixedHeight, design] (int h) { return juce::roundToInt ((float) (h - fixedHeight()) * design.getWidth() / design.getHeight()); };
+    page->onLayoutChanged = [this] { setSize (getWidth(), aspect.heightFor (getWidth())); };
+    setConstrainer (&aspect);
     setResizable (true, true);
-    setResizeLimits (900, 520, 3000, 1800);
-    setSize (1440, 940);
+    setResizeLimits (900, 400, 3000, 2000);
+    setSize (1440, aspect.heightFor (1440));
     changeListenerCallback (nullptr);
 }
 
@@ -266,6 +294,8 @@ void PeakEditorEditor::changeListenerCallback (juce::ChangeBroadcaster*)
         projectMessage.setText ("This project's patch is \"" + juce::String (patch->name()).trim() + "\". Send it to the Peak?", juce::dontSendNotification);
     for (auto* c : std::initializer_list<juce::Component*> { &projectMessage, &sendProjectPatch, &loadProjectPatch, &dismissProject })
         c->setVisible (patch.has_value());
+    if (aspect.heightFor && getWidth() > 0) // the banner adds to the height: keep the panel's proportions
+        setSize (getWidth(), aspect.heightFor (getWidth()));
     resized();
     repaint();
 }

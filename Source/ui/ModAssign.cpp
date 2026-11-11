@@ -154,15 +154,33 @@ juce::Array<int> slotsFrom (const PeakModel& model, int source, bool fx)
     return found;
 }
 
-int assign (PeakModel& model, int source, int destination, bool fx)
+int assign (PeakModel& model, int source, int destination, bool fx, int sourceB)
 {
     const auto slot = firstFreeSlot (model, fx);
     if (slot < 0)
         return -1;
     model.set (slotParam (fx, slot, "depth"), depthCentre); // none first: nothing changes until the depth is dragged
     model.set (slotParam (fx, slot, "source1"), source);
+    if (sourceB >= 0)
+        model.set (slotParam (fx, slot, "source2"), sourceB);
     model.set (slotParam (fx, slot, "dest"), destination);
     return slot;
+}
+
+void setSourceB (PeakModel& model, int slot, bool fx, int source)
+{
+    model.set (slotParam (fx, slot, "source2"), source);
+}
+
+juce::String describe (const PeakModel& model, int slot, bool fx)
+{
+    const auto& srcNames = fx ? peak::fxSourceNames() : peak::modSourceNames();
+    const auto b = model.get (slotParam (fx, slot, "source2"));
+    return (fx ? "FX " : "Slot ") + juce::String (slot + 1) + ": " + juce::String (srcNames[(size_t) model.get (slotParam (fx, slot, "source1"))])
+         + (b != 0 ? juce::String::fromUTF8 (" \xc3\x97 ") + juce::String (srcNames[(size_t) b]) : juce::String())
+         + juce::String::fromUTF8 (" \xe2\x86\x92 ")
+         + juce::String ((fx ? peak::fxDestinationNames() : peak::modDestinationNames())[(size_t) model.get (slotParam (fx, slot, "dest"))])
+         + " (" + signedDepth (model.get (slotParam (fx, slot, "depth"))) + ")";
 }
 
 void showMenu (const PeakModel& model, const peak::ParamDef& p)
@@ -184,9 +202,27 @@ void showMenu (const PeakModel& model, const peak::ParamDef& p)
     {
         const auto destName = juce::String (destNames[(size_t) destIndex]);
         const bool full = firstFreeSlot (model, fx) < 0;
+        // Each source: on its own, or scaled by a controller as Source B (the Peak multiplies them).
+        static const char* const scalers[] { "Mod Wheel", "Aftertouch", "Velocity", "Expr Pedal 1", "Breath/Pedal 2", "Keyboard",
+                                             "Animate 1", "Animate 2" };
         juce::PopupMenu from;
         for (int s = 0; s < (int) srcNames.size(); ++s)
-            from.addItem (srcNames[(size_t) s], [s, destIndex, fx] { if (handler().add) handler().add (s, destIndex, fx); });
+        {
+            const auto add = [s, destIndex, fx] (int b) { if (handler().add) handler().add (s, destIndex, fx, b); };
+            if (s == 0) // Direct: a fixed amount, nothing to scale
+            {
+                from.addItem (srcNames[0], [add] { add (-1); });
+                continue;
+            }
+            juce::PopupMenu how;
+            how.addItem ("On its own", [add] { add (-1); });
+            how.addSeparator();
+            how.addSectionHeader ("Scaled by (Source B)");
+            for (const auto* scaler : scalers)
+                if (const auto b = indexOf (srcNames, scaler); b >= 0 && b != s)
+                    how.addItem (scaler, [add, b] { add (b); });
+            from.addSubMenu (srcNames[(size_t) s], how);
+        }
         menu.addSubMenu ("Modulate " + destName + " from", from, ! full);
 
         if (const auto used = slotsFor (model, destIndex, fx); ! used.isEmpty())
@@ -266,11 +302,30 @@ void showMenu (const PeakModel& model, const peak::ParamDef& p)
             {
                 juce::PopupMenu sub;
                 for (int d = range.first; d <= range.second && d < (int) peak::modDestinationNames().size(); ++d)
-                    sub.addItem (peak::modDestinationNames()[(size_t) d], [source, d] { if (handler().add) handler().add (source, d, false); });
+                    sub.addItem (peak::modDestinationNames()[(size_t) d], [source, d] { if (handler().add) handler().add (source, d, false, -1); });
                 to.addSubMenu (group, sub);
             }
             menu.addSeparator();
             menu.addSubMenu ("Send " + juce::String (peak::modSourceNames()[(size_t) source]) + " to", to, ! full);
+
+            // Make this source the Source B (scaler) of a slot already in use.
+            juce::PopupMenu scale;
+            const auto addScaled = [&] (bool isFx, int src) {
+                for (int s = 0; s < (isFx ? 4 : 16); ++s)
+                {
+                    if (! inUse (model, isFx, s) || model.get (slotParam (isFx, s, "source1")) == src || model.get (slotParam (isFx, s, "source2")) == src)
+                        continue;
+                    const auto b = model.get (slotParam (isFx, s, "source2"));
+                    const auto& names = isFx ? peak::fxSourceNames() : peak::modSourceNames();
+                    scale.addItem (describe (model, s, isFx) + (b != 0 ? "   (replaces " + juce::String (names[(size_t) b]) + ")" : juce::String()),
+                                   [s, isFx, src] { if (handler().scale) handler().scale (s, isFx, src); });
+                }
+            };
+            addScaled (false, source);
+            if (const auto fxSource = indexOf (peak::fxSourceNames(), srcName.toStdString()); fxSource >= 0)
+                addScaled (true, fxSource);
+            if (scale.getNumItems() > 0)
+                menu.addSubMenu ("Scale an existing slot with " + srcName, scale);
         }
     }
     menu.showMenuAsync (juce::PopupMenu::Options().withMousePosition());

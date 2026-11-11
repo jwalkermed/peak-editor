@@ -272,6 +272,14 @@ void PeakModel::markSaved (std::optional<peak::Patch::Location> where, const juc
     changed.sendChangeMessage();
 }
 
+void PeakModel::setSavedValue (const peak::ParamDef& def, int value)
+{
+    patch.set (def, value);
+    reference.set (def, value);
+    connection->sendParam (def, value);
+    changed.sendChangeMessage();
+}
+
 bool PeakModel::writeToSlot (peak::Patch::Location where)
 {
     if (comparing)

@@ -786,6 +786,8 @@ void FrontPanel::mouseDown (const juce::MouseEvent& ev)
         return toggleFavourite();
     if (helpButtonArea().contains (toDesign (ev.position)))
         return showHelp();
+    if (categoryArea.contains (toDesign (ev.position)) && parameterAlpha() <= 0.0f && message.isEmpty() && model.hasPatch())
+        return chooseCategory();
     if (ev.mods.isPopupMenu())
     {
         // Right-click: modulate this control (or send its source somewhere), as in the TEO-5 editor.
@@ -1088,6 +1090,55 @@ void FrontPanel::showHelp()
     text->setSize (560, 520);
     const auto area = helpButtonArea().transformedBy (designToScreen()).toNearestInt();
     juce::CallOutBox::launchAsynchronously (std::move (text), localAreaToGlobal (area), nullptr);
+}
+
+void FrontPanel::chooseCategory()
+{
+    const auto& param = *peak::findParam ("patch_category");
+    const auto current = model.get (param);
+    juce::PopupMenu menu;
+    menu.addSectionHeader ("Category");
+    const auto& names = peak::categoryNames();
+    for (int i = 0; i < (int) names.size(); ++i)
+        menu.addItem (names[(size_t) i], true, i == current, [this, i] { setCategoryAndSave (i); });
+    const auto area = categoryArea.transformedBy (designToScreen()).toNearestInt();
+    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withTargetScreenArea (localAreaToGlobal (area)));
+}
+
+void FrontPanel::setCategoryAndSave (int category)
+{
+    // The category is saved where the patch lives straight away: into its Peak slot (the stored
+    // version with the new category, so other edits stay unsaved) or its My Banks entry.
+    const auto& param = *peak::findParam ("patch_category");
+    if (category == model.get (param))
+        return;
+    const auto home = DrawerStyle::loadedPatchKey (model);
+    auto& library = model.getLibrary();
+    if (home.startsWith ("p:"))
+    {
+        const peak::Patch::Location where { home.fromFirstOccurrenceOf (":", false, false).upToFirstOccurrenceOf (":", false, false).getIntValue(),
+                                            home.fromLastOccurrenceOf (":", false, false).getIntValue() };
+        auto stored = library.syncedSlot (where).value_or (model.getReference());
+        stored.set (param, category);
+        bool ok = false;
+        const auto result = SlotWriter::writePatch (model, stored, where, ok);
+        if (ok)
+            model.setSavedValue (param, category);
+        showMessage (ok ? "Category saved to " + juce::String (where.name()) : result);
+    }
+    else if (home.startsWith ("l:"))
+    {
+        library.checkpoint();
+        library.setCategory (home.substring (2), category);
+        model.setSavedValue (param, category);
+        showMessage ("Category saved in My Banks");
+    }
+    else
+    {
+        // Not stored anywhere yet: it's an edit until the patch is saved.
+        setParam (param, category);
+        showMessage ("Not stored yet: use Save to keep it");
+    }
 }
 
 void FrontPanel::toggleFavourite()
@@ -1682,7 +1733,11 @@ void FrontPanel::drawDisplay (juce::Graphics& g, const PanelElement& e) const
         else
         {
             const auto& category = *peak::findParam ("patch_category");
-            g.drawText (juce::String (peak::formatValue (category, model.get (category))), top, juce::Justification::centredRight);
+            const auto categoryText = juce::String (peak::formatValue (category, model.get (category)));
+            g.drawText (categoryText, top, juce::Justification::centredRight);
+            // Click the category to change it (saved at once).
+            const auto categoryW = juce::GlyphArrangement::getStringWidth (mono (smallH), categoryText);
+            categoryArea = top.withLeft (top.getRight() - juce::jmax (categoryW, smallH * 2.0f) - 6.0f);
 
             // The name, large and centred, with its favourite star; "Edited" below it in amber.
             const auto edited = model.isModified() && ! model.isComparing();

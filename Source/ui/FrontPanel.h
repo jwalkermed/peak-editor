@@ -111,8 +111,10 @@ private:
     // The screen shows a touched parameter for a moment, then fades back to the patch.
     void timerCallback() override;
     float parameterAlpha() const;
-    mutable juce::Rectangle<float> starArea, nameArea; // on the screen's patch view, in design coordinates
+    mutable juce::Rectangle<float> starArea, nameArea, categoryArea; // on the screen's patch view, in design coordinates
     void toggleFavourite();
+    void chooseCategory();
+    void setCategoryAndSave (int category);
     void showCard (std::unique_ptr<juce::Component>); // a menu page or the wavetable picker, over the panel
     std::unique_ptr<CardStyle::Overlay> overlay;
     void showHelp();
