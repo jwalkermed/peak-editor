@@ -15,6 +15,28 @@ public:
         panel.onShowTab = std::move (showTab);
         addAndMakeVisible (panel);
         addAndMakeVisible (keys);
+        setWantsKeyboardFocus (true);
+    }
+
+    // Arrow keys (also when the on-screen keyboard has focus, which passes them up):
+    // Up/Down step through patches, Left/Right through banks.
+    bool keyPressed (const juce::KeyPress& key) override
+    {
+        if (key.getModifiers().isAnyModifierKeyDown())
+            return false;
+        if (key.isKeyCode (juce::KeyPress::upKey) || key.isKeyCode (juce::KeyPress::downKey))
+            panel.stepPatch (key.isKeyCode (juce::KeyPress::upKey) ? 1 : -1);
+        else if (key.isKeyCode (juce::KeyPress::leftKey) || key.isKeyCode (juce::KeyPress::rightKey))
+            panel.stepBank (key.isKeyCode (juce::KeyPress::rightKey) ? 1 : -1);
+        else
+            return false;
+        return true;
+    }
+
+    void visibilityChanged() override
+    {
+        if (isShowing() && ! hasKeyboardFocus (true))
+            grabKeyboardFocus();
     }
 
     void resized() override
@@ -24,8 +46,9 @@ public:
         panel.setBounds (r);
     }
 
-private:
     FrontPanel panel;
+
+private:
     KeyboardStrip keys;
 };
 } // namespace
@@ -56,12 +79,26 @@ PeakEditorEditor::PeakEditorEditor (PeakEditorProcessor& p)
     peakProcessor.projectPatchChanged.addChangeListener (this);
 
     const auto tabColour = MidiMonitorPanel::panelColour;
-    tabs.addTab ("Front Panel", tabColour, new PanelPage (p.getModel(), [this] (const juce::String& name) {
+    const auto showTab = [this] (const juce::String& name) {
         const auto names = tabs.getTabNames();
         if (names.contains (name))
             tabs.setCurrentTabIndex (names.indexOf (name));
-    }), true);
-    tabs.addTab ("Library", DrawerStyle::background, new LibraryDrawer (p.getModel()), true);
+    };
+    auto* page = new PanelPage (p.getModel(), showTab);
+    auto* library = new LibraryDrawer (p.getModel());
+    tabs.addTab ("Front Panel", tabColour, page, true);
+    tabs.addTab ("Library", DrawerStyle::background, library, true);
+
+    // Save, as in the TEO-5 and OB-6 editors: the Library opens as a picker, then back to the panel.
+    page->panel.onSave = [showTab, library] {
+        showTab ("Library");
+        library->beginSave();
+    };
+    library->onSaveFinished = [showTab, page] (bool saved, const juce::String& what) {
+        showTab ("Front Panel");
+        if (saved) // after Cancel the screen just shows the patch again
+            page->panel.showMessage (what);
+    };
     tabs.addTab ("Mod Matrix", DrawerStyle::background, new ModMatrixDrawer (p.getModel()), true);
     tabs.addTab ("Settings", DrawerStyle::background, new SettingsDrawer (p.getModel()), true);
     tabs.addTab ("MIDI Monitor", tabColour, new MidiMonitorPanel (p.getModel().getConnection()), true);

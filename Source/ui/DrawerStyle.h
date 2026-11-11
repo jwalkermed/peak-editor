@@ -1,5 +1,6 @@
 #pragma once
 
+#include "peak/PeakModel.h"
 #include "peak/core/Patch.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -26,6 +27,11 @@ void drawCheekTab (juce::Graphics&, juce::Rectangle<float>, const juce::String& 
 const peak::Patch& emptyPatch();
 // A parameter's value in the Init Patch: what double-click resets to.
 int initValue (const peak::ParamDef&);
+
+// Where the editor's patch was loaded from, as a Library row key: "p:<bank>:<slot>" (Peak memory,
+// preferred), "l:<id>" (My Banks) or "" (nowhere). Compares the patch as loaded, so an edited
+// sound still finds its home.
+juce::String loadedPatchKey (const PeakModel&);
 bool isEmpty (const peak::Patch&);
 
 // Applies the drawer colours to the usual widgets.

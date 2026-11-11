@@ -277,6 +277,22 @@ int main()
         CHECK (encodeParam (*findParam ("animate2_hold"), 0, 0)[0][2] == 0);
     });
 
+    test ("sameSound: Arp Chance 0 (stored) equals 100 (current sound)", [] {
+        auto bytes = readFixture ("current-all-in-sync.syx");
+        const auto a = *Patch::fromSysex (bytes);
+        bytes[(size_t) findParam ("arp_chance")->offset] = 0; // as in the stored banks (below the 1-100 range)
+        auto b = *Patch::fromSysex (bytes);
+        CHECK (a.sameSound (b) && b.sameSound (a));
+        b.set (*findParam ("arp_chance"), 50);
+        CHECK (! a.sameSound (b));
+    });
+
+    test ("dump requests (verified on the Peak 2026-11-10)", [] {
+        CHECK (toHex (currentSoundRequest().data(), currentSoundRequest().size()) == "F0 00 20 29 01 10 00 7E 40 00 00 00 00 00 F7");
+        CHECK (slotRequest (1, 63)[8] == 0x41 && slotRequest (1, 63)[12] == 2 && slotRequest (1, 63)[13] == 63);
+        CHECK (settingsRequest()[8] == 0x44);
+    });
+
     test ("bank dumps carry slot locations; edit-buffer dumps do not", [] {
         for (const auto& [file, bank] : { std::pair { "bank-a.syx", 0 }, std::pair { "bank-b.syx", 1 }, std::pair { "bank-c.syx", 2 }, std::pair { "bank-d.syx", 3 } })
         {

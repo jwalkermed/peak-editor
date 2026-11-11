@@ -31,6 +31,13 @@ PeakEditorProcessor::PeakEditorProcessor()
     ignoreHostChangesFor (settleAfterLoadMs);
     model->changed.addChangeListener (this);
     startTimerHz (flushHz);
+
+    // Unless a project brings its own patch (the host restores it just after this), start
+    // from whatever the Peak is playing now.
+    juce::Timer::callAfterDelay (1500, [safe = juce::WeakReference<PeakEditorProcessor> (this)] {
+        if (safe != nullptr && ! safe->projectPatch && ! safe->model->hasPatch())
+            safe->model->requestFromPeak();
+    });
 }
 
 PeakEditorProcessor::~PeakEditorProcessor()

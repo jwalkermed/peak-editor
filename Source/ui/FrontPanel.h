@@ -11,7 +11,8 @@
 // from the lens- and parallax-corrected reference photo (PanelLayout), with each
 // control bound to the patch parameter it drives on the hardware.
 class FrontPanel final : public juce::Component,
-                         private juce::ChangeListener
+                         private juce::ChangeListener,
+                         private juce::Timer
 {
 public:
     explicit FrontPanel (PeakModel&);
@@ -26,6 +27,14 @@ public:
 
     // Asks the editor to show one of its tabs ("Mod Matrix", "Settings").
     std::function<void (const juce::String& tab)> onShowTab;
+    // Save: the Library opens as a picker for where the patch goes (see LibraryDrawer::beginSave).
+    std::function<void()> onSave;
+
+    // Patch -/+ and Bank -/+ (also the arrow keys): Peak banks A-D, then My Banks, as one list.
+    void stepPatch (int delta);
+    void stepBank (int delta);
+
+    void showMessage (const juce::String&);
 
     // Panel area in reference-photo pixels, including the wooden end cheeks.
     static juce::Rectangle<float> designBounds();
@@ -70,12 +79,11 @@ private:
     void press (Control&);
     void openMenu (const juce::String& name, const PanelElement& from);
     void stepLastTouched (int delta);
-    void selectSlotInBank (int slot); // the patch encoder
+    void goTo (int bank, int index);
 
     bool animateHold = false;                          // the Hold button: Animate presses latch
     const peak::ParamDef* animatePressed = nullptr;    // released on mouse up unless Hold is on
     void movePage (int delta);
-    void showMessage (const juce::String&);
 
     void drawBackground (juce::Graphics&) const;
     void drawKnob (juce::Graphics&, const Control&) const;
@@ -90,11 +98,23 @@ private:
     int modEnvSelect = 0;
     juce::String openMenuName, message;
 
+    // The screen shows a touched parameter for a moment, then fades back to the patch.
+    void timerCallback() override;
+    float parameterAlpha() const;
+    mutable juce::Rectangle<float> starArea, nameArea; // on the screen's patch view, in design coordinates
+    void toggleFavourite();
+    void showHelp();
+    static juce::Rectangle<float> helpButtonArea();
+    static juce::Path peakLogo (float right, float top, float h);
+    void renamePatch(); // double-click on the name: rename, then overwrite or save elsewhere
+    const peak::ParamDef* shownParam = nullptr;
+    int shownValue = -1;
+    double shownSince = 0.0; // Time::getMillisecondCounterHiRes
+
     Control* dragging = nullptr;
     const peak::ParamDef* dragParam = nullptr;
     int dragStartValue = 0;
     float dragStartY = 0;
-    int patchStepsApplied = 0; // patch encoder: slots moved so far in this drag
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FrontPanel)
 };

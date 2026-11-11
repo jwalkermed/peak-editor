@@ -77,5 +77,6 @@ private:
 
     std::optional<peak::Patch> projectPatch;
 
+    JUCE_DECLARE_WEAK_REFERENCEABLE (PeakEditorProcessor)
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PeakEditorProcessor)
 };

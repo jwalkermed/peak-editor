@@ -21,6 +21,7 @@ public:
 
     PeakConnection& getConnection() { return *connection; }
     PatchLibrary& getLibrary() { return *library; }
+    const PatchLibrary& getLibrary() const { return *library; }
 
     const peak::Patch& getPatch() const noexcept { return patch; }
     int get (const peak::ParamDef&) const;
@@ -41,12 +42,21 @@ public:
     // Revert: drops every edit, back to the patch as loaded, and sends it to the Peak.
     bool revert();
     bool isModified() const { return patch.body() != reference.body(); }
+    const peak::Patch& getReference() const noexcept { return reference; } // the patch as loaded
+    // The library row the patch was loaded from ("l:<id>"), if the Library loaded it; cleared by loadPatch.
+    void setLoadedFrom (const juce::String& key) { loadedFrom = key; }
+    const juce::String& getLoadedFrom() const noexcept { return loadedFrom; }
+    // Renames the editor's patch and sends it to the Peak's edit buffer (nothing is saved).
+    void rename (const juce::String& newName);
     // A parameter's value in the patch as it was loaded (Revert / Restore go back to it).
     int getStored (const peak::ParamDef& def) const { return def.isStored() ? reference.get (def) : get (def); }
 
     // Overwrites a memory slot on the Peak with the editor's patch. Callers confirm
     // with the user and back up the bank first (see LibraryPanel).
     bool writeToSlot (peak::Patch::Location);
+    // The editor's sound has been saved elsewhere (e.g. by Save all changes): it is the new
+    // "as loaded" patch, at `where` if that is a Peak slot.
+    void markSaved (std::optional<peak::Patch::Location> where, const juce::String& newSource);
     // Where the loaded patch came from on the Peak, if anywhere: the default Save target,
     // and the slot Patch -/+ step from.
     std::optional<peak::Patch::Location> getOriginalLocation() const { return originalLocation; }
@@ -54,6 +64,8 @@ public:
     // Selects a slot on the Peak (Program Change) and loads its sound from the library's
     // copy of Peak memory; if that bank hasn't been read, only the location is shown.
     bool selectPeakSlot (peak::Patch::Location);
+    // Asks the Peak for its current sound (and its settings); the replies load as they arrive.
+    bool requestFromPeak();
     // Patch -/+: the next/previous slot, across banks (D127 wraps to A000).
     bool stepPeakSlot (int delta);
 
@@ -93,6 +105,8 @@ private:
             connection->sendSysex (settings->bytes());
     } };
     std::optional<peak::Patch::Location> originalLocation;
+    std::optional<peak::Patch::Location> awaitedSlot;
+    juce::String loadedFrom; // a slot asked for because its bank hadn't been read
     bool comparing = false;
     std::vector<int> unstoredValues; // parameters the dump doesn't hold (e.g. Animate Hold)
     std::map<int, int> pendingSends; // param index -> latest value

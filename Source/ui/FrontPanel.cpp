@@ -168,7 +168,9 @@ FrontPanel::FrontPanel (PeakModel& m) : model (m)
 {
     // The editor has no page or value controls: the screen takes their place.
     static const juce::StringArray replacedByScreen { "soft1", "soft2", "soft3", "page_prev", "page_next", "page_select",
-                                                      "data_encoder", "value_down", "value_up", "value_label", "menu_patch" };
+                                                      "data_encoder", "value_down", "value_up", "value_label", "menu_patch",
+                                                      "master_volume", "title_master", // the Peak has no MIDI master volume
+                                                      "patch_encoder" };                // Patch -/+ and Bank -/+ (and the arrow keys) instead
     for (const auto& e : PanelLayout::get().elements)
     {
         if (replacedByScreen.contains (e.id))
@@ -184,16 +186,11 @@ FrontPanel::FrontPanel (PeakModel& m) : model (m)
             screen.y1 = 470.0f;
             c.e = &screen;
         }
-        else if (std::strcmp (e.id, "patch_encoder") == 0)
-        {
-            auto& encoder = changedElements.emplace_back (e);
-            encoder.y = 290.0f; // up to make room for Bank -/+ below Patch -/+
-            c.e = &encoder;
-        }
         else if (std::strcmp (e.id, "patch_down") == 0 || std::strcmp (e.id, "patch_up") == 0 || std::strcmp (e.id, "patch_pm_label") == 0)
         {
+            // Up where the patch knob was: the buttons' tops level with the screen's.
             auto& moved = changedElements.emplace_back (e);
-            moved.y -= 63.0f;
+            moved.y -= 187.0f;
             c.e = &moved;
         }
         else if (juce::String (e.bind).startsWith ("menu:") && e.type == PanelElement::button)
@@ -203,6 +200,12 @@ FrontPanel::FrontPanel (PeakModel& m) : model (m)
             moved.x -= 107.6f;
             c.e = &moved;
         }
+        else if (juce::String (e.id).startsWith ("anim") || std::strcmp (e.id, "title_animate") == 0)
+        {
+            auto& moved = changedElements.emplace_back (e);
+            moved.y -= 193.6f; // up into Master's place
+            c.e = &moved;
+        }
         else if (std::strcmp (e.id, "audition") == 0)
         {
             auto& revert = changedElements.emplace_back (e);
@@ -210,7 +213,7 @@ FrontPanel::FrontPanel (PeakModel& m) : model (m)
             revert.bind = "action:revert";
             c.e = &revert;
         }
-        const juce::String bind (e.bind);
+        const juce::String bind (c.e->bind); // after any override above
 
         if (bind.startsWith ("menu:"))
             c.menu = bind.fromFirstOccurrenceOf ("menu:", false, false);
@@ -253,9 +256,9 @@ FrontPanel::FrontPanel (PeakModel& m) : model (m)
     }
 
     // Bank -/+ below Patch -/+, where Patch -/+ sat on the hardware.
-    for (const auto& added : { PanelElement { PanelElement::button, "bank_down", 251.9f, 438.0f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_down", 0, false, "dark" },
-                               PanelElement { PanelElement::button, "bank_up", 336.3f, 438.1f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_up", 0, false, "dark" },
-                               PanelElement { PanelElement::text, "bank_pm_label", 290.7f, 471.4f, 0.0f, 0.0f, 12.0f, 0.0f, "–      Bank      +", "", 0, false, "centre" } })
+    for (const auto& added : { PanelElement { PanelElement::button, "bank_down", 251.9f, 314.0f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_down", 0, false, "dark" },
+                               PanelElement { PanelElement::button, "bank_up", 336.3f, 314.1f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_up", 0, false, "dark" },
+                               PanelElement { PanelElement::text, "bank_pm_label", 290.7f, 347.4f, 0.0f, 0.0f, 12.0f, 0.0f, "–      Bank      +", "", 0, false, "centre" } })
     {
         Control c;
         c.e = &changedElements.emplace_back (added);
@@ -298,6 +301,36 @@ const peak::ParamDef* FrontPanel::resolve (const Control& c) const
 void FrontPanel::changeListenerCallback (juce::ChangeBroadcaster*)
 {
     message.clear();
+    const auto* p = model.getLastTouched();
+    if (p == nullptr)
+        shownParam = nullptr; // a new patch: show it at once
+    else if (p != shownParam || model.get (*p) != shownValue)
+    {
+        shownParam = p;
+        shownValue = model.get (*p);
+        shownSince = juce::Time::getMillisecondCounterHiRes();
+        startTimerHz (30);
+    }
+    repaint();
+}
+
+constexpr double parameterHoldMs = 1500.0, parameterFadeMs = 600.0;
+
+float FrontPanel::parameterAlpha() const
+{
+    if (shownParam == nullptr)
+        return 0.0f;
+    const auto age = juce::Time::getMillisecondCounterHiRes() - shownSince;
+    return (float) juce::jlimit (0.0, 1.0, 1.0 - (age - parameterHoldMs) / parameterFadeMs);
+}
+
+void FrontPanel::timerCallback()
+{
+    if (parameterAlpha() <= 0.0f)
+    {
+        stopTimer();
+        shownParam = nullptr;
+    }
     repaint();
 }
 
@@ -362,6 +395,10 @@ void FrontPanel::setParam (const peak::ParamDef& p, int value)
 
 void FrontPanel::mouseDown (const juce::MouseEvent& ev)
 {
+    if (starArea.contains (toDesign (ev.position)) && parameterAlpha() <= 0.0f && message.isEmpty())
+        return toggleFavourite();
+    if (helpButtonArea().contains (toDesign (ev.position)))
+        return showHelp();
     dragging = controlAt (toDesign (ev.position));
     dragParam = nullptr;
     if (dragging == nullptr)
@@ -392,13 +429,6 @@ void FrontPanel::mouseDown (const juce::MouseEvent& ev)
     {
         // The data encoder edits whatever the display is showing, as on the hardware.
         dragParam = dragging->action == "data_encoder" ? model.getLastTouched() : resolve (*dragging);
-        if (dragging->action == "patch_encoder")
-        {
-            dragStartY = ev.position.y;
-            dragStartValue = model.getOriginalLocation().value_or (peak::Patch::Location {}).slot;
-            patchStepsApplied = 0;
-            return;
-        }
         if (dragParam == nullptr)
         {
             if (dragging->action.isNotEmpty() && dragging->action != "data_encoder")
@@ -419,18 +449,6 @@ void FrontPanel::mouseDown (const juce::MouseEvent& ev)
 
 void FrontPanel::mouseDrag (const juce::MouseEvent& ev)
 {
-    // Patch encoder: one patch per 3 px of vertical drag, from 000 to 127 of the current bank.
-    if (dragging != nullptr && dragging->action == "patch_encoder")
-    {
-        const auto slot = juce::jlimit (0, 127, dragStartValue + juce::roundToInt ((dragStartY - ev.position.y) / 3.0f));
-        if (slot != patchStepsApplied + dragStartValue)
-        {
-            selectSlotInBank (slot);
-            patchStepsApplied = slot - dragStartValue;
-        }
-        return;
-    }
-
     if (dragging == nullptr || dragParam == nullptr)
         return;
 
@@ -463,6 +481,8 @@ void FrontPanel::mouseUp (const juce::MouseEvent&)
 
 void FrontPanel::mouseDoubleClick (const juce::MouseEvent& ev)
 {
+    if (nameArea.contains (toDesign (ev.position)) && parameterAlpha() <= 0.0f && message.isEmpty() && model.hasPatch())
+        return renamePatch();
     if (auto* c = controlAt (toDesign (ev.position)); c != nullptr && (c->e->type == PanelElement::knob || c->e->type == PanelElement::fader))
         if (const auto* p = resolve (*c))
             setParam (*p, DrawerStyle::initValue (*p));
@@ -473,13 +493,6 @@ void FrontPanel::mouseWheelMove (const juce::MouseEvent& ev, const juce::MouseWh
     auto* c = controlAt (toDesign (ev.position));
     if (c == nullptr || (c->e->type != PanelElement::knob && c->e->type != PanelElement::fader))
         return;
-
-    if (c->action == "patch_encoder")
-    {
-        const auto slot = model.getOriginalLocation().value_or (peak::Patch::Location {}).slot;
-        selectSlotInBank (juce::jlimit (0, 127, slot + (wheel.deltaY > 0 ? 1 : -1)));
-        return;
-    }
 
     if (const auto* p = c->action == "data_encoder" ? model.getLastTouched() : resolve (*c))
     {
@@ -557,17 +570,16 @@ void FrontPanel::press (Control& c)
             showMessage ("No MIDI output to the Peak");
     }
     else if (c.action == "bank_up" || c.action == "bank_down")
+        stepBank (c.action == "bank_up" ? 1 : -1);
+    else if (c.action == "save")
     {
-        // The same patch number in the next/previous bank (D wraps to A).
-        const auto where = model.getOriginalLocation().value_or (peak::Patch::Location {});
-        if (! model.selectPeakSlot ({ (where.bank + (c.action == "bank_up" ? 1 : 3)) % 4, where.slot }))
-            showMessage ("No MIDI output to the Peak");
+        if (! model.hasPatch())
+            showMessage ("No patch to save");
+        else if (onSave)
+            onSave();
     }
     else if (c.action == "patch_up" || c.action == "patch_down")
-    {
-        if (! model.stepPeakSlot (c.action == "patch_up" ? 1 : -1))
-            showMessage ("No MIDI output to the Peak");
-    }
+        stepPatch (c.action == "patch_up" ? 1 : -1);
     else if (c.action == "initialise")
     {
         // As the Peak's own Initialise: the Init Patch becomes the current sound (nothing saved).
@@ -578,11 +590,270 @@ void FrontPanel::press (Control& c)
         showMessage ("Not available yet");
 }
 
-void FrontPanel::selectSlotInBank (int slot)
+juce::Rectangle<float> FrontPanel::helpButtonArea()
 {
+    const auto& p = PanelLayout::get().panel;
+    return { p[0] + 18.0f, p[1] + 14.0f, 36.0f, 36.0f };
+}
+
+// PEAK as on the hardware, right-aligned at `right`, letters `h` high from `top`. Traced from
+// the reference photo (docs/reference/peak-front-panel.png, measured at 6x: letters span
+// x 65-1242, y 56-266 of that enlargement).
+juce::Path FrontPanel::peakLogo (float right, float top, float h)
+{
+    juce::Path logo;
+    logo.setUsingNonZeroWinding (false); // the A's counter is a hole
+    const auto poly = [&] (std::initializer_list<juce::Point<float>> points) {
+        auto it = points.begin();
+        logo.startNewSubPath (*it);
+        for (++it; it != points.end(); ++it)
+            logo.lineTo (*it);
+        logo.closeSubPath();
+    };
+
+    // P: a slanted top bar into a round bowl; the counter is a slot open to the left; the stem hangs below.
+    logo.startNewSubPath (106, 56);
+    logo.lineTo (259, 56);
+    logo.addCentredArc (259, 134, 78, 78, 0.0f, 0.0f, juce::MathConstants<float>::pi);
+    logo.lineTo (128, 212);
+    logo.lineTo (128, 262);
+    logo.lineTo (65, 262);
+    logo.lineTo (65, 155);
+    logo.lineTo (269, 155);
+    logo.lineTo (269, 113);
+    logo.lineTo (64, 113);
+    logo.closeSubPath();
+
+    // E: an upright with top and bottom bars; the middle bar stands apart. Bar ends are slanted.
+    poly ({ { 368, 56 }, { 610, 56 }, { 566, 113 }, { 435, 113 }, { 435, 213 }, { 609, 213 }, { 571, 262 }, { 368, 262 } });
+    poly ({ { 464, 140 }, { 596, 140 }, { 559, 190 }, { 464, 190 } });
+
+    // A: a flat-topped triangle with a triangular counter.
+    poly ({ { 752, 56 }, { 800, 56 }, { 947, 266 }, { 602, 266 } });
+    poly ({ { 776, 126 }, { 838, 212 }, { 714, 212 } });
+
+    // K: an upright, and a chevron standing apart from it.
+    poly ({ { 967, 56 }, { 1033, 56 }, { 1033, 266 }, { 967, 266 } });
+    poly ({ { 1152, 56 }, { 1236, 56 }, { 1112, 160 }, { 1242, 266 }, { 1146, 266 }, { 1057, 190 }, { 1057, 134 } });
+
+    const auto scale = h / 210.0f;
+    logo.applyTransform (juce::AffineTransform::translation (-65.0f, -56.0f).scaled (scale).translated (right - 1177.0f * scale, top));
+    return logo;
+}
+
+void FrontPanel::showHelp()
+{
+    auto text = std::make_unique<juce::TextEditor>();
+    text->setMultiLine (true);
+    text->setReadOnly (true);
+    text->setCaretVisible (false);
+    text->setScrollbarsShown (true);
+    text->setFont (juce::FontOptions (14.0f));
+    text->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0xff1e1f22));
+    text->setColour (juce::TextEditor::textColourId, juce::Colour (0xffe6e6e6));
+    text->setColour (juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
+    text->setText (juce::String::fromUTF8 (
+        "FRONT PANEL HELP\n\n"
+        "Knobs and sliders\n"
+        "\xe2\x80\xa2 Drag up/down (or scroll) to change a value. Changes go straight to the Peak.\n"
+        "\xe2\x80\xa2 Double-click a knob or slider to reset it to its Init Patch value.\n"
+        "\xe2\x80\xa2 The screen shows the parameter, its value and (in brackets) the saved value, then fades back to the patch.\n"
+        "\xe2\x80\xa2 The LEDs and the small buttons under them choose waves, ranges and sources. Click an LED to pick it directly.\n"
+        "\xe2\x80\xa2 Turning a knob on the Peak moves it here too.\n\n"
+        "The screen\n"
+        "\xe2\x80\xa2 Top left: the patch's slot (e.g. B063). Top right: its category. Middle: its name.\n"
+        "\xe2\x80\xa2 Click the star to add the patch to (or remove it from) Favourites.\n"
+        "\xe2\x80\xa2 Double-click the name to rename the patch, then overwrite it or save it somewhere new.\n"
+        "\xe2\x80\xa2 \"Edited\" (amber) means the sound differs from the saved patch.\n\n"
+        "Patch\n"
+        "\xe2\x80\xa2 Patch \xe2\x80\x93/+ (or the Up/Down arrow keys) steps through patches: Peak banks A\xe2\x80\x93" "D, then My Banks.\n"
+        "\xe2\x80\xa2 Bank \xe2\x80\x93/+ (or the Left/Right arrow keys) moves to the same position in the previous/next bank.\n"
+        "\xe2\x80\xa2 Save opens the Library to choose where the patch goes; click a slot to hear what's there, then Confirm.\n"
+        "\xe2\x80\xa2 Compare switches between your edit and the saved patch. Revert throws your edits away.\n"
+        "\xe2\x80\xa2 Initialise loads the Init Patch (nothing is saved until you Save).\n\n"
+        "Animate\n"
+        "\xe2\x80\xa2 Animate 1 and 2 are on while you hold the mouse down.\n"
+        "\xe2\x80\xa2 Turn Hold on first to latch them; turn Hold off to release.\n"
+        "\xe2\x80\xa2 What they do is set in the Mod Matrix (sources Animate 1/2) and their timing in the Animate menu.\n\n"
+        "Menu buttons\n"
+        "\xe2\x80\xa2 Osc, Env, LFO, Arp/Clock, Animate, Voice and FX open the settings that have no knob on the panel.\n"
+        "\xe2\x80\xa2 Mod opens the Mod Matrix tab, Settings the Settings tab and Library the Library tab.\n"
+        "\xe2\x80\xa2 The small arrows (\xe2\x96\xb6) by the Oscillator, VCA and Filter sections open their menus too.\n\n"
+        "Playing\n"
+        "\xe2\x80\xa2 The keyboard under the panel plays the Peak; your computer keys play it too while the keyboard has focus.\n"
+        "\xe2\x80\xa2 A controller keyboard can be chosen in the MIDI settings and is passed through to the Peak.\n\n"
+        "Connection\n"
+        "\xe2\x80\xa2 When the editor opens it asks the Peak for its current sound and settings.\n"
+        "\xe2\x80\xa2 The Peak's MIDI channel and CC/NRPN setting must allow receiving (Settings > MIDI)."));
+    text->setSize (560, 520);
+    const auto area = helpButtonArea().transformedBy (designToScreen()).toNearestInt();
+    juce::CallOutBox::launchAsynchronously (std::move (text), localAreaToGlobal (area), nullptr);
+}
+
+void FrontPanel::toggleFavourite()
+{
+    if (! model.hasPatch())
+        return;
+    auto& library = model.getLibrary();
+    library.checkpoint();
+    const auto home = DrawerStyle::loadedPatchKey (model);
+    if (const auto* e = home.startsWith ("l:") ? library.find (home.substring (2)) : nullptr)
+        library.setFavourite (e->id, ! e->favourite);
+    else
+        library.setPeakFavourite (model.getReference(), ! library.isPeakFavourite (model.getReference()));
+    repaint();
+}
+
+void FrontPanel::renamePatch()
+{
+    const auto oldName = juce::String (model.getPatch().name());
+    auto* w = new juce::AlertWindow ("Rename patch", "A new name (up to 16 characters):", juce::MessageBoxIconType::NoIcon, this);
+    w->addTextEditor ("name", oldName);
+    if (auto* field = w->getTextEditor ("name"))
+        field->setInputRestrictions (16);
+    w->addButton ("Rename", 1, juce::KeyPress (juce::KeyPress::returnKey));
+    w->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
+    w->enterModalState (true, juce::ModalCallbackFunction::create ([this, w, oldName] (int result) {
+        const auto newName = w->getTextEditorContents ("name").trim();
+        if (result != 1 || newName.isEmpty() || newName == oldName)
+            return;
+        model.rename (newName);
+
+        // Then: overwrite where it came from, or save somewhere else (the Save picker).
+        const auto home = DrawerStyle::loadedPatchKey (model);
+        const peak::Patch::Location slot { home.fromFirstOccurrenceOf (":", false, false).upToFirstOccurrenceOf (":", false, false).getIntValue(),
+                                           home.fromLastOccurrenceOf (":", false, false).getIntValue() };
+        juce::String homeName;
+        if (home.startsWith ("p:"))
+            homeName = juce::String (slot.name());
+        else if (const auto* e = home.startsWith ("l:") ? model.getLibrary().find (home.substring (2)) : nullptr)
+            homeName = e->bank;
+        auto options = juce::MessageBoxOptions()
+                           .withIconType (juce::MessageBoxIconType::QuestionIcon)
+                           .withTitle ("Save \"" + newName + "\"")
+                           .withMessage (homeName.isNotEmpty() ? "Overwrite the patch in " + homeName + " with the renamed one, or save it to a new destination?"
+                                                               : juce::String ("Save the renamed patch to a destination?"))
+                           .withAssociatedComponent (this);
+        if (homeName.isNotEmpty())
+            options = options.withButton (juce::MessageBoxButtonOptions ("Overwrite " + homeName, 1).withRole (juce::MessageBoxButtonRole::destroy));
+        options = options.withButton (juce::MessageBoxButtonOptions (juce::String::fromUTF8 ("Save to a new destination\xe2\x80\xa6"), 2)
+                                          .withRole (juce::MessageBoxButtonRole::normal))
+                      .withButton (juce::MessageBoxButtonOptions ("Not now", 0).withRole (juce::MessageBoxButtonRole::cancel));
+        juce::AlertWindow::showAsync (options, [this, home, slot] (int choice) {
+            const bool overwrite = choice == 1, elsewhere = choice == 2;
+            if (overwrite && home.startsWith ("p:"))
+            {
+                bool ok = false;
+                showMessage (SlotWriter::write (model, slot, ok));
+            }
+            else if (overwrite)
+            {
+                auto& library = model.getLibrary();
+                library.checkpoint();
+                library.replacePatch (home.substring (2), model.getPatch());
+                model.markSaved (std::nullopt, "My Banks: " + juce::String (model.getPatch().name()));
+                model.setLoadedFrom (home);
+                showMessage ("Saved in My Banks");
+            }
+            else if (elsewhere && onSave)
+                onSave();
+            // "Not now": the new name stays as an unsaved edit (Revert undoes it).
+        });
+    }), true);
+}
+
+//==============================================================================
+// Patch and bank stepping: Peak banks A-D first, then My Banks in order, as one list.
+namespace
+{
+struct Place
+{
+    int bank = 0;  // 0-3: Peak A-D; 4+: My Banks (getBanks() index + 4)
+    int index = 0; // slot, or position in the My Banks bank
+};
+}
+
+static std::vector<const PatchLibrary::Entry*> entriesOf (const PatchLibrary& library, int bank)
+{
+    return bank >= 4 && bank - 4 < library.getBanks().size() ? library.entriesIn (library.getBanks()[bank - 4])
+                                                               : std::vector<const PatchLibrary::Entry*> {};
+}
+
+static int bankSize (const PatchLibrary& library, int bank)
+{
+    return bank < 4 ? 128 : (int) entriesOf (library, bank).size();
+}
+
+static Place currentPlace (const PeakModel& model)
+{
+    const auto& library = model.getLibrary();
+    // Loaded from My Banks (and still that sound): its bank and position.
+    if (const auto& from = model.getLoadedFrom(); from.startsWith ("l:"))
+        if (const auto* e = library.find (from.substring (2)); e != nullptr && e->patch.sameSound (model.getReference()))
+        {
+            const auto bank = library.getBanks().indexOf (e->bank);
+            const auto list = entriesOf (library, bank + 4);
+            for (int i = 0; i < (int) list.size(); ++i)
+                if (list[(size_t) i] == e)
+                    return { bank + 4, i };
+        }
     const auto where = model.getOriginalLocation().value_or (peak::Patch::Location {});
-    if (slot != where.slot && ! model.selectPeakSlot ({ where.bank, slot }))
+    return { where.bank, where.slot };
+}
+
+void FrontPanel::goTo (int bank, int index)
+{
+    if (bank < 4)
+    {
+        if (! model.selectPeakSlot ({ bank, index }))
+            showMessage ("No MIDI output to the Peak");
+        return;
+    }
+    const auto list = entriesOf (model.getLibrary(), bank);
+    if (! juce::isPositiveAndBelow (index, (int) list.size()))
+        return;
+    const auto& e = *list[(size_t) index];
+    if (! model.audition (e.patch, "My Banks: " + juce::String (e.patch.name())))
         showMessage ("No MIDI output to the Peak");
+    model.setLoadedFrom ("l:" + e.id);
+}
+
+void FrontPanel::stepPatch (int delta)
+{
+    // Through every patch: A000 ... D127, then each My Banks bank in turn, wrapping round.
+    const auto& library = model.getLibrary();
+    const int banks = 4 + library.getBanks().size();
+    auto [bank, index] = currentPlace (model);
+    for (int guard = 0; guard < 4096; ++guard)
+    {
+        index += delta;
+        while (index >= bankSize (library, bank))
+        {
+            bank = (bank + 1) % banks;
+            index = 0;
+        }
+        while (index < 0)
+        {
+            bank = (bank - 1 + banks) % banks;
+            index = bankSize (library, bank) - 1;
+        }
+        if (bankSize (library, bank) > 0)
+            return goTo (bank, index);
+    }
+}
+
+void FrontPanel::stepBank (int delta)
+{
+    // To the same position in the next bank with patches in it (or its last patch).
+    const auto& library = model.getLibrary();
+    const int banks = 4 + library.getBanks().size();
+    const auto [current, index] = currentPlace (model);
+    for (int step = 1; step < banks; ++step)
+    {
+        const auto bank = ((current + delta * step) % banks + banks) % banks;
+        if (const auto size = bankSize (library, bank); size > 0)
+            return goTo (bank, juce::jmin (index, size - 1));
+    }
 }
 
 void FrontPanel::stepLastTouched (int delta)
@@ -684,15 +955,21 @@ void FrontPanel::drawBackground (juce::Graphics& g) const
 
     g.setColour (colours::rule);
     for (const auto& r : layout.rules)
-        g.fillRect (juce::Rectangle<float>::leftTopRightBottom (r.x0, r.y - 3.0f, r.x1, r.y + 3.0f));
+        if (! (r.x0 < 100.0f && r.y > 200.0f && r.y < 300.0f)) // Animate's rule: it now uses Master's, at the top
+            g.fillRect (juce::Rectangle<float>::leftTopRightBottom (r.x0, r.y - 3.0f, r.x1, r.y + 3.0f));
 
-    // Logos (drawn as type; the real artwork is not reproduced).
+    // Logos: "novation" as type, with the help button where the square mark is; PEAK traced
+    // from the panel.
     g.setColour (colours::text);
     g.setFont (font (44.0f, true));
     g.drawText ("novation", juce::Rectangle<float> (face.getX() + 62, face.getY() + 6, 300, 52), juce::Justification::centredLeft);
-    g.drawRoundedRectangle (juce::Rectangle<float> (face.getX() + 18, face.getY() + 14, 36, 36), 6.0f, 3.0f);
-    g.setFont (font (50.0f, true).withExtraKerningFactor (0.08f));
-    g.drawText ("PEAK", juce::Rectangle<float> (face.getRight() - 260, face.getY() + 6, 252, 56), juce::Justification::centredRight);
+    {
+        const auto help = helpButtonArea();
+        g.drawEllipse (help.reduced (1.5f), 3.0f);
+        g.setFont (font (26.0f, true));
+        g.drawText ("?", help.translated (0.0f, 1.0f), juce::Justification::centred);
+    }
+    g.fillPath (peakLogo (face.getRight() - 22.0f, face.getY() + 21.0f, 35.0f)); // where it sits in the photo
 
     for (const auto& c : controls)
     {
@@ -794,8 +1071,6 @@ void FrontPanel::drawKnob (juce::Graphics& g, const Control& c) const
 
     const auto* p = resolve (c);
     auto a = -sweep + 2.0f * sweep * (p != nullptr ? normalised (*p, model.get (*p)) : 0.5f);
-    if (c.action == "patch_encoder") // fully left = patch 000, fully right = 127, in the current bank
-        a = -sweep + 2.0f * sweep * (float) model.getOriginalLocation().value_or (peak::Patch::Location {}).slot / 127.0f;
     g.setColour (juce::Colour (0xff111111));
     g.drawLine (juce::Line<float> (centre.getPointOnCircumference (capR * 0.15f, a), centre.getPointOnCircumference (capR * 0.92f, a)), 3.2f * s);
 
@@ -925,61 +1200,99 @@ void FrontPanel::drawDisplay (juce::Graphics& g, const PanelElement& e) const
     g.fillRoundedRectangle (r, 4.0f);
 
     const auto lineH = r.getHeight() / 4.0f;
-    // About 22 characters fit across, as on the Peak's screen.
-    const auto textH = juce::jmin (lineH * 0.98f, (r.getWidth() - 16.0f) / 22.0f / 0.6f);
-    auto line = [&] (int i, const juce::String& left, const juce::String& right, bool highlight) {
-        const auto row = juce::Rectangle<float> (r.getX() + 8, r.getY() + 2 + lineH * (float) i, r.getWidth() - 16, lineH);
-        if (highlight)
-        {
-            g.setColour (colours::oled.withAlpha (0.18f));
-            g.fillRect (row);
-        }
-        g.setColour (colours::oled);
-        g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), textH, juce::Font::plain)));
-        g.drawText (left, row, juce::Justification::centredLeft);
-        g.drawText (right, row, juce::Justification::centredRight);
+    const auto inner = r.reduced (14.0f, 10.0f);
+    const auto mono = [] (float h) { return juce::Font (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), h, juce::Font::plain)); };
+    // Text as large as `height`, shrunk to fit `width` (monospaced: about 0.6 em per character).
+    const auto fitted = [&] (const juce::String& text, float height, float width) {
+        return mono (juce::jmin (height, width / juce::jmax (1, text.length()) / 0.6f));
     };
+    const auto smallH = r.getHeight() * 0.13f;
 
     if (message.isNotEmpty())
     {
-        line (0, "INFO", {}, false);
-        line (1, message.substring (0, 22), {}, false);
-        line (2, message.substring (22, 44), {}, false);
+        const auto textH = juce::jmin (lineH * 0.98f, (r.getWidth() - 16.0f) / 22.0f / 0.6f);
+        g.setColour (colours::oled);
+        g.setFont (mono (textH));
+        for (int i = 0; i < 3; ++i)
+            g.drawText (i == 0 ? juce::String ("INFO") : message.substring ((i - 1) * 22, i * 22),
+                        juce::Rectangle<float> (r.getX() + 8, r.getY() + 2 + lineH * (float) i, r.getWidth() - 16, lineH), juce::Justification::centredLeft);
         return;
     }
 
-    const auto* p = model.getLastTouched();
-    if (p == nullptr)
+    const auto paramAlpha = parameterAlpha();
+
+    // The patch: number top left, category top right, the name large in the middle.
+    if (paramAlpha < 1.0f)
     {
-        // The current patch: slot, name, category, and whether it has been edited.
-        const auto where = model.getOriginalLocation();
-        line (0, "PATCH", where ? juce::String (where->name()) : juce::String(), false);
+        g.setColour (colours::oled.withMultipliedAlpha (1.0f - paramAlpha));
+        g.setFont (mono (smallH));
+        const auto top = inner.withHeight (smallH * 1.2f);
+        if (const auto where = model.getOriginalLocation())
+            g.drawText (juce::String (where->name()), top, juce::Justification::centredLeft);
         if (! model.hasPatch())
         {
-            line (1, "No patch loaded", {}, false);
-            line (2, "Backup page > Go", {}, false);
-            return;
+            g.setFont (fitted ("Backup page > Go", r.getHeight() * 0.16f, inner.getWidth()));
+            g.drawText ("No patch loaded", inner.withTrimmedBottom (inner.getHeight() * 0.25f), juce::Justification::centred);
+            g.drawText ("Backup page > Go", inner.withTrimmedTop (inner.getHeight() * 0.35f), juce::Justification::centred);
         }
-        const auto& category = *peak::findParam ("patch_category");
-        line (1, juce::String (model.getPatch().name()), {}, false);
-        line (2, "Category", juce::String (peak::formatValue (category, model.get (category))), false);
-        line (3, model.isComparing() ? "Comparing" : model.isModified() ? "Edited" : "As saved", {}, false);
-        return;
+        else
+        {
+            const auto& category = *peak::findParam ("patch_category");
+            g.drawText (juce::String (peak::formatValue (category, model.get (category))), top, juce::Justification::centredRight);
+
+            // The name, large and centred, with its favourite star; "Edited" below it in amber.
+            const auto edited = model.isModified() && ! model.isComparing();
+            const auto fade = 1.0f - paramAlpha;
+            const auto name = juce::String (model.getPatch().name()).trim();
+            const auto starW = r.getHeight() * 0.16f;
+            const auto nameFont = fitted (name, r.getHeight() * 0.30f, inner.getWidth() - 2.0f * (starW + 10.0f));
+            const auto nameW = juce::GlyphArrangement::getStringWidth (nameFont, name);
+            nameArea = inner.withSizeKeepingCentre (nameW, nameFont.getHeight() * 1.3f);
+            g.setColour (colours::oled.withMultipliedAlpha (fade));
+            g.setFont (nameFont);
+            g.drawText (name, nameArea, juce::Justification::centred);
+
+            const auto home = DrawerStyle::loadedPatchKey (model);
+            const auto& library = model.getLibrary();
+            const auto* entry = home.startsWith ("l:") ? library.find (home.substring (2)) : nullptr;
+            const bool favourite = entry != nullptr ? entry->favourite : library.isPeakFavourite (model.getReference());
+            starArea = juce::Rectangle<float> (starW * 1.4f, nameArea.getHeight()).withRightX (nameArea.getX() - 6.0f).withY (nameArea.getY());
+            g.setColour ((favourite ? DrawerStyle::star : colours::oled.withAlpha (0.35f)).withMultipliedAlpha (fade));
+            g.setFont (juce::FontOptions (starW * 1.25f));
+            g.drawText (juce::String::fromUTF8 (favourite ? "\xe2\x98\x85" : "\xe2\x98\x86"), starArea, juce::Justification::centred);
+
+            if (model.isComparing() || edited)
+            {
+                g.setColour ((edited ? DrawerStyle::accent : colours::oled).withMultipliedAlpha (fade));
+                g.setFont (mono (smallH));
+                g.drawText (model.isComparing() ? "Comparing" : "Edited", inner.withTrimmedTop (inner.getHeight() - smallH * 1.2f), juce::Justification::centred);
+            }
+        }
     }
 
-    // Like the Peak: section title, then three parameters with the touched one highlighted.
-    const auto& all = peak::allParams();
-    int first = peak::indexOf (*p);
-    while (first > 0 && std::strcmp (all[(size_t) first - 1].section, p->section) == 0 && peak::indexOf (*p) - first < 1)
-        --first;
-
-    line (0, juce::String (p->section).toUpperCase(), {}, false);
-    for (int i = 0; i < 3; ++i)
+    // A touched parameter: its section, its name, and its value with the saved value in brackets.
+    if (paramAlpha > 0.0f)
     {
-        const auto idx = first + i;
-        if (idx >= (int) all.size() || std::strcmp (all[(size_t) idx].section, p->section) != 0)
-            break;
-        const auto& q = all[(size_t) idx];
-        line (i + 1, q.name, peak::formatValue (q, model.get (q)), &q == p);
+        const auto& p = *shownParam;
+        g.setColour (colours::oled.withMultipliedAlpha (paramAlpha));
+        g.setFont (mono (smallH));
+        g.drawText (juce::String (p.section).toUpperCase(), inner.withHeight (smallH * 1.2f), juce::Justification::centredLeft);
+
+        const auto paramNameArea = inner.withTrimmedTop (inner.getHeight() * 0.18f).withHeight (inner.getHeight() * 0.30f);
+        g.setFont (fitted (p.name, r.getHeight() * 0.19f, inner.getWidth()));
+        g.drawText (p.name, paramNameArea, juce::Justification::centred);
+
+        const auto value = juce::String (peak::formatValue (p, model.get (p)));
+        const auto saved = p.isStored() ? "  (" + juce::String (peak::formatValue (p, model.getStored (p))) + ")" : juce::String();
+        const auto valueArea = inner.withTrimmedTop (inner.getHeight() * 0.50f);
+        auto big = fitted (value + saved, r.getHeight() * 0.30f, inner.getWidth());
+        auto small = mono (big.getHeight() * 0.6f);
+        const auto valueW = juce::GlyphArrangement::getStringWidth (big, value);
+        const auto savedW = juce::GlyphArrangement::getStringWidth (small, saved);
+        auto line = valueArea.withSizeKeepingCentre (valueW + savedW, valueArea.getHeight());
+        g.setFont (big);
+        g.drawText (value, line.removeFromLeft (valueW), juce::Justification::centredLeft);
+        g.setFont (small);
+        g.drawText (saved, line, juce::Justification::centredLeft);
     }
 }

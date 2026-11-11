@@ -264,6 +264,18 @@ void PatchLibrary::setCategory (const juce::String& id, int category)
         }
 }
 
+void PatchLibrary::replacePatch (const juce::String& id, const peak::Patch& patch)
+{
+    for (auto& e : entries)
+        if (e.id == id)
+        {
+            e.patch = patch;
+            e.patch.setLocation (std::nullopt);
+            writeBytes (libraryDir.getChildFile (id + ".syx"), e.patch.toSysex());
+            changed.sendChangeMessage();
+        }
+}
+
 void PatchLibrary::setFavourite (const juce::String& id, bool favourite)
 {
     for (auto& e : entries)
