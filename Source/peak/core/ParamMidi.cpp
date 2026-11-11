@@ -9,6 +9,12 @@ namespace peak
 {
 namespace
 {
+// Animate 1/2 (CC 114/115): on/off in the editor, 127/0 on the wire (verified 2026-11-10).
+bool isAnimate (const ParamDef& p)
+{
+    return p.kind == MidiKind::cc && (p.number == 114 || p.number == 115);
+}
+
 struct Lookup
 {
     std::array<const ParamDef*, 128> byCc {};    // plain CCs and pair MSBs
@@ -52,6 +58,8 @@ std::vector<ShortMessage> encodeParam (const ParamDef& def, int value, int chann
     switch (def.kind)
     {
         case MidiKind::cc:
+            if (isAnimate (def)) // the Peak sends and expects 127 for pressed, 0 for released
+                return { { status, (uint8_t) def.number, (uint8_t) (value != 0 ? 127 : 0) } };
             return { { status, (uint8_t) def.number, (uint8_t) value } };
         case MidiKind::ccPair:
             return { { status, (uint8_t) def.number, (uint8_t) (value >> 1) },
@@ -117,7 +125,7 @@ std::optional<ParamChange> ParamMidiDecoder::feed (int channel, uint8_t status, 
             pendingMsb[data1] = data2; // completed by the LSB, which the Peak always sends next
             return std::nullopt;
         }
-        return ParamChange { p, data2 };
+        return ParamChange { p, isAnimate (*p) ? (data2 >= 64 ? 1 : 0) : data2 };
     }
 
     return std::nullopt;

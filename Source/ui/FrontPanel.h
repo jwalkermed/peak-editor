@@ -71,6 +71,9 @@ private:
     void openMenu (const juce::String& name, const PanelElement& from);
     void stepLastTouched (int delta);
     void selectSlotInBank (int slot); // the patch encoder
+
+    bool animateHold = false;                          // the Hold button: Animate presses latch
+    const peak::ParamDef* animatePressed = nullptr;    // released on mouse up unless Hold is on
     void movePage (int delta);
     void showMessage (const juce::String&);
 

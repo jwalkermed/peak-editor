@@ -49,6 +49,7 @@ const Names enumNames[] {
     { "^lfo[12]_range$", { "Low", "High", "Sync" } },
     { "^lfo\\d_fade_in_out$", { "FadeIn", "FadeOut", "GateIn", "GateOut" } },
     { "^lfo\\d_monotrig$", { "Legato", "Re-Trig" } },
+    { "^(ampenv|modenv\\d)_trigger$", { "Legato", "Retrigger" } }, // Init: Amp Legato, Mod Envs Re-Trig
     { "^filter_slope$", { "12 dB", "24 dB" } },
     { "^filter_shape$", { "LP", "BP", "HP" } },
     { "^filter_env_select$", { "Amp Env", "Mod Env 1" } },
