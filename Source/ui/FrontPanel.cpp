@@ -145,10 +145,12 @@ private:
 
 std::unique_ptr<juce::Component> FrontPanel::createMenuPage (PeakModel& model, const juce::String& name)
 {
+    // The Voice menu leaves out the mixer levels that have their own panel controls.
+    static const juce::StringArray onPanel { "mix_osc1", "mix_osc2", "mix_osc3", "ring_1_2", "noise_level", "vca_gain" };
     std::vector<const peak::ParamDef*> params;
     for (const auto* section : menuSections (name))
         for (const auto& p : peak::allParams())
-            if (std::strcmp (p.section, section) == 0)
+            if (std::strcmp (p.section, section) == 0 && ! (name == "Voice" && onPanel.contains (p.id)))
                 params.push_back (&p);
 
     if (params.empty())
@@ -366,6 +368,26 @@ void FrontPanel::mouseDown (const juce::MouseEvent& ev)
         return;
 
     const auto& e = *dragging->e;
+    if (std::strcmp (e.id, "anim1") == 0 || std::strcmp (e.id, "anim2") == 0)
+    {
+        // Animate is on while pressed. With Hold on, a press latches it and a second press releases it.
+        const auto& p = *peak::findParam (e.id[4] == '1' ? "animate1_hold" : "animate2_hold");
+        const auto on = ! (animateHold && model.get (p) != 0);
+        setParam (p, on ? p.max : p.min);
+        if (on && ! animateHold)
+            animatePressed = &p;
+        return;
+    }
+    if (std::strcmp (e.id, "anim_hold") == 0)
+    {
+        animateHold = ! animateHold;
+        if (! animateHold) // Hold off releases any latched Animate
+            for (const auto* id : { "animate1_hold", "animate2_hold" })
+                if (const auto& p = *peak::findParam (id); model.get (p) != 0)
+                    setParam (p, p.min);
+        repaint();
+        return;
+    }
     if (e.type == PanelElement::knob || e.type == PanelElement::fader)
     {
         // The data encoder edits whatever the display is showing, as on the hardware.
@@ -432,6 +454,9 @@ void FrontPanel::mouseDrag (const juce::MouseEvent& ev)
 
 void FrontPanel::mouseUp (const juce::MouseEvent&)
 {
+    if (animatePressed != nullptr)
+        setParam (*animatePressed, animatePressed->min);
+    animatePressed = nullptr;
     dragging = nullptr;
     dragParam = nullptr;
 }
@@ -794,6 +819,8 @@ void FrontPanel::drawButton (juce::Graphics& g, const Control& c) const
         on = c.menu == openMenuName;
     else if (c.action == "compare")
         on = model.isComparing();
+    else if (std::strcmp (e.id, "anim_hold") == 0)
+        on = animateHold;
     else if (! c.cycle && ! c.alternatives.empty())
         if (const auto* p = resolve (c))
             on = model.get (*p) != 0;

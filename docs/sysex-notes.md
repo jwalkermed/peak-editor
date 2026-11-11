@@ -143,3 +143,7 @@ Read from the Peak's screen after sending values, or fixed by the Init Patch's v
 - **Arp SyncRate (0–18)** runs fastest first: 0 = 32nd T, 3 = 16th (Init), 18 = 8 beats.
 - **Delay SyncRate runs 0–27**, not 0–18 as the chart says. It's the LFO list fastest first, from 32nd T up to 24 beats (7 = 4th T, Init).
 - **WaveMore (4–63)**: the guide's 4-column wavetable grid reads down the columns (5 = Random, 19 = String).
+
+## Animate buttons and MIDI volume (verified 2026-11-10, firmware 2.2)
+- The Peak's Animate 1/2 buttons send **CC 114/115 = 127** when pressed and **0** when released, and the Peak responds to the same. A value of 1 does nothing. Hold sends nothing of its own: while an Animate is held, the release (0) just isn't sent until Hold is released.
+- The Peak ignores **CC 7** (MIDI volume): CC 7 = 0 left it at full volume. Master Volume has no MIDI control.

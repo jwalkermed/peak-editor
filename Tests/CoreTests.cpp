@@ -269,6 +269,12 @@ int main()
         dec.feed (0, 0xB0, 98, 121);
         const auto n = dec.feed (0, 0xB0, 6, 1);
         CHECK (n && n->param == findParam ("arp_on") && n->value == 1);
+        // Animate buttons: the Peak sends 127 pressed, 0 released (capture 2026-11-10), and expects the same.
+        const auto a = dec.feed (0, 0xB0, 114, 127);
+        CHECK (a && a->param == findParam ("animate1_hold") && a->value == 1);
+        const auto pressed = encodeParam (*findParam ("animate2_hold"), 1, 0);
+        CHECK (pressed.size() == 1 && pressed[0][1] == 115 && pressed[0][2] == 127);
+        CHECK (encodeParam (*findParam ("animate2_hold"), 0, 0)[0][2] == 0);
     });
 
     test ("bank dumps carry slot locations; edit-buffer dumps do not", [] {
