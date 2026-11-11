@@ -190,4 +190,7 @@ Stored patches hold **Arp Chance 0** where the same patch as the current sound r
   wait, and with or without the 0x49 message Components' files may end with. Components behaves the same.
   **To keep a wavetable, save it on the Peak:** Osc menu, page 9 "User Waves", select the wavetable, press that
   page's own Save (not the patch Save). Novation's article "Saving User Wavetables to Peak/Summit" describes this.
-- **Not known yet:** the overall polarity (Noisia may be drawn upside down compared to Components).
+- **Saving sends nothing:** pressing that Save sends no MIDI (only the usual NRPN 62:0 when the Osc menu opens),
+  so the editor can't trigger or detect it; the save stays a step on the Peak.
+- **Polarity:** a sawtooth sent as sine parts (-1)^(h+1)/h rises slowly and drops sharply on an oscilloscope, so
+  positive sine parts are drawn upward (as decoded).
