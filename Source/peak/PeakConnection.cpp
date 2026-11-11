@@ -293,7 +293,7 @@ void PeakConnection::handleIncoming (const uint8_t* data, size_t size)
             notify = true;
         }
     }
-    else if (peak::Patch::looksLikePatchDump (data, size) || peak::SettingsDump::isSettingsDump (data, size))
+    else if (peak::Patch::looksLikePatchDump (data, size) || peak::SettingsDump::isSettingsDump (data, size) || peak::isWavetableName (data, size))
     {
         const juce::ScopedLock sl (logLock);
         pendingDumps.emplace_back (data, data + size);

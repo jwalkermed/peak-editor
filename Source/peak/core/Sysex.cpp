@@ -18,6 +18,27 @@ Bytes currentSoundRequest() { return dumpRequest (0x40, 0, 0); }
 Bytes slotRequest (int bank, int slot) { return dumpRequest (0x41, bank + 1, slot); }
 Bytes settingsRequest() { return dumpRequest (0x44, 0, 0); }
 
+Bytes wavetableNameRequest (int index)
+{
+    return { 0xF0, 0x00, 0x20, 0x29, 0x01, 0x10, 0x00, 0x7E, 0x47, 0x00, 0x00, static_cast<uint8_t> (index & 0x7F), 0x00, 0x00, 0xF7 };
+}
+
+bool isWavetableName (const uint8_t* d, size_t n)
+{
+    return n >= 17 && n <= 40 && d[0] == 0xF0 && d[1] == 0x00 && d[2] == 0x20 && d[3] == 0x29 && d[4] == 0x01 && d[5] == 0x10
+        && d[8] == 0x07 && d[n - 1] == 0xF7;
+}
+
+std::optional<std::pair<int, std::string>> parseWavetableName (const Bytes& b)
+{
+    if (! isWavetableName (b.data(), b.size()))
+        return std::nullopt;
+    std::string name (b.begin() + 15, b.end() - 1);
+    while (! name.empty() && name.back() == ' ')
+        name.pop_back();
+    return std::pair<int, std::string> { b[14], name };
+}
+
 std::vector<Bytes> splitSysex (const uint8_t* data, size_t size)
 {
     std::vector<Bytes> messages;

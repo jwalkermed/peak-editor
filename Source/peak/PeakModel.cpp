@@ -1,5 +1,7 @@
 #include "PeakModel.h"
 
+#include "peak/core/ParamFormat.h"
+
 namespace
 {
 constexpr int sendIntervalMs = 15, dumpIntervalMs = 150;
@@ -180,7 +182,16 @@ void PeakModel::rename (const juce::String& newName)
 
 bool PeakModel::requestFromPeak()
 {
-    return connection->sendSysex (peak::currentSoundRequest()) && connection->sendSysex (peak::settingsRequest(), 300.0);
+    return connection->sendSysex (peak::currentSoundRequest()) && connection->sendSysex (peak::settingsRequest(), 300.0)
+        && requestUserWavetableNames();
+}
+
+bool PeakModel::requestUserWavetableNames()
+{
+    bool ok = true;
+    for (int i = 0; i < 10; ++i)
+        ok = connection->sendSysex (peak::wavetableNameRequest (64 + i), 400.0 + 20.0 * i) && ok;
+    return ok;
 }
 
 void PeakModel::followPeakSlot (peak::Patch::Location where)
@@ -262,8 +273,18 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
         lastTouched = c.param;
     }
 
+    bool namesChanged = false;
     for (const auto& d : dumps)
-        if (const auto s = peak::SettingsDump::fromSysex (d))
+        if (const auto name = peak::parseWavetableName (d))
+        {
+            auto& names = peak::userWavetableNames();
+            if (name->first >= 64 && name->first - 64 < (int) names.size() && ! name->second.empty() && names[(size_t) (name->first - 64)] != name->second)
+            {
+                names[(size_t) (name->first - 64)] = name->second;
+                namesChanged = true;
+            }
+        }
+        else if (const auto s = peak::SettingsDump::fromSysex (d))
         {
             settings = s;
             settingsSource = "Read from the Peak at " + juce::Time::getCurrentTime().toString (false, true, false);
@@ -307,6 +328,8 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
             }
         }
 
+    if (namesChanged)
+        changed.sendChangeMessage();
     if (! changes.empty())
         changed.sendChangeMessage();
 }

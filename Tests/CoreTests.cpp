@@ -296,6 +296,19 @@ int main()
         CHECK (formatValue (rate, 97) == "97 BPM");
     });
 
+    test ("wavetable names: request 0x47, reply type 07 (verified on the Peak 2026-11-11)", [] {
+        CHECK (toHex (wavetableNameRequest (64).data(), 15) == "F0 00 20 29 01 10 00 7E 47 00 00 40 00 00 F7");
+        const auto reply = *parseHex ("F0 00 20 29 01 10 00 7E 07 00 00 00 00 00 40 4E 6F 69 73 69 61 20 F7"); // "Noisia "
+        const auto name = parseWavetableName (reply);
+        CHECK (name && name->first == 64 && name->second == "Noisia");
+        CHECK (! parseWavetableName (readFixture ("current-all-in-sync.syx")));
+        CHECK (formatValue (*findParam ("osc1_wave_more"), 37) == "Grow");
+        userWavetableNames()[0] = "Noisia";
+        CHECK (formatValue (*findParam ("osc2_wave_more"), 64) == "Noisia");
+        CHECK (formatValue (*findParam ("osc2_wave_more"), 73) == "User 10");
+        userWavetableNames()[0] = "User 1";
+    });
+
     test ("dump requests (verified on the Peak 2026-11-10)", [] {
         CHECK (toHex (currentSoundRequest().data(), currentSoundRequest().size()) == "F0 00 20 29 01 10 00 7E 40 00 00 00 00 00 F7");
         CHECK (slotRequest (1, 63)[8] == 0x41 && slotRequest (1, 63)[12] == 2 && slotRequest (1, 63)[13] == 63);

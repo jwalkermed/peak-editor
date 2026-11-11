@@ -1,6 +1,7 @@
 #pragma once
 
 #include "peak/PeakModel.h"
+#include "ui/CardStyle.h"
 #include "ui/PanelLayout.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -43,6 +44,10 @@ public:
     static juce::Path peakLogo (float right, float top, float h);
     // A menu button's page ("Osc", "Animate", ...), or nullptr if it has none.
     static std::unique_ptr<juce::Component> createMenuPage (PeakModel&, const juce::String& menu);
+    // The wavetable picker for oscillator 1-3 (waveBefore: its Wave before More was chosen).
+    static std::unique_ptr<juce::Component> createWavePicker (PeakModel&, int oscillator, int waveBefore);
+
+    void resized() override;
 
 private:
     // Where a selector value lives: a patch parameter or panel-only UI state.
@@ -106,6 +111,8 @@ private:
     float parameterAlpha() const;
     mutable juce::Rectangle<float> starArea, nameArea; // on the screen's patch view, in design coordinates
     void toggleFavourite();
+    void showCard (std::unique_ptr<juce::Component>); // a menu page or the wavetable picker, over the panel
+    std::unique_ptr<CardStyle::Overlay> overlay;
     void showHelp();
     static juce::Rectangle<float> helpButtonArea();
     void renamePatch(); // double-click on the name: rename, then overwrite or save elsewhere

@@ -64,6 +64,7 @@ target_sources(PeakEditor PRIVATE
     Source/ui/FrontPanel.cpp
     Source/ui/KeyboardStrip.cpp
     Source/ui/SlotWriter.cpp
+    Source/ui/CardStyle.cpp
     Source/ui/DrawerStyle.cpp
     Source/ui/LibraryDrawer.cpp
     Source/ui/ModMatrixDrawer.cpp
@@ -106,6 +107,7 @@ target_sources(PanelSnapshot PRIVATE
     Source/ui/ParamRows.cpp
     Source/ui/PanelLayout.cpp
     Source/ui/FrontPanel.cpp
+    Source/ui/CardStyle.cpp
     Source/ui/DrawerStyle.cpp
     Source/ui/LibraryDrawer.cpp
     Source/ui/ModMatrixDrawer.cpp

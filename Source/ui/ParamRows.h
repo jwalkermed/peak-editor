@@ -12,8 +12,10 @@ class ParamRows final : public juce::Component
 {
 public:
     ParamRows (PeakModel&, const std::vector<const peak::ParamDef*>& params);
+    ~ParamRows() override;
 
     void refresh(); // pull values from the model
+    void paint (juce::Graphics&) override;
     void layout (int width, int columnWidth = 380);
 
 private:

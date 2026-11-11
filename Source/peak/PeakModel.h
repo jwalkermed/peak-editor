@@ -66,6 +66,9 @@ public:
     bool selectPeakSlot (peak::Patch::Location);
     // Asks the Peak for its current sound (and its settings); the replies load as they arrive.
     bool requestFromPeak();
+    // Reads the 10 user wavetables' names from the Peak (they change when wavetables are loaded
+    // with Components); the names update as the replies arrive.
+    bool requestUserWavetableNames();
     // Called (on the message thread) each time a patch from a Peak slot arrives and is stored.
     std::function<void (peak::Patch::Location)> onSlotStored;
     // A slot the Peak selected turned out to hold something other than the editor's copy (changed
