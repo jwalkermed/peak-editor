@@ -25,8 +25,22 @@ void drawCheekTab (juce::Graphics&, juce::Rectangle<float>, const juce::String& 
 // The Peak's Init Patch (Initialise, IniPatch mode; captured from firmware 2.2). The Peak
 // can't empty a slot, so an "empty" slot is one holding this patch.
 const peak::Patch& emptyPatch();
-// A parameter's value in the Init Patch: what double-click resets to.
-int initValue (const peak::ParamDef&);
+// A slider whose double-click puts back the value `resetValue` gives at that moment (the
+// patch's saved value) rather than a fixed one.
+class ResetSlider final : public juce::Slider
+{
+public:
+    using juce::Slider::Slider;
+    std::function<int()> resetValue;
+
+    void mouseDoubleClick (const juce::MouseEvent& e) override
+    {
+        if (resetValue)
+            setValue (resetValue(), juce::sendNotificationSync);
+        else
+            juce::Slider::mouseDoubleClick (e);
+    }
+};
 
 // Where the editor's patch was loaded from, as a Library row key: "p:<bank>:<slot>" (Peak memory,
 // preferred), "l:<id>" (My Banks) or "" (nowhere). Compares the patch as loaded, so an edited

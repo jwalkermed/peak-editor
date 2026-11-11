@@ -66,6 +66,12 @@ public:
     bool selectPeakSlot (peak::Patch::Location);
     // Asks the Peak for its current sound (and its settings); the replies load as they arrive.
     bool requestFromPeak();
+    // Called (on the message thread) each time a patch from a Peak slot arrives and is stored.
+    std::function<void (peak::Patch::Location)> onSlotStored;
+    // A slot the Peak selected turned out to hold something other than the editor's copy (changed
+    // outside the editor, e.g. by Components). The editor's copy is updated and the old one saved
+    // to Backups/ (`backup`).
+    std::function<void (peak::Patch::Location, const juce::File& backup)> onSlotChangedOutside;
     // Patch -/+: the next/previous slot, across banks (D127 wraps to A000).
     bool stepPeakSlot (int delta);
 
@@ -106,6 +112,7 @@ private:
     } };
     std::optional<peak::Patch::Location> originalLocation;
     std::optional<peak::Patch::Location> awaitedSlot;
+    std::optional<peak::Patch> checkingSlot; // the editor's copy of a slot being checked against the Peak
     juce::String loadedFrom; // a slot asked for because its bank hadn't been read
     bool comparing = false;
     std::vector<int> unstoredValues; // parameters the dump doesn't hold (e.g. Animate Hold)

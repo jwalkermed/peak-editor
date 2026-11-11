@@ -50,6 +50,8 @@ public:
 
     // Track MIDI -> Peak (plugins only; the standalone app uses the keyboard strip).
     std::atomic<bool> forwardTrackMidi { true };
+    // Sends the DAW's tempo to the Peak as MIDI clock, with Start/Stop following the transport.
+    std::atomic<bool> sendDawClock { false };
 
     // A patch saved in the DAW project that differs from what the editor has. The editor
     // asks before sending it; nothing is sent automatically.
@@ -76,6 +78,9 @@ private:
     double currentSampleRate = 44100.0;
 
     std::optional<peak::Patch> projectPatch;
+    void sendClock (int numSamples);
+    bool clockRunning = false;
+    double nextTickPpq = 0.0; // audio thread only
 
     JUCE_DECLARE_WEAK_REFERENCEABLE (PeakEditorProcessor)
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PeakEditorProcessor)

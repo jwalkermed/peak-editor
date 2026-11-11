@@ -38,6 +38,9 @@ public:
 
     // Panel area in reference-photo pixels, including the wooden end cheeks.
     static juce::Rectangle<float> designBounds();
+    // The PEAK lettering traced from the panel, right-aligned at `right`, letters `h` high from `top`
+    // (about 5.6 h wide). Also used in the editor's header.
+    static juce::Path peakLogo (float right, float top, float h);
     // A menu button's page ("Osc", "Animate", ...), or nullptr if it has none.
     static std::unique_ptr<juce::Component> createMenuPage (PeakModel&, const juce::String& menu);
 
@@ -105,7 +108,6 @@ private:
     void toggleFavourite();
     void showHelp();
     static juce::Rectangle<float> helpButtonArea();
-    static juce::Path peakLogo (float right, float top, float h);
     void renamePatch(); // double-click on the name: rename, then overwrite or save elsewhere
     const peak::ParamDef* shownParam = nullptr;
     int shownValue = -1;

@@ -82,6 +82,9 @@ public:
 
     // Saves the synth's contents of a bank to Backups/. Fails unless all 128 slots are known.
     juce::Result backupBank (int bank, juce::File* written = nullptr) const;
+    // Saves the given patches to Backups/<name>-<timestamp>.syx (e.g. the editor's old copy of a
+    // bank that turned out to have changed on the Peak).
+    juce::Result backupPatches (const std::vector<peak::Patch>&, const juce::String& name, juce::File* written = nullptr) const;
 
     // Undo/redo for library actions. Call checkpoint() before each user action; it records
     // the library, My Banks, favourites and NOT SENT changes. Writes to the synth are not undone.

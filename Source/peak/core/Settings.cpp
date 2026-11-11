@@ -9,6 +9,8 @@ const std::vector<SettingDef>& allSettings()
     // Names, pages and order from the Peak's own Settings pages; numbers from the menu walk
     // and Settings dump captured on 2026-11-10 (Tests/fixtures/settings-*).
     static const std::vector<SettingDef> table {
+        // Clock Source (Arp/Clock menu), 64:6, read from the Peak on 2026-11-10.
+        { "clock_source", "Source", "Clock", 6, 0, 4, { "Auto", "Internal", "Ext-Auto", "MIDI", "USB" } },
         { "protect", "Protect", "System", 9, 0, 1, { "Off", "On" } },
         { "pickup", "Pickup", "System", 10, 0, 1, { "Off", "On" } },
         { "brightness", "Brightness", "System", 11, 0, 127, {} },

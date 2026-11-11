@@ -45,6 +45,8 @@ juce::String write (PeakModel& model, peak::Patch::Location where, bool& ok)
 
     if (! model.writeToSlot (where))
         return "Not written: no MIDI output to the Peak";
+    // Read it back shortly after, so the library holds what the Peak actually stored.
+    model.getConnection().sendSysex (peak::slotRequest (where.bank, where.slot), 800.0);
 
     ok = true;
     return "Wrote " + slot + (canBackup ? ", backup: " + backup.getFileName() : juce::String());

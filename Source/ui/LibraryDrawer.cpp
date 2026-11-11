@@ -89,8 +89,8 @@ juce::MessageBoxOptions confirmOptions (const juce::String& title, const juce::S
 }
 
 const char* helpText =
-    "PEAK (left) shows banks A-D as last read from the synth. The Peak sends a bank from its Backup page "
-    "(Settings > Backup, Select = Bank A or A+B+C+D, Go); this drawer fills in as it arrives.\n\n"
+    "PEAK (left) shows banks A-D as last read from the synth. Fetch reads them from the Peak (one bank or all four); "
+    "a bank sent from the Peak's Backup page fills in here too.\n\n"
     "MY BANKS (right) is your library: imported .syx files become banks, and you can make your own.\n\n"
     "Double-click a patch to audition it: it replaces the Peak's current sound without saving.\n"
     "Drag from PEAK to MY BANKS to copy, or within MY BANKS to reorder (the Empty row at the end of a bank adds to it). "
@@ -739,7 +739,7 @@ LibraryDrawer::LibraryDrawer (PeakModel& m) : model (m), library (m.getLibrary()
         addAndMakeVisible (b);
     }
     helpButton.setTooltip ("How the library works");
-    fetchButton.setTooltip ("How to read banks from the Peak");
+    fetchButton.setTooltip ("Read banks from the Peak: one bank or all four (click again to stop)");
     importButton.setTooltip ("Import .syx files (single patches or banks) into My Banks");
     newBankButton.setTooltip ("Make a new bank in My Banks");
     saveAllButton.setTooltip ("Write every NOT SENT change to the Peak (lists what it overwrites and backs up each bank first)");
@@ -751,7 +751,38 @@ LibraryDrawer::LibraryDrawer (PeakModel& m) : model (m), library (m.getLibrary()
     helpButton.onClick = [this] {
         juce::AlertWindow::showAsync (juce::MessageBoxOptions().withTitle ("Library").withMessage (helpText).withButton ("OK", 0).withAssociatedComponent (this), [] (int) {});
     };
-    fetchButton.onClick = [this] { showFetchHelp(); };
+    fetchButton.onClick = [this] {
+        if (fetchQueue.empty())
+            fetchMenu();
+        else
+            stopFetch ("Stopped");
+    };
+    model.onSlotChangedOutside = [this] (peak::Patch::Location where, const juce::File& backup) {
+        warnOutOfSync (juce::String (where.name()), backup.exists() ? juce::StringArray { backup.getFileName() } : juce::StringArray {});
+    };
+    // Once the editor has its current sound, check all four banks against its copy.
+    juce::Timer::callAfterDelay (4000, [safe = juce::Component::SafePointer<LibraryDrawer> (this)] {
+        if (safe != nullptr)
+            safe->startSyncCheck();
+    });
+    model.onSlotStored = [this] (peak::Patch::Location where) {
+        // The slot asked for has arrived: on to the next.
+        if (fetchIndex < fetchQueue.size() && where == fetchQueue[fetchIndex])
+        {
+            // Startup check: has this slot changed since the editor last read it?
+            if (syncCheck)
+                if (const auto& before = syncBefore[(size_t) where.bank][(size_t) where.slot])
+                    if (const auto& now = library.syncedSlot (where); now && ! now->sameSound (*before))
+                        syncChanged[(size_t) where.bank].add (juce::String (where.name()));
+            // Checking a save: does the slot now hold what was written?
+            if (const auto it = fetchExpected.find (where.bank * 128 + where.slot); it != fetchExpected.end())
+                if (const auto& got = library.syncedSlot (where); ! got || ! got->sameSound (it->second))
+                    fetchMismatches.add (juce::String (where.name()));
+            ++fetchIndex;
+            fetchRetries = 0;
+            fetchNext();
+        }
+    };
     importButton.onClick = [this] {
         chooser = std::make_unique<juce::FileChooser> ("Import patches (.syx, single or bank)", juce::File(), "*.syx");
         chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectMultipleItems,
@@ -844,6 +875,8 @@ LibraryDrawer::LibraryDrawer (PeakModel& m) : model (m), library (m.getLibrary()
 
 LibraryDrawer::~LibraryDrawer()
 {
+    model.onSlotStored = nullptr;
+    model.onSlotChangedOutside = nullptr;
     library.changed.removeChangeListener (this);
     model.changed.removeChangeListener (this);
 }
@@ -1335,7 +1368,7 @@ void LibraryDrawer::rowMenu (int pane, int row)
             const auto res = library.backupBank (b, &f);
             setStatus (res ? "Backed up to " + f.getFileName() : res.getErrorMessage());
         });
-        menu.addItem (juce::String::fromUTF8 ("How to read this bank…"), [this] { showFetchHelp(); });
+        menu.addItem ("Fetch this bank from the Peak", fetchQueue.empty(), false, [this, b] { startFetch ({ b }); });
         if (const auto n = library.unsentCount (b); n > 0)
         {
             menu.addSeparator();
@@ -1692,7 +1725,7 @@ void LibraryDrawer::saveAllChanges()
         message << "Bank " << backedUp.joinIntoString (", ") << " will be backed up first. ";
     if (! notBackedUp.isEmpty())
         message << "Bank " << notBackedUp.joinIntoString (", ") << " hasn't been fully read from the Peak, so it can't be backed up first "
-                << "(to enable it, cancel and dump it: Settings > Backup, Select = that bank, Go).";
+                << "(to enable it, cancel and Fetch that bank).";
 
     juce::AlertWindow::showAsync (confirmOptions ("Save all changes", message, "Write to the Peak", this), [this, pending, banks, editedForPeak] (int res) {
         if (res != 1)
@@ -1718,6 +1751,16 @@ void LibraryDrawer::saveAllChanges()
         if (editedForPeak)
             model.markSaved (editedForPeak->location(), "Saved to " + juce::String (editedForPeak->location()->name()));
         const auto seconds = juce::roundToInt ((double) pending.size() * msBetweenWrites / 1000.0);
+
+        // Once the writes have gone, read the banks back from the Peak to check every one landed.
+        std::map<int, peak::Patch> written;
+        for (const auto& p : pending)
+            written[p.location()->bank * 128 + p.location()->slot] = p;
+        juce::Timer::callAfterDelay ((int) ((double) pending.size() * msBetweenWrites) + 1500,
+                                     [safe = juce::Component::SafePointer<LibraryDrawer> (this), banks, written] {
+                                         if (safe != nullptr && safe->fetchQueue.empty())
+                                             safe->startFetch (std::vector<int> (banks.begin(), banks.end()), written);
+                                     });
         setStatus ("Writing " + juce::String ((int) pending.size()) + " change(s) to the Peak" + (seconds > 1 ? " (about " + juce::String (seconds) + " s)" : juce::String())
                    + (backups.isEmpty() ? juce::String() : ". Backup: " + backups.joinIntoString (", ")));
     });
@@ -1813,18 +1856,149 @@ void LibraryDrawer::copyPeakToLibrary()
         }
     }
     if (banks == 0)
-        showFetchHelp();
+        setStatus ("Nothing to copy yet: Fetch the Peak's banks first");
 }
 
-void LibraryDrawer::showFetchHelp()
+void LibraryDrawer::fetchMenu()
 {
-    juce::StringArray state;
+    juce::PopupMenu menu;
+    menu.addItem (juce::String::fromUTF8 ("All banks (A\xe2\x80\x93" "D)"), [this] { startFetch ({ 0, 1, 2, 3 }); });
+    menu.addSeparator();
     for (int b = 0; b < 4; ++b)
-        state.add ("Bank " + bankLetter (b) + ": " + juce::String (library.knownSlots (b)) + "/128");
-    const auto message = "The Peak sends its memory from the Backup page, and this drawer fills in as it arrives:\n\n"
-                         "Settings > page right to Backup\nSelect = Bank A (or A+B+C+D for everything)\nSend To = the port this editor listens on\nPress Go\n\n"
-                         "Read so far: " + state.joinIntoString (", ");
-    juce::AlertWindow::showAsync (juce::MessageBoxOptions().withTitle ("Reading banks from the Peak").withMessage (message).withButton ("OK", 0).withAssociatedComponent (this), [] (int) {});
+        menu.addItem ("Bank " + bankLetter (b) + " (" + juce::String (library.knownSlots (b)) + "/128 read)", [this, b] { startFetch ({ b }); });
+    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&fetchButton));
+}
+
+void LibraryDrawer::startFetch (const std::vector<int>& banks, std::map<int, peak::Patch> expected)
+{
+    fetchQueue.clear();
+    fetchExpected = std::move (expected);
+    fetchMismatches.clear();
+    juce::StringArray letters;
+    for (const auto b : banks)
+    {
+        letters.add (bankLetter (b));
+        for (int s = 0; s < 128; ++s)
+            fetchQueue.push_back ({ b, s });
+    }
+    fetchWhat = (banks.size() == 4 ? juce::String (juce::String::fromUTF8 ("banks A\xe2\x80\x93" "D")) : "bank " + letters.joinIntoString (", "));
+    fetchIndex = 0;
+    fetchRetries = fetchMissed = 0;
+    fetchButton.setButtonText ("Stop");
+    if (! syncCheck) // a quiet check leaves the banks as they are
+        for (const auto b : banks)
+            expanded.insert ("pb:" + juce::String (b));
+    rebuildRows();
+    fetchNext();
+}
+
+void LibraryDrawer::fetchNext()
+{
+    if (fetchIndex >= fetchQueue.size())
+        return stopFetch ("Fetched");
+    const auto where = fetchQueue[fetchIndex];
+    if (! model.getConnection().sendSysex (peak::slotRequest (where.bank, where.slot)))
+        return stopFetch ("Stopped: no MIDI output to the Peak.");
+    fetchTimeout.startTimer (1500); // no answer: ask again (twice), then skip the slot
+    if (where.slot % 8 == 0)
+        setStatus ((syncCheck ? "Checking " : "Fetching ") + fetchWhat + " from the Peak: " + juce::String (where.name()) + " (" + juce::String ((int) fetchIndex + 1) + "/"
+                   + juce::String ((int) fetchQueue.size()) + ")");
+}
+
+void LibraryDrawer::startSyncCheck()
+{
+    // Once per session: reopening a plugin's window doesn't repeat it.
+    static bool checkedThisSession = false;
+    if (checkedThisSession || ! fetchQueue.empty() || ! model.getConnection().isOutputOpen())
+        return;
+    checkedThisSession = true;
+    for (int b = 0; b < 4; ++b)
+    {
+        syncBefore[(size_t) b].clear();
+        for (int s = 0; s < 128; ++s)
+            syncBefore[(size_t) b].push_back (library.syncedSlot ({ b, s }));
+        syncChanged[(size_t) b].clear();
+    }
+    syncCheck = true;
+    startFetch ({ 0, 1, 2, 3 });
+    fetchButton.setButtonText ("Stop");
+    setStatus ("Checking the Peak's banks against the editor's copy...");
+}
+
+void LibraryDrawer::finishSyncCheck()
+{
+    syncCheck = false;
+    juce::StringArray what, backups;
+    for (int b = 0; b < 4; ++b)
+    {
+        const auto n = syncChanged[(size_t) b].size();
+        if (n == 0)
+            continue;
+        what.add ("Bank " + bankLetter (b) + " (" + juce::String (n) + " patch" + (n == 1 ? ")" : "es)"));
+        // The editor's previous copy of the bank: possibly the only copy of what was overwritten.
+        std::vector<peak::Patch> old;
+        for (const auto& p : syncBefore[(size_t) b])
+            if (p)
+                old.push_back (*p);
+        juce::File file;
+        if (library.backupPatches (old, "bank-" + bankLetter (b) + "-before-sync", &file))
+            backups.add (file.getFileName());
+    }
+    for (auto& v : syncBefore)
+        v.clear();
+    if (what.isEmpty())
+        return setStatus ("The Peak's banks match the editor's copy");
+    warnOutOfSync (what.joinIntoString (", "), backups);
+}
+
+void LibraryDrawer::warnOutOfSync (const juce::String& what, const juce::StringArray& backups)
+{
+    setStatus ("Peak banks changed outside the editor: " + what);
+    juce::AlertWindow::showAsync (juce::MessageBoxOptions()
+                                      .withIconType (juce::MessageBoxIconType::WarningIcon)
+                                      .withTitle ("Peak banks changed outside the editor")
+                                      .withMessage ("The Peak's memory no longer matched the editor's copy: " + what + ".\n\n"
+                                                    "The Library now shows what the Peak holds. The editor's previous copy was saved to Backups"
+                                                    + (backups.isEmpty() ? juce::String (".") : " (" + backups.joinIntoString (", ") + ").")
+                                                    + (library.unsentCount() > 0 ? "\n\nNOT SENT changes are kept: check them before saving." : juce::String()))
+                                      .withButton ("OK", 0)
+                                      .withAssociatedComponent (this),
+                                  [] (int) {});
+}
+
+void LibraryDrawer::stopFetch (const juce::String& why)
+{
+    fetchTimeout.stopTimer();
+    if (syncCheck)
+    {
+        fetchQueue.clear();
+        fetchIndex = 0;
+        fetchButton.setButtonText ("Fetch");
+        if (why == "Fetched")
+            return finishSyncCheck();
+        syncCheck = false; // stopped part-way: nothing to report
+        for (auto& v : syncBefore)
+            v.clear();
+        return setStatus ("Stopped checking the Peak's banks");
+    }
+    const auto done = (int) fetchIndex - fetchMissed;
+    fetchQueue.clear();
+    fetchIndex = 0;
+    fetchButton.setButtonText ("Fetch");
+    const auto missed = fetchMissed > 0 ? ", " + juce::String (fetchMissed) + " didn't answer" : juce::String();
+    if (! fetchExpected.empty())
+    {
+        // Read back after Save all changes.
+        const auto n = (int) fetchExpected.size();
+        setStatus (fetchMismatches.isEmpty() && fetchMissed == 0
+                       ? "Checked " + fetchWhat + " on the Peak: all " + juce::String (n) + " change" + (n == 1 ? " is" : "s are") + " there"
+                       : "Checked " + fetchWhat + " on the Peak: " + (fetchMismatches.isEmpty() ? juce::String()
+                             : juce::String (fetchMismatches.size()) + " didn't match what was sent (" + fetchMismatches.joinIntoString (", ") + ")")
+                             + missed + ". The library now shows what the Peak holds.");
+        fetchExpected.clear();
+        return;
+    }
+    setStatus (why + " " + fetchWhat + ": " + juce::String (done) + " patch" + (done == 1 ? "" : "es") + " read" + missed);
 }
 
 void LibraryDrawer::askText (const juce::String& titleText, const juce::String& prompt, const juce::String& initial, std::function<void (const juce::String&)> onOk, bool allowEmpty)

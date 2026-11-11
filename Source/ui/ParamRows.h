@@ -20,7 +20,7 @@ private:
     struct Row
     {
         const peak::ParamDef* def = nullptr;
-        std::unique_ptr<juce::Label> label;
+        std::unique_ptr<juce::Label> label; // double-click: the value back to the patch's saved value
         std::unique_ptr<juce::Slider> slider;   // numeric values
         std::unique_ptr<juce::ComboBox> choices; // named values (item id = value - min + 1)
         juce::Component& control() { return slider ? (juce::Component&) *slider : *choices; }
@@ -37,6 +37,12 @@ private:
     std::deque<Row> rows; // deque: stable addresses for items
     std::vector<Item> items;
     bool updating = false;
+
+    struct DoubleClicks final : juce::MouseListener
+    {
+        std::function<void (juce::Component*)> onDoubleClick;
+        void mouseDoubleClick (const juce::MouseEvent& e) override { if (onDoubleClick) onDoubleClick (e.eventComponent); }
+    } resetOnDoubleClick;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ParamRows)
 };

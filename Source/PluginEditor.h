@@ -24,6 +24,9 @@ private:
     PeakEditorProcessor& peakProcessor;
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
     juce::ToggleButton forwardMidi { juce::String::fromUTF8 ("Track MIDI \xe2\x86\x92 Peak") };
+    juce::TextButton optionsButton { "Options" }; // standalone: audio/MIDI settings and saved states
+    void parentHierarchyChanged() override;
+    juce::ToggleButton sendClock { juce::String::fromUTF8 ("DAW clock \xe2\x86\x92 Peak") };
 
     // Shown when the DAW project holds a patch that differs from the editor's.
     juce::Label projectMessage;

@@ -58,13 +58,14 @@ public:
         setRange (0, 127, 1);
         setMouseDragSensitivity (300);
         setVelocityBasedMode (false);
+        setScrollWheelEnabled (false); // drag only: the wheel scrolls the matrix instead
     }
 
     bool dimmed = false;
     std::optional<int> ghost;            // slot turned off: the depth it comes back with (dashed outline)
-    std::function<int()> initValue;      // double-click: the Init Patch's value
+    std::function<int()> storedValue;    // double-click: the depth as saved in the patch
     std::function<void()> onContextMenu; // right-click: the slot's menu
-    std::function<void()> onEditStart;   // just before a drag, double-click or wheel changes the depth
+    std::function<void()> onEditStart;   // just before a drag or double-click changes the depth
 
     void mouseDown (const juce::MouseEvent& e) override
     {
@@ -88,17 +89,11 @@ public:
         if (! e.mods.isPopupMenu())
             juce::Slider::mouseUp (e);
     }
-    void mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w) override
-    {
-        if (onEditStart)
-            onEditStart();
-        juce::Slider::mouseWheelMove (e, w);
-    }
     void mouseDoubleClick (const juce::MouseEvent&) override
     {
         if (onEditStart)
             onEditStart();
-        setValue (initValue ? initValue() : depthCentre, juce::sendNotificationSync);
+        setValue (storedValue ? storedValue() : depthCentre, juce::sendNotificationSync);
     }
 
     void paint (juce::Graphics& g) override
@@ -173,7 +168,7 @@ public:
             bindCombo (sourceB, slot.sourceB, "source B");
         bindCombo (destination, slot.destination, "destination");
 
-        amount.initValue = [this] { return DrawerStyle::initValue (*slot.depth); };
+        amount.storedValue = [this, &peakModel] { return peakModel.getStored (*slot.depth); };
         amount.onEditStart = [this] { owner.userEdit ("depth of slot " + slot.label); };
         amount.onContextMenu = [this] { showMenu(); };
         amount.onValueChange = [this, &peakModel] {

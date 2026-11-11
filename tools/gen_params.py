@@ -23,7 +23,7 @@ SECTIONS = [  # (name prefix regex, section)
     (r"^AmpEnv", "Amp Envelope"), (r"^ModEnv1", "Mod Envelope 1"), (r"^ModEnv2", "Mod Envelope 2"),
     (r"^LFO1", "LFO 1"), (r"^LFO2", "LFO 2"), (r"^LFO3", "LFO 3"), (r"^LFO4", "LFO 4"),
     (r"^(Distortion|FX |Dry Level|Wet Level)", "Effects"), (r"^Delay", "Delay"), (r"^Reverb", "Reverb"), (r"^Chorus", "Chorus"),
-    (r"^Arp", "Arp"), (r"^(Animate|Anim)", "Animate"), (r"^Mod\d+ ", "Mod Matrix"), (r"^FXMod\d+ ", "FX Mod Matrix"),
+    (r"^Clock", "Clock"), (r"^Arp", "Arp"), (r"^(Animate|Anim)", "Animate"), (r"^Mod\d+ ", "Mod Matrix"), (r"^FXMod\d+ ", "FX Mod Matrix"),
 ]
 
 def section(name):
@@ -41,7 +41,7 @@ def ident(name):
 # Table order: panel/menu sections in this order, then dump order within a section.
 ORDER = ["Patch", "Voice", "Glide", "Osc Common", "Oscillator 1", "Oscillator 2", "Oscillator 3", "Mixer", "Filter",
          "Amp Envelope", "Mod Envelope 1", "Mod Envelope 2", "LFO 1", "LFO 2", "LFO 3", "LFO 4", "Effects", "Distortion",
-         "Delay", "Reverb", "Chorus", "Arp", "Animate", "Mod Matrix", "FX Mod Matrix"]
+         "Delay", "Reverb", "Chorus", "Clock", "Arp", "Animate", "Mod Matrix", "FX Mod Matrix"]
 params = [p for p in pmap["params"] if p["offset"] is not None or p["status"].startswith("not stored")]
 params.sort(key=lambda p: (ORDER.index(section(p["name"])), p["offset"] if p["offset"] is not None else 9999))
 rows = []

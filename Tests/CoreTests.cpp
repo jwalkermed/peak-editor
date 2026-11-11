@@ -136,12 +136,14 @@ int main()
             CHECK (ids.insert (p.id).second);
             CHECK (p.min <= p.max && p.min >= 0 && p.max <= (p.kind == MidiKind::ccPair ? 255 : 127));
 
-            if (p.kind == MidiKind::nrpn)
+            if (! p.hasMidi())
+                CHECK (p.isStored()); // Clock Rate: only reachable through the patch dump
+            else if (p.kind == MidiKind::nrpn)
                 CHECK (nrpns.insert (p.number).second);
             else
                 CHECK (ccs.insert (p.number).second);
 
-            if (p.kind == MidiKind::ccPair)
+            if (p.kind == MidiKind::ccPair && p.hasMidi())
                 CHECK (ccs.insert (p.number + 32).second);
 
             if (p.isStored())
@@ -237,7 +239,7 @@ int main()
                     rebuilt.set (*c->param, c->value);
 
             for (const auto& p : allParams())
-                if (p.isStored())
+                if (p.isStored() && p.hasMidi())
                     CHECK (rebuilt.get (p) == source.get (p));
         }
     });
@@ -285,6 +287,13 @@ int main()
         CHECK (a.sameSound (b) && b.sameSound (a));
         b.set (*findParam ("arp_chance"), 50);
         CHECK (! a.sameSound (b));
+    });
+
+    test ("Clock Rate: in the patch at 0xFB/0xFC, no MIDI (read from the Peak 2026-11-10)", [] {
+        const auto& rate = *findParam ("clock_rate");
+        CHECK (! rate.hasMidi() && encodeParam (rate, 97, 0).empty());
+        CHECK (Patch::fromSysex (readFixture ("current-init-patch.syx"))->get (rate) == 120);
+        CHECK (formatValue (rate, 97) == "97 BPM");
     });
 
     test ("dump requests (verified on the Peak 2026-11-10)", [] {
