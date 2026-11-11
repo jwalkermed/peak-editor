@@ -53,6 +53,9 @@ public:
     // Audio thread: a channel message from the DAW track, moved to the Peak's channel and
     // scheduled delayMs ahead. No allocation and not logged (the monitor would allocate).
     void sendPerformance (const uint8_t* data, size_t size, double delayMs);
+    // While muted, notes from the on-screen keyboard, a controller and the DAW track don't
+    // reach the Peak (Save: an empty slot has nothing to audition). Muting stops held notes.
+    void setNotesMuted (bool);
     // Sends a long run of CC/NRPN messages spaced out so DIN/network bridges keep up.
     bool sendPaced (const std::vector<peak::ShortMessage>& messages, double msBetween = 2.0);
 
@@ -113,6 +116,7 @@ private:
     int lastBankSelect = 1; // CC 32 from the Peak (MIDI thread only)
 
     std::atomic<int> channel { 0 }; // read on the MIDI thread
+    std::atomic<bool> notesMuted { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PeakConnection)
 };

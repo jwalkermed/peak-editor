@@ -28,6 +28,35 @@ int initValue (const peak::ParamDef& p)
     return p.isStored() ? emptyPatch().get (p) : peak::defaultValue (p);
 }
 
+juce::String loadedPatchKey (const PeakModel& model)
+{
+    if (! model.hasPatch())
+        return {};
+    const auto& loaded = model.getReference();
+    const auto& library = model.getLibrary();
+    const auto inPeak = [&] (peak::Patch::Location l) {
+        const auto& stored = library.syncedSlot (l);
+        return stored && stored->sameSound (loaded);
+    };
+    const auto peakKey = [] (peak::Patch::Location l) { return "p:" + juce::String (l.bank) + ":" + juce::String (l.slot); };
+
+    if (const auto where = model.getOriginalLocation(); where && inPeak (*where))
+        return peakKey (*where);
+    if (! isEmpty (loaded)) // the Init Patch fills every empty slot: only its own slot counts
+        for (int i = 0; i < 512; ++i)
+            if (inPeak ({ i / 128, i % 128 }))
+                return peakKey ({ i / 128, i % 128 });
+
+    const auto& from = model.getLoadedFrom();
+    if (from.startsWith ("l:"))
+        if (const auto* e = library.find (from.substring (2)); e != nullptr && e->patch.sameSound (loaded))
+            return from;
+    for (const auto& e : library.getEntries())
+        if (e.patch.sameSound (loaded))
+            return "l:" + e.id;
+    return {};
+}
+
 bool isEmpty (const peak::Patch& p)
 {
     return p.body() == emptyPatch().body();

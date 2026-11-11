@@ -24,7 +24,8 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
-    bool keyPressed (const juce::KeyPress&) override; // Cmd+Z / Shift+Cmd+Z
+    void visibilityChanged() override; // opening the Library goes to the loaded patch
+    bool keyPressed (const juce::KeyPress&) override; // Cmd+Z / Shift+Cmd+Z, arrow keys
 
     // Opens or closes every bank in both panes.
     void setAllExpanded (bool);
@@ -46,6 +47,16 @@ public:
 
     static constexpr int peakPane = 0, libraryPane = 1;
 
+    // ---- Saving (the panel's Save), as in the TEO-5 and OB-6 editors ----
+    // The library becomes a picker: clicking a Peak slot or a My Banks row (or a bank's empty row)
+    // chooses where the editor's patch goes, and the sound stored there goes into the Peak's edit
+    // buffer so it can be heard before it is replaced. The patch's own slot is chosen to begin with.
+    void beginSave();
+    bool isSaving() const noexcept { return saving; }
+    void confirmSave(); // writes the Peak slot (bank backed up first) or stores in My Banks; the saved patch stays in the edit buffer
+    void cancelSave (bool notify = true); // your edit goes back into the edit buffer
+    std::function<void (bool saved, const juce::String& what)> onSaveFinished;
+
 private:
     class ListView;
     friend class ListView;
@@ -61,6 +72,15 @@ private:
     void toggleCollapsed (const Row&);
     void rowClicked (int pane, int row, const juce::MouseEvent&);
     void rowDoubleClicked (int pane, int row);
+    // Arrow keys: up/down to the previous/next patch, left/right to the same place in the
+    // previous/next bank; the patch reached is loaded into the Peak's edit buffer.
+    bool navigate (int rowDelta, int bankDelta);
+    // The row holding the patch the editor loaded (Peak memory first, then My Banks), or "".
+    juce::String findLoadedPatch() const;
+    void revealLoadedPatch();
+    void setSaveTarget (const juce::String& key);
+    juce::String describeTarget (bool& replacing) const;
+    class SavePanel;
     void rowMenu (int pane, int row);
     void rowIconClicked (int pane, int row, int icon);
     void dropKeys (const juce::StringArray& keys, int pane, int row, bool below);
@@ -110,6 +130,11 @@ private:
     std::array<std::vector<Row>, 2> rowLists;
     std::set<juce::String> selection, expanded; // row keys; bank keys are "pb:<n>" / "lb:<name>"
     juce::String loadedKey;
+    juce::String homeKey; // findLoadedPatch(), kept current: marked EDITED while the editor's sound differs
+    bool homeEdited = false;
+    bool saving = false, auditioned = false;
+    juce::String saveTarget; // a row key while saving
+    std::unique_ptr<SavePanel> savePanel;
     std::unique_ptr<juce::FileChooser> chooser;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LibraryDrawer)

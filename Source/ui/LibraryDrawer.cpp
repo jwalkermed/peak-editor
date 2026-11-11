@@ -4,6 +4,7 @@
 #include "ui/DrawerStyle.h"
 #include "ui/SlotWriter.h"
 
+#include <algorithm>
 #include <limits>
 
 namespace
@@ -194,6 +195,11 @@ public:
             owner.toggleCollapsed (r);
             return;
         }
+        if (owner.isSaving())
+        {
+            owner.setSaveTarget (r.key());
+            return;
+        }
         if (r.isNew)
             return;
         if (const auto icon = iconAt (e.x); icon != noIcon && ! (r.peakBank >= 0 && owner.patchFor (r.key()) && isEmpty (*owner.patchFor (r.key()))))
@@ -223,7 +229,7 @@ public:
 
     void mouseDrag (const juce::MouseEvent& e) override
     {
-        if (dragStarted || e.getDistanceFromDragStart() < 5 || e.mods.isPopupMenu())
+        if (dragStarted || e.getDistanceFromDragStart() < 5 || e.mods.isPopupMenu() || owner.isSaving())
             return;
         const int row = rowAt (e.getMouseDownY());
         if (! juce::isPositiveAndBelow (row, (int) owner.rows (pane).size()) || owner.rows (pane)[(size_t) row].isBank
@@ -247,7 +253,7 @@ public:
     void mouseDoubleClick (const juce::MouseEvent& e) override
     {
         const int row = rowAt (e.y);
-        if (juce::isPositiveAndBelow (row, (int) owner.rows (pane).size()) && iconAt (e.x) == noIcon)
+        if (juce::isPositiveAndBelow (row, (int) owner.rows (pane).size()) && iconAt (e.x) == noIcon && ! owner.isSaving())
             owner.rowDoubleClicked (pane, row);
     }
 
@@ -351,8 +357,18 @@ private:
 
         g.setColour (i % 2 ? rowB : rowA);
         g.fillRect (r);
+        const auto paintTarget = [&] {
+            if (owner.isSaving() && owner.saveTarget == row.key())
+            {
+                g.setColour (accent.withAlpha (0.18f));
+                g.fillRect (r);
+                g.setColour (accent);
+                g.drawRect (r, 2);
+            }
+        };
         if (row.isNew)
         {
+            paintTarget();
             auto t = r.withTrimmedLeft (iconsRight + 16).withTrimmedRight (6);
             g.setFont (font (9.0f));
             g.setColour (silkscreen.withAlpha (0.3f));
@@ -367,6 +383,7 @@ private:
             g.setColour (pinstripe.withAlpha (0.45f));
             g.fillRect (r);
         }
+        paintTarget();
 
         const auto patch = owner.patchFor (key);
         const PatchLibrary::Entry* entry = row.peakBank < 0 ? lib.find (row.id) : nullptr;
@@ -453,6 +470,14 @@ private:
 
         }
 
+        if (key == owner.homeKey && owner.homeEdited)
+        {
+            // The editor's sound started here and has been changed since.
+            g.setColour (accent);
+            g.setFont (juce::FontOptions (12.0f, juce::Font::bold)); // as large as the category
+            g.drawText ("EDITED", text.removeFromRight (64), juce::Justification::centredRight, false);
+        }
+
         g.setFont (juce::FontOptions (14.0f));
         g.setColour (silkscreen);
         g.drawText (nameOf (*patch), text, juce::Justification::centredLeft, true);
@@ -465,9 +490,244 @@ private:
     bool dragStarted = false, dropBelow = false;
 };
 
+namespace
+{
+constexpr int savePanelHeight = 190;
+}
+
+//==============================================================================
+// Save card: what's being saved, where to, what can be heard now, and Cancel / Confirm
+// (as in the TEO-5 and OB-6 editors).
+class LibraryDrawer::SavePanel final : public juce::Component
+{
+public:
+    explicit SavePanel (LibraryDrawer& o) : owner (o)
+    {
+        for (auto* b : { &cancel, &confirm })
+        {
+            DrawerStyle::style (*b);
+            addAndMakeVisible (b);
+        }
+        confirm.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff3a3020));
+        cancel.onClick = [this] { owner.cancelSave(); };
+        confirm.onClick = [this] { owner.confirmSave(); };
+    }
+
+    void update()
+    {
+        confirm.setEnabled (owner.saveTarget.isNotEmpty());
+        repaint();
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        auto b = getLocalBounds().toFloat();
+        g.setColour (juce::Colour (0xff26282d));
+        g.fillRoundedRectangle (b, 8.0f);
+        g.setColour (accent.withAlpha (0.7f));
+        g.drawRoundedRectangle (b.reduced (0.5f), 8.0f, 1.0f);
+
+        auto r = getLocalBounds().reduced (18, 12);
+        r.removeFromBottom (36); // buttons
+        g.setColour (silkscreen);
+        g.setFont (juce::FontOptions (16.0f, juce::Font::bold));
+        g.drawText ("Save patch", r.removeFromTop (22), juce::Justification::centredLeft);
+        r.removeFromTop (4);
+
+        const auto line = [&] (const juce::String& label, const juce::String& text, juce::Colour c) {
+            auto row = r.removeFromTop (20);
+            g.setFont (juce::FontOptions (12.5f));
+            g.setColour (silkscreen.withAlpha (0.6f));
+            g.drawText (label, row.removeFromLeft (70), juce::Justification::centredLeft);
+            g.setFont (juce::FontOptions (13.5f));
+            g.setColour (c);
+            g.drawFittedText (text, row, juce::Justification::centredLeft, 1, 0.85f);
+        };
+        const auto& patch = owner.model.getPatch();
+        const auto home = loadedPatchKey (owner.model);
+        auto from = home.startsWith ("p:") ? juce::String (owner.model.getOriginalLocation()->name())
+                    : home.startsWith ("l:") ? juce::String ("My Banks") : juce::String();
+        if (owner.model.isModified())
+            from += from.isEmpty() ? "your edit" : " (edited)";
+        line ("Saving", "\"" + nameOf (patch) + "\"" + (from.isNotEmpty() ? ", from " + from : juce::String()), silkscreen);
+
+        bool replacing = false;
+        const auto where = owner.describeTarget (replacing);
+        const bool chosen = owner.saveTarget.isNotEmpty(), toPeak = owner.saveTarget.startsWith ("p:");
+        line ("Save to", chosen ? where : juce::String ("Click a slot in the library"), chosen ? accent : silkscreen.withAlpha (0.5f));
+        r.removeFromTop (6);
+
+        g.setColour (silkscreen.withAlpha (0.85f));
+        g.setFont (juce::FontOptions (13.0f));
+        g.drawFittedText (owner.auditioned ? juce::String ("Now in the Peak's edit buffer: the patch you'd replace. Play the Peak "
+                                                           "or your controller to hear it.")
+                          : chosen && replacing ? juce::String ("Your edit is in the edit buffer. Click the slot to hear the patch it holds now.")
+                          : chosen ? juce::String ("This slot is empty, so there's nothing to audition: the editor's keyboard is silent until you pick a slot with a patch.")
+                                   : juce::String ("Select a slot and its patch goes into the Peak's edit buffer, so you can play it "
+                                                   "before replacing it."),
+                          r.removeFromTop (34), juce::Justification::topLeft, 2, 1.0f);
+        if (chosen)
+        {
+            g.setFont (juce::FontOptions (12.5f));
+            g.setColour (toPeak ? juce::Colour (0xfff0c27a) : silkscreen.withAlpha (0.6f));
+            const auto slot = where.upToFirstOccurrenceOf (",", false, false);
+            g.drawFittedText (toPeak ? juce::String::fromUTF8 ("\xe2\x9a\xa0 Confirm writes \"") + nameOf (patch) + "\" into the Peak's memory at " + slot
+                                           + " (the bank is backed up first)."
+                                     : juce::String ("Saved in My Banks only. Nothing is written to the Peak."),
+                              r.removeFromTop (20), juce::Justification::topLeft, 1, 0.9f);
+        }
+    }
+
+    void resized() override
+    {
+        auto r = getLocalBounds().reduced (18, 12).removeFromBottom (28);
+        confirm.setBounds (r.removeFromRight (110));
+        r.removeFromRight (10);
+        cancel.setBounds (r.removeFromRight (110));
+    }
+
+private:
+    LibraryDrawer& owner;
+    juce::TextButton cancel { "Cancel" }, confirm { "Confirm" };
+};
+
+void LibraryDrawer::beginSave()
+{
+    if (! model.hasPatch())
+        return setStatus ("Nothing to save: no patch loaded");
+    saving = true;
+    auditioned = false;
+    selection.clear();
+
+    // The patch's own slot is chosen to begin with; otherwise pick one.
+    saveTarget = loadedPatchKey (model);
+    if (saveTarget.startsWith ("p:"))
+        expanded.insert ("pb:" + saveTarget.fromFirstOccurrenceOf (":", false, false).upToFirstOccurrenceOf (":", false, false));
+    else if (saveTarget.startsWith ("l:"))
+        if (const auto* e = library.find (saveTarget.substring (2)))
+            expanded.insert ("lb:" + e->bank);
+    rebuildRows();
+    for (int pane = 0; pane < 2; ++pane)
+        for (int i = 0; i < (int) rows (pane).size(); ++i)
+            if (rows (pane)[(size_t) i].key() == saveTarget)
+                viewports[(size_t) pane].setViewPosition (0, juce::jmax (0, i * rowHeight - viewports[(size_t) pane].getHeight() / 3));
+
+    savePanel->setVisible (true);
+    savePanel->update();
+    resized();
+    setStatus ("Choose where to save: click a slot in a Peak bank or in My Banks (Return confirms, Esc cancels)");
+    grabKeyboardFocus();
+    for (auto& l : lists)
+        l->repaint();
+}
+
+juce::String LibraryDrawer::describeTarget (bool& replacing) const
+{
+    replacing = false;
+    if (saveTarget.startsWith ("new:"))
+        return saveTarget.substring (4) + ", new (at the end)";
+    const auto p = patchFor (saveTarget);
+    replacing = p && ! isEmpty (*p);
+    juce::String where;
+    if (saveTarget.startsWith ("p:"))
+        where = p && p->location() ? juce::String (p->location()->name()) : saveTarget.substring (2);
+    else if (const auto* e = library.find (saveTarget.substring (2)))
+        where = e->bank;
+    return where + (replacing ? ", replacing \"" + nameOf (*p) + "\"" : juce::String (" (empty)"));
+}
+
+void LibraryDrawer::setSaveTarget (const juce::String& key)
+{
+    if (! saving || key.isEmpty() || key.startsWith ("pb:") || key.startsWith ("lb:"))
+        return;
+    saveTarget = key;
+    // Audition: the patch stored there goes into the edit buffer (the editor's patch doesn't change).
+    // An empty slot has nothing to hear, so the keyboard is silent until a slot with a patch is chosen.
+    const auto p = patchFor (key);
+    const bool empty = ! p || isEmpty (*p);
+    model.getConnection().setNotesMuted (empty);
+    if (! empty)
+    {
+        auto sound = *p;
+        sound.setLocation (std::nullopt);
+        model.getConnection().sendSysex (sound.toSysex());
+        auditioned = true;
+    }
+    else if (std::exchange (auditioned, false))
+        model.sendPatchToPeak(); // your edit back (silent until another slot is picked)
+    setStatus ({});
+    savePanel->update();
+    for (auto& l : lists)
+        l->repaint();
+}
+
+void LibraryDrawer::confirmSave()
+{
+    if (! saving || saveTarget.isEmpty())
+        return;
+    const auto name = nameOf (model.getPatch());
+    juce::String result;
+    if (saveTarget.startsWith ("p:"))
+    {
+        const peak::Patch::Location where { saveTarget.fromFirstOccurrenceOf (":", false, false).upToFirstOccurrenceOf (":", false, false).getIntValue(),
+                                            saveTarget.fromLastOccurrenceOf (":", false, false).getIntValue() };
+        bool ok = false;
+        result = SlotWriter::write (model, where, ok);
+        if (! ok)
+            return setStatus (result); // stay in the picker
+    }
+    else
+    {
+        library.checkpoint();
+        juce::String id;
+        if (saveTarget.startsWith ("new:"))
+            id = library.add (model.getPatch(), "Editor, " + today(), saveTarget.substring (4));
+        else
+        {
+            id = saveTarget.substring (2);
+            library.replacePatch (id, model.getPatch());
+        }
+        model.markSaved (std::nullopt, "My Banks: " + name);
+        model.setLoadedFrom ("l:" + id);
+        loadedKey = "l:" + id;
+        result = "Saved \"" + name + "\" in My Banks";
+    }
+    if (auditioned)
+        model.sendPatchToPeak(); // the saved patch is in the edit buffer, as stored from now on
+    model.getConnection().setNotesMuted (false);
+    saving = auditioned = false;
+    saveTarget.clear();
+    savePanel->setVisible (false);
+    resized();
+    setStatus (result);
+    revealLoadedPatch();
+    if (onSaveFinished)
+        onSaveFinished (true, result);
+}
+
+void LibraryDrawer::cancelSave (bool notify)
+{
+    if (! saving)
+        return;
+    if (std::exchange (auditioned, false))
+        model.sendPatchToPeak(); // your edit goes back
+    model.getConnection().setNotesMuted (false);
+    saving = false;
+    saveTarget.clear();
+    savePanel->setVisible (false);
+    resized();
+    setStatus ("Not saved");
+    for (auto& l : lists)
+        l->repaint();
+    if (notify && onSaveFinished)
+        onSaveFinished (false, "Not saved");
+}
+
 //==============================================================================
 LibraryDrawer::LibraryDrawer (PeakModel& m) : model (m), library (m.getLibrary())
 {
+    savePanel = std::make_unique<SavePanel> (*this);
+    addChildComponent (*savePanel);
     title.setFont (font (14.0f));
     title.setColour (juce::Label::textColourId, silkscreen);
     addAndMakeVisible (title);
@@ -577,6 +837,7 @@ LibraryDrawer::LibraryDrawer (PeakModel& m) : model (m), library (m.getLibrary()
     addAndMakeVisible (status);
 
     library.changed.addChangeListener (this);
+    model.changed.addChangeListener (this);
     rebuildRows();
     updateToolbar();
 }
@@ -584,6 +845,7 @@ LibraryDrawer::LibraryDrawer (PeakModel& m) : model (m), library (m.getLibrary()
 LibraryDrawer::~LibraryDrawer()
 {
     library.changed.removeChangeListener (this);
+    model.changed.removeChangeListener (this);
 }
 
 void LibraryDrawer::paint (juce::Graphics& g)
@@ -637,6 +899,13 @@ void LibraryDrawer::resized()
 
     status.setBounds (r.removeFromBottom (24));
     r.removeFromBottom (4);
+    if (saving)
+    {
+        // The save card sits under the two panes, centred.
+        auto card = r.removeFromBottom (savePanelHeight);
+        savePanel->setBounds (card.withSizeKeepingCentre (juce::jmin (620, card.getWidth()), savePanelHeight));
+        r.removeFromBottom (8);
+    }
 
     const int gap = 16, paneW = (r.getWidth() - gap) / 2;
     for (int pane = 0; pane < 2; ++pane)
@@ -651,15 +920,72 @@ void LibraryDrawer::resized()
     }
 }
 
-void LibraryDrawer::changeListenerCallback (juce::ChangeBroadcaster*)
+void LibraryDrawer::changeListenerCallback (juce::ChangeBroadcaster* source)
 {
+    if (source == &model.changed)
+    {
+        // Only the EDITED mark can change; rows are rebuilt for library changes.
+        if (const auto key = findLoadedPatch(); key != homeKey || model.isModified() != homeEdited)
+        {
+            homeKey = key;
+            homeEdited = model.isModified();
+            for (auto& l : lists)
+                l->repaint();
+            updateToolbar();
+        }
+        return;
+    }
     rebuildRows();
     updateToolbar();
 }
 
+juce::String LibraryDrawer::findLoadedPatch() const
+{
+    return loadedPatchKey (model);
+}
+
+
+void LibraryDrawer::visibilityChanged()
+{
+    if (isShowing())
+    {
+        if (! saving)
+            revealLoadedPatch();
+    }
+    else if (saving)
+        cancelSave (false); // left the Library mid-save
+}
+
+void LibraryDrawer::revealLoadedPatch()
+{
+    homeKey = findLoadedPatch();
+    homeEdited = model.isModified();
+    if (homeKey.isEmpty())
+        return;
+
+    // Open its bank, select it and scroll it into the middle of its pane.
+    const auto pane = homeKey.startsWith ("p:") ? peakPane : libraryPane;
+    if (pane == peakPane)
+        expanded.insert ("pb:" + homeKey.fromFirstOccurrenceOf (":", false, false).upToFirstOccurrenceOf (":", false, false));
+    else if (const auto* e = library.find (homeKey.substring (2)))
+        expanded.insert ("lb:" + e->bank);
+    rebuildRows();
+    selection.clear();
+    selection.insert (homeKey);
+    for (int i = 0; i < (int) rows (pane).size(); ++i)
+        if (rows (pane)[(size_t) i].key() == homeKey)
+        {
+            auto& view = viewports[(size_t) pane];
+            view.setViewPosition (view.getViewPositionX(), juce::jmax (0, i * rowHeight - (view.getViewHeight() - rowHeight) / 2));
+            break;
+        }
+    for (auto& l : lists)
+        l->repaint();
+}
+
 void LibraryDrawer::updateToolbar()
 {
-    const auto unsent = library.unsentCount();
+    const auto unsent = library.unsentCount() + (homeEdited && homeKey.isNotEmpty() ? 1 : 0); // + the edited patch
     saveAllButton.setEnabled (unsent > 0);
     saveAllButton.setButtonText (unsent > 0 ? "Save all changes (" + juce::String (unsent) + ")" : juce::String ("Save all changes"));
     saveAllButton.setColour (juce::TextButton::textColourOffId, unsent > 0 ? accent : silkscreen);
@@ -679,7 +1005,87 @@ bool LibraryDrawer::keyPressed (const juce::KeyPress& key)
         redoButton.triggerClick();
         return true;
     }
+    if (saving)
+    {
+        if (key.isKeyCode (juce::KeyPress::returnKey))
+            confirmSave();
+        else if (key.isKeyCode (juce::KeyPress::escapeKey))
+            cancelSave();
+        return true;
+    }
+    if (key.getModifiers().isAnyModifierKeyDown())
+        return false;
+    if (key.isKeyCode (juce::KeyPress::upKey))
+        return navigate (-1, 0);
+    if (key.isKeyCode (juce::KeyPress::downKey))
+        return navigate (1, 0);
+    if (key.isKeyCode (juce::KeyPress::leftKey))
+        return navigate (0, -1);
+    if (key.isKeyCode (juce::KeyPress::rightKey))
+        return navigate (0, 1);
     return false;
+}
+
+bool LibraryDrawer::navigate (int rowDelta, int bankDelta)
+{
+    // Start from the selected patch (or the one last loaded) in whichever pane holds it.
+    int pane = -1, row = -1;
+    for (int p = 0; p < 2 && row < 0; ++p)
+        for (int i = 0; i < (int) rows (p).size(); ++i)
+            if (const auto k = rows (p)[(size_t) i].key(); ! rows (p)[(size_t) i].isBank && (selection.count (k) || k == loadedKey))
+            {
+                pane = p;
+                row = i;
+                if (selection.count (k))
+                    break;
+            }
+    if (row < 0)
+        return false;
+
+    const auto& list = rows (pane);
+    const auto isPatch = [&] (int i) { return juce::isPositiveAndBelow (i, (int) list.size()) && ! list[(size_t) i].isBank && ! list[(size_t) i].isNew; };
+    int target = -1;
+    if (rowDelta != 0)
+    {
+        for (int i = row + rowDelta; juce::isPositiveAndBelow (i, (int) list.size()); i += rowDelta)
+            if (isPatch (i))
+            {
+                target = i;
+                break;
+            }
+    }
+    else
+    {
+        // The bank header above this row, and the position within the bank.
+        int header = row;
+        while (header >= 0 && ! list[(size_t) header].isBank)
+            --header;
+        const int position = row - header;
+        // The next bank in that direction that is open (has patch rows).
+        for (int h = header + bankDelta; juce::isPositiveAndBelow (h, (int) list.size()); h += bankDelta)
+            if (list[(size_t) h].isBank && isPatch (h + 1))
+            {
+                int last = h + 1;
+                while (isPatch (last + 1))
+                    ++last;
+                target = juce::jmin (h + position, last);
+                break;
+            }
+    }
+    if (target < 0)
+        return true; // at the end: nothing to move to
+
+    const auto key = list[(size_t) target].key();
+    selection.clear();
+    selection.insert (key);
+    auto& view = viewports[(size_t) pane];
+    const auto top = target * rowHeight;
+    if (top < view.getViewPositionY())
+        view.setViewPosition (view.getViewPositionX(), top);
+    else if (top + rowHeight > view.getViewPositionY() + view.getViewHeight())
+        view.setViewPosition (view.getViewPositionX(), top + rowHeight - view.getViewHeight());
+    audition (key);
+    return true;
 }
 
 //==============================================================================
@@ -850,6 +1256,7 @@ void LibraryDrawer::audition (const juce::String& key)
     if (model.audition (*p, where + ": " + nameOf (*p)))
     {
         loadedKey = key;
+        model.setLoadedFrom (key);
         setStatus ("Auditioning \"" + nameOf (*p) + "\" (not saved)");
     }
     else
@@ -1230,9 +1637,35 @@ void LibraryDrawer::swapInPeak (const juce::StringArray& keys, peak::Patch::Loca
 
 void LibraryDrawer::saveAllChanges()
 {
-    const auto pending = library.unsentPatches();
+    // An edited patch is saved back where it came from: My Banks at once (undoable), Peak
+    // memory along with the other changes below.
+    std::optional<peak::Patch> editedForPeak;
+    if (homeEdited && homeKey.startsWith ("l:"))
+    {
+        library.checkpoint();
+        library.replacePatch (homeKey.substring (2), model.getPatch());
+        model.markSaved (std::nullopt, "My Banks: " + nameOf (model.getPatch()));
+        setStatus ("Saved the edited \"" + nameOf (model.getPatch()) + "\" in My Banks");
+    }
+    else if (homeEdited && homeKey.startsWith ("p:"))
+    {
+        auto p = model.getPatch();
+        p.setLocation (peak::Patch::Location { homeKey.fromFirstOccurrenceOf (":", false, false).upToFirstOccurrenceOf (":", false, false).getIntValue(),
+                                               homeKey.fromLastOccurrenceOf (":", false, false).getIntValue() });
+        editedForPeak = p;
+    }
+
+    auto pending = library.unsentPatches();
+    if (editedForPeak)
+    {
+        std::erase_if (pending, [&] (const peak::Patch& p) { return p.location() == editedForPeak->location(); });
+        pending.push_back (*editedForPeak);
+        std::sort (pending.begin(), pending.end(), [] (const peak::Patch& a, const peak::Patch& b) {
+            return a.location()->bank * 128 + a.location()->slot < b.location()->bank * 128 + b.location()->slot;
+        });
+    }
     if (pending.empty())
-        return setStatus ("Nothing to send");
+        return homeKey.startsWith ("l:") ? void() : setStatus ("Nothing to send");
 
     // List what gets overwritten, then which banks can be backed up first.
     juce::StringArray lines;
@@ -1261,7 +1694,7 @@ void LibraryDrawer::saveAllChanges()
         message << "Bank " << notBackedUp.joinIntoString (", ") << " hasn't been fully read from the Peak, so it can't be backed up first "
                 << "(to enable it, cancel and dump it: Settings > Backup, Select = that bank, Go).";
 
-    juce::AlertWindow::showAsync (confirmOptions ("Save all changes", message, "Write to the Peak", this), [this, pending, banks] (int res) {
+    juce::AlertWindow::showAsync (confirmOptions ("Save all changes", message, "Write to the Peak", this), [this, pending, banks, editedForPeak] (int res) {
         if (res != 1)
             return setStatus ("Nothing written; the changes are still NOT SENT");
 
@@ -1282,6 +1715,8 @@ void LibraryDrawer::saveAllChanges()
                 return setStatus ("Stopped: no MIDI output to the Peak (" + juce::String ((int) i) + " written)");
             library.storePeakSlot (pending[i]); // now on the synth: no longer NOT SENT
         }
+        if (editedForPeak)
+            model.markSaved (editedForPeak->location(), "Saved to " + juce::String (editedForPeak->location()->name()));
         const auto seconds = juce::roundToInt ((double) pending.size() * msBetweenWrites / 1000.0);
         setStatus ("Writing " + juce::String ((int) pending.size()) + " change(s) to the Peak" + (seconds > 1 ? " (about " + juce::String (seconds) + " s)" : juce::String())
                    + (backups.isEmpty() ? juce::String() : ". Backup: " + backups.joinIntoString (", ")));

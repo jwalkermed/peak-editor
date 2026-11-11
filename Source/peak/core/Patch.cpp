@@ -118,6 +118,16 @@ std::string_view Patch::body() const
     return { reinterpret_cast<const char*> (raw.data()) + nameOffset, dumpSize - nameOffset - 1 };
 }
 
+bool Patch::sameSound (const Patch& other) const
+{
+    static const auto chance = static_cast<size_t> (findParam ("arp_chance")->offset);
+    const auto normal = [] (uint8_t v) { return v == 0 ? uint8_t (100) : v; };
+    for (size_t i = nameOffset; i < dumpSize - 1; ++i)
+        if (i == chance ? normal (raw[i]) != normal (other.raw[i]) : raw[i] != other.raw[i])
+            return false;
+    return true;
+}
+
 std::string Patch::name() const
 {
     std::string s (raw.begin() + nameOffset, raw.begin() + nameOffset + nameLength);

@@ -147,3 +147,11 @@ Read from the Peak's screen after sending values, or fixed by the Init Patch's v
 ## Animate buttons and MIDI volume (verified 2026-11-10, firmware 2.2)
 - The Peak's Animate 1/2 buttons send **CC 114/115 = 127** when pressed and **0** when released, and the Peak responds to the same. A value of 1 does nothing. Hold sends nothing of its own: while an Animate is held, the release (0) just isn't sent until Hold is released.
 - The Peak ignores **CC 7** (MIDI volume): CC 7 = 0 left it at full volume. Master Volume has no MIDI control.
+
+## Dump requests (verified 2026-11-10, firmware 2.2)
+The dump header with a request command in byte 8 makes the Peak send a dump:
+- `F0 00 20 29 01 10 00 7E 40 00 00 00 00 00 F7`: the current sound (type 00 reply, no location).
+- `... 7E 41 00 00 00 <bank> <slot> F7`: the patch in a slot, bank A = 1 (type 01 reply, located).
+- `... 7E 44 00 00 00 00 00 F7`: the global settings (type 04 reply).
+
+Stored patches hold **Arp Chance 0** where the same patch as the current sound reports **100** (the default), so patches are compared with that difference ignored.

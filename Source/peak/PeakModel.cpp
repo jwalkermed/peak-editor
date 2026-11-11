@@ -67,6 +67,7 @@ void PeakModel::loadPatch (const peak::Patch& newPatch, const juce::String& newS
     patch.setLocation (std::nullopt); // the editor always works on the current sound
     reference = patch;
     comparing = false;
+    loadedFrom.clear();
     source = newSource;
     loaded = true;
     pendingSends.clear();
@@ -157,6 +158,20 @@ bool PeakModel::stepPeakSlot (int delta)
     return selectPeakSlot ({ index / 128, index % 128 });
 }
 
+void PeakModel::rename (const juce::String& newName)
+{
+    if (comparing)
+        toggleCompare(); // rename the edit, not the stored version
+    patch.setName (newName.toStdString());
+    sendPatchToPeak();
+    changed.sendChangeMessage();
+}
+
+bool PeakModel::requestFromPeak()
+{
+    return connection->sendSysex (peak::currentSoundRequest()) && connection->sendSysex (peak::settingsRequest(), 300.0);
+}
+
 void PeakModel::followPeakSlot (peak::Patch::Location where)
 {
     // The Peak plays what is stored in the slot (not any NOT SENT change to it).
@@ -164,11 +179,25 @@ void PeakModel::followPeakSlot (peak::Patch::Location where)
         loadPatch (*stored, "Peak " + juce::String (where.name()));
     else
     {
+        // Not read yet: ask the Peak for that slot and load it when it arrives.
         originalLocation = where;
-        source = "Peak " + juce::String (where.name()) + " (bank not read: Backup page, Go)";
+        awaitedSlot = where;
+        connection->sendSysex (peak::slotRequest (where.bank, where.slot));
+        source = "Peak " + juce::String (where.name()) + " (asking the Peak)";
         changed.sendChangeMessage();
     }
     lastTouched = nullptr; // the display shows the patch
+}
+
+void PeakModel::markSaved (std::optional<peak::Patch::Location> where, const juce::String& newSource)
+{
+    if (comparing)
+        toggleCompare();
+    reference = patch;
+    if (where)
+        originalLocation = where;
+    source = newSource;
+    changed.sendChangeMessage();
 }
 
 bool PeakModel::writeToSlot (peak::Patch::Location where)
@@ -228,9 +257,22 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
         else if (const auto p = peak::Patch::fromSysex (d))
         {
             if (p->location())
+            {
                 library->storePeakSlot (*p); // bank dumps fill the Peak memory view
+                if (p->location() == awaitedSlot)
+                {
+                    awaitedSlot.reset();
+                    loadPatch (*p, "Peak " + juce::String (p->location()->name()));
+                }
+            }
             else
+            {
                 loadPatch (*p, "Received from Peak at " + juce::Time::getCurrentTime().toString (false, true, false));
+                // The current sound carries no slot; if it matches one exactly (unedited), show that slot.
+                for (int i = 0; i < 512 && ! originalLocation; ++i)
+                    if (const auto& stored = library->syncedSlot ({ i / 128, i % 128 }); stored && stored->sameSound (*p))
+                        originalLocation = peak::Patch::Location { i / 128, i % 128 };
+            }
         }
 
     if (! changes.empty())

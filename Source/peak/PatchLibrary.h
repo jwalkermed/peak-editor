@@ -57,6 +57,7 @@ public:
     void remove (const juce::String& id);
     void rename (const juce::String& id, const juce::String& name);
     void setCategory (const juce::String& id, int category); // Patch Category, 0-14 (stored in the patch)
+    void replacePatch (const juce::String& id, const peak::Patch&); // e.g. an edited version saved over it
     void setFavourite (const juce::String& id, bool);
 
     // Favourites for sounds in Peak memory. Keyed by the sound (name + parameters),

@@ -10,4 +10,7 @@
 namespace SlotWriter
 {
 void confirmAndWrite (PeakModel&, peak::Patch::Location, juce::Component* parent, std::function<void (const juce::String&)> done);
+// The write itself, for callers that have already asked: backs up the bank if it can, then writes.
+// Returns a status message; `ok` says whether the patch was written.
+juce::String write (PeakModel&, peak::Patch::Location, bool& ok);
 }

@@ -25,19 +25,28 @@ void confirmAndWrite (PeakModel& model, peak::Patch::Location where, juce::Compo
                                               .withRole (juce::MessageBoxButtonRole::destroy))
                              .withButton (juce::MessageBoxButtonOptions ("Cancel", 0).withRole (juce::MessageBoxButtonRole::cancel))
                              .withAssociatedComponent (parent);
-    juce::AlertWindow::showAsync (options, [&model, where, slot, canBackup, done] (int result) {
+    juce::AlertWindow::showAsync (options, [&model, where, slot, done] (int result) {
         if (result != 1)
             return done ("Write to " + slot + " cancelled");
-
-        juce::File backup;
-        if (canBackup)
-            if (const auto r = model.getLibrary().backupBank (where.bank, &backup); r.failed())
-                return done ("Not written: backup failed (" + r.getErrorMessage() + ")");
-
-        if (! model.writeToSlot (where))
-            return done ("Not written: no MIDI output to the Peak");
-
-        done ("Wrote " + slot + (canBackup ? ", backup: " + backup.getFileName() : juce::String()));
+        bool ok = false;
+        done (write (model, where, ok));
     });
+}
+
+juce::String write (PeakModel& model, peak::Patch::Location where, bool& ok)
+{
+    ok = false;
+    const auto slot = juce::String (where.name());
+    const auto canBackup = model.getLibrary().knownSlots (where.bank) == 128;
+    juce::File backup;
+    if (canBackup)
+        if (const auto r = model.getLibrary().backupBank (where.bank, &backup); r.failed())
+            return "Not written: backup failed (" + r.getErrorMessage() + ")";
+
+    if (! model.writeToSlot (where))
+        return "Not written: no MIDI output to the Peak";
+
+    ok = true;
+    return "Wrote " + slot + (canBackup ? ", backup: " + backup.getFileName() : juce::String());
 }
 } // namespace SlotWriter

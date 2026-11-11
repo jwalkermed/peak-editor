@@ -1,5 +1,5 @@
 // Renders the front panel to a PNG for visual checks against the reference photo.
-// Usage: PanelSnapshot out.png [width] [patch.syx]
+// Usage: PanelSnapshot out.png [width] [patch.syx] [param_id=value]  (the last shows the screen just after an edit)
 #include "peak/PeakModel.h"
 #include "ui/FrontPanel.h"
 #include "ui/LibraryDrawer.h"
@@ -59,6 +59,12 @@ int main (int argc, char** argv)
         auto panel = std::make_unique<FrontPanel> (*model);
         const auto d = FrontPanel::designBounds();
         panel->setSize (width, juce::roundToInt ((float) width * d.getHeight() / d.getWidth()));
+        if (argc > 4)
+            if (const auto* p = peak::findParam (juce::String (argv[4]).upToFirstOccurrenceOf ("=", false, false).toStdString()))
+            {
+                model->set (*p, juce::String (argv[4]).fromFirstOccurrenceOf ("=", false, false).getIntValue());
+                model->changed.dispatchPendingMessages();
+            }
         view = std::move (panel);
     }
 

@@ -16,6 +16,12 @@ inline constexpr uint8_t novationId[] { 0x00, 0x20, 0x29 };
 
 // Splits a raw byte stream (e.g. a .syx file) into complete F0..F7 messages.
 // Stray bytes outside a message and truncated messages are dropped.
+// Asks the Peak for a dump (verified on firmware 2.2, 2026-11-10): the dump header with
+// command 0x40 = current sound, 0x41 = the patch in a slot (bank A = 1), 0x44 = global settings.
+Bytes currentSoundRequest();
+Bytes slotRequest (int bank, int slot); // bank 0-3 (A-D), slot 0-127
+Bytes settingsRequest();
+
 std::vector<Bytes> splitSysex (const uint8_t* data, size_t size);
 inline std::vector<Bytes> splitSysex (const Bytes& b) { return splitSysex (b.data(), b.size()); }
 

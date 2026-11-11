@@ -5,6 +5,19 @@
 
 namespace peak
 {
+namespace
+{
+Bytes dumpRequest (uint8_t command, int bank, int slot)
+{
+    return { 0xF0, 0x00, 0x20, 0x29, 0x01, 0x10, 0x00, 0x7E, command, 0x00, 0x00, 0x00,
+             static_cast<uint8_t> (bank & 0x7F), static_cast<uint8_t> (slot & 0x7F), 0xF7 };
+}
+} // namespace
+
+Bytes currentSoundRequest() { return dumpRequest (0x40, 0, 0); }
+Bytes slotRequest (int bank, int slot) { return dumpRequest (0x41, bank + 1, slot); }
+Bytes settingsRequest() { return dumpRequest (0x44, 0, 0); }
+
 std::vector<Bytes> splitSysex (const uint8_t* data, size_t size)
 {
     std::vector<Bytes> messages;

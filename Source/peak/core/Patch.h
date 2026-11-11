@@ -54,6 +54,9 @@ public:
 
     // Bytes 16-525 (name + sound), for duplicate detection independent of location.
     std::string_view body() const;
+    // Same name and sound. Stored patches hold Arp Chance 0 where the Peak's current sound
+    // reports 100 (its default) for the same patch (seen 2026-11-10), so those count as equal.
+    bool sameSound (const Patch&) const;
 
     std::string name() const; // trailing spaces trimmed
     void setName (std::string_view); // non-printable characters become spaces, padded/truncated to 16
