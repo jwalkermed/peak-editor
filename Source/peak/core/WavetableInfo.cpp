@@ -1,0 +1,98 @@
+#include "WavetableInfo.h"
+
+#include <array>
+
+namespace peak
+{
+namespace
+{
+// From "Novation Peak/Summit factory wavetable list", r/synthesizers (reddit.com/r/synthesizers/comments/1spjuk3),
+// in the Peak's order (WaveMore 4-63). One typo fixed ("Mid-range ot thin").
+const std::array<WavetableInfo, 60> table { {
+    { "Evolves from a soft organ-like tone to a harsh square-like wave", "Soft, bassy", "Organs, leads, keys, pads" },
+    { "Random harmonics that provide a harsh and dissonant tone. PPG-like", "Harsh, tinny", "Noise, SFX, metal-like leads" },
+    { "Sounds almost like FM noise. Very harsh and bass-like", "Harsh, buzzy", "Noise, SFX, bass, lead" },
+    { "Changes between bell and vocal-like waves. The end waves are bellish, and the middle waves are vox-like",
+      "Soft and harsh, mid-range, crystalline", "Pads, keys, bells, choirs" },
+    { "The first two harmonics shift up an octave for the next wave", "Soft, additive, basic", "Pads, bells, organs" },
+    { "Goes from a square wave to FM noise. Sounds like a cross between \"Zing\" and \"BS Sine\"", "Soft and harsh, buzzy", "Leads, SFX" },
+    { "Crystalline and glass tones that change chords throughout the frames. Animoog-esque", "Mid-range, bright, glassy",
+      "Organs, pads, keys, maybe leads" },
+    { "Supposed to be a didgeridoo, but it sounds much more like the PPG vox sound. Cycling it rapidly creates an \"Eee-ooo\" sound",
+      "Mid-range, buzzy", "Pads, choirs, SFX" },
+    { "Goes from a square-like sound to a harsh wave and then a bell-like sound. Very reminiscent of Casio's \"vowel consonant\" and SD keyboards",
+      "Harsh, low or mid-range, buzzy, glassy", "Keys, bells, pads, leads" },
+    { "Sounds like what it's supposed to be. It goes from a soft to a harsh tonewheel organ tone", "Soft to harsh, mid or high-range, additive",
+      "Organs, pads" },
+    { "Sounds nothing like the DX7 classic. Maybe more like a Wurlitzer. Also sounds a bit vocal-like", "Harsh, cheapy, buzzy",
+      "Keys, choirs, leads" },
+    { "It has a sort of chipmunk-like vibe. It does exactly as the name suggests. Also PPG-like", "Mid-range, buzzy, formant-like",
+      "Choirs, leads" },
+    { "Sounds exactly like the name suggests. It's cool what you can achieve with 5 frames!", "Mid-range, buzzy, formant-like", "Choirs, leads" },
+    { "Sounds like a collection of waves based on different wind instruments. The last couple of waves sound voxy", "Mid-range, buzzy, soft",
+      "Leads, pads" },
+    { "It's supposed to sound like a clavinet, but it's still vocal or FM-like without the proper sweeping", "Mid-range to thin, buzzy, harsh",
+      "Keys, leads, choirs" },
+    { "I guess it's supposed to be like a bowed string. Still very formant-like", "Mid-range to thin, buzzy", "Leads, pads, choirs" },
+    { "Another organ wavetable. This one is more buzzy than the Organ one, and it has a bell waveform in the middle",
+      "Bass to mid-range, buzzy, soft", "Organs, bells, keys, pads" },
+    { "Sounds very squeezy, but it does not sound like resonance", "Mid-range to thin, formant-like, alien", "Leads, basses, SFX, choirs" },
+    { "This one goes from vocal to bright", "Mid-range to thin, buzzy", "Choirs, leads" },
+    { "Goes from soft to glassy. Appears to be an approximation of a Shepard tone", "Bassy to bright, additive, soft", "Pads, SFX" },
+    { "A vocal wavetable that is kind of chord-like", "Mid-range to thin, formant, buzzy, bright", "Choirs" },
+    { "Starts as a sawtooth wave before becoming chord-like sounds", "Bassy to thin, bright, shimmering", "SFX, Pads, Keys" },
+    { "Analog-like wavetable phasing from harsh to soft", "Mid-range to thin, bright, soft", "Leads, bass, pads" },
+    { "A muffled formant-like sound. It's like a submerged choir", "Mid-range, formant-like, hollow", "Choirs, pads" },
+    { "Goes from a soft square-like tone to a harsh EPiano-like waveform", "Bassy to bright, soft, rich, glassy", "Keys, leads, bass" },
+    { "Yet another formant wavetable", "Mid-range to thin, buzzy, alien", "Choirs" },
+    { "An interesting analog-like sound. It sounds sort of like a phased and harmonized saw wave. Animoog-esque",
+      "Bassy to thin, buzzy, shimmering, bright", "Leads, SFX, keys" },
+    { "Very interesting, distinct, and kind of like water swishing", "Thin, alien, additive", "SFX, leads, pads" },
+    { "A soft tone that \"whistles\" like throat singing", "Thin, additive, dynamic", "SFX, pads" },
+    { "Bell-like tone that becomes a muffled formant", "Mid-range, glassy, brittle", "Bells, keys, leads, pads" },
+    { "A bright, glassy sound that becomes soft and piano-like", "Bright to mid-range, harmonic", "Keys, organs, leads, pads" },
+    { "Chime-like sound that becomes somewhat vocal", "Mid-range to bright, chimey, bright", "Bells, keys, vocals, leads" },
+    { "Interesting glassy sound that is organ-like", "Mid-range, bright, organ-like, bellish, shimmering", "Keys, organs, bells, pads" },
+    { "Kind of a reverse version of \"Glassy\". It's a piano sound that starts to become bright and glassy",
+      "Mid-range, analog-like, glistening, chimey", "Keys, bells, pads" },
+    { "A mixture of analog and FM/formant-like sounds", "Mid-range, basic", "Plucks, bass, keys, leads" },
+    { "Yet another glassy formant wavetable", "Mid-range to thin, alien or formant-like", "Choirs, leads" },
+    { "Evolves from an EPiano-like sound to a PPG bellish sound", "Bass to thin, chimey, bright", "Keys, bells" },
+    { "Switches between formant and chime-like", "Mid-range, buzzy, mellow", "Keys, choirs, pads" },
+    { "Sounds more digital than analog. Very vocal-like", "Mid-range to thin, buzzy, formant-like", "Leads, choirs" },
+    { "Is this supposed to be based on an analog or acoustic sound? It's almost completely bell or chime-like",
+      "Mid-range to bright, glassy, chimey, bell-like, simple", "Bells, keys, pads" },
+    { "Another bell-like wavetable that is pleasant and fun to use!", "Mid-range to bright, glassy, chimey, bell-like, simple", "Bells, keys, pads" },
+    { "Interesting square or FM-like wavetable", "Bassy to mid-range, hollow, smooth, mellow, odd harmonics",
+      "Keys, bells, pads, leads, bass/pluck" },
+    { "Thin sound that becomes glassy", "Thin, bright, harmonic, alien", "Leads, SFX" },
+    { "Interesting mixture of chime, formant, and organ-like waves. The first wave stands out to me the most, and it is very bell-like",
+      "Bassy to mid-range, chimey, formant, organ-like, buzzy", "Pads, keys, bells, choirs, SFX" },
+    { "Sounds more bell than organ-like", "Bassy to mid-range, soft, mellow, bright, chimey", "Bells, keys/organs, pads, leads" },
+    { "Saw-like sound that instantly becomes a series of dissonant chords", "Thin, bright, sweepy, chord-like", "SFX" },
+    { "Soft square-like tone that becomes an in-between chime", "Bassy to mid-range, hollow, glassy, odd harmonics", "Keys, bells, leads, bass" },
+    { "Shimmering organ-like wavetable", "Mid-range to thin, shimmering, bright, chimey, organ-like", "Organs, keys" },
+    { "Quite thin and glassy. Seems useless or redundant to me", "Thin, organ-like, chimey, bright, harsh", "SFX" },
+    { "Piano-like sound that becomes glassy", "Bassy to mid-range, hollow, mellow, glassy, bright", "Keys, pads, bells" },
+    { "Goes from a bell to a steel-like sound. Very glassy and metallic", "Mid-range to thin, bright, harsh, glassy", "Bells, SFX" },
+    { "Square-like tone that starts to sound like an EPiano, and then a chimey organ", "Mid-range to thin, hollow, chimey, bright",
+      "SFX, Keys, Bells" },
+    { "A combination of bright, PPG or organ-like waves", "Mid-range to thin, bright, harsh, glassy", "SFX, keys, organs, bells" },
+    { "Goes from a thin to a full-sounding bell wave. Might be useful for percussive sounds", "Thin to mid-range, bright, chimey",
+      "SFX, bells, keys, pads" },
+    { "Excellent and unique wavetable! It's a set of chords with variable analog-like waves. Also chiptuney",
+      "Mid-range, analog-like, bell-like, bright", "Keys, leads, pads" },
+    { "Nice set of bell-like waveforms!", "Mid-range to thin, chimey, bright, glassy", "Bells, keys, pads, organs, leads" },
+    { "More PPG than Miku-like", "Thin to mid-range, formant, alien", "Choirs, leads, pads" },
+    { "EPiano-like wavetable with vocal undertones", "Bassy to mid-range, mellow, hollow, soft", "Keys, pads, choirs" },
+    { "Thin and glassy vocal-like wavetable. Sounds more bell than vox-like", "Mid-range to thin, formant, alien, chimey",
+      "Choirs, keys, pads, leads, SFX" },
+    { "Sounds like what the name suggests!", "Mid-range, formant, alien", "Choirs, leads" },
+} };
+} // namespace
+
+const WavetableInfo* wavetableInfo (int waveMore)
+{
+    return waveMore >= 4 && waveMore - 4 < (int) table.size() ? &table[(size_t) (waveMore - 4)] : nullptr;
+}
+} // namespace peak

@@ -2,6 +2,8 @@
 
 #include "peak/core/ParamFormat.h"
 
+#include <limits>
+
 namespace
 {
 constexpr int sendIntervalMs = 15, dumpIntervalMs = 150;
@@ -180,6 +182,49 @@ void PeakModel::rename (const juce::String& newName)
     changed.sendChangeMessage();
 }
 
+void PeakModel::findEditedOrigin()
+{
+    // An edited sound (e.g. left on the Peak when the editor was closed): if a stored patch has the
+    // same name, take the closest one as where it came from, so it shows as Edited and Revert,
+    // Compare and Save know its home. Peak memory first, then My Banks.
+    const auto differences = [this] (const peak::Patch& other) {
+        const auto a = patch.body(), b = other.body();
+        int n = 0;
+        for (size_t i = 0; i < a.size(); ++i)
+            n += a[i] != b[i] ? 1 : 0;
+        return n;
+    };
+    const auto name = patch.name();
+    std::optional<peak::Patch> best;
+    int bestDiff = std::numeric_limits<int>::max();
+    for (int i = 0; i < 512; ++i)
+        if (const auto& stored = library->syncedSlot ({ i / 128, i % 128 }); stored && stored->name() == name)
+            if (const auto d = differences (*stored); d < bestDiff)
+            {
+                best = stored;
+                bestDiff = d;
+            }
+    juce::String fromLibrary;
+    if (! best)
+        for (const auto& e : library->getEntries())
+            if (e.patch.name() == name)
+                if (const auto d = differences (e.patch); d < bestDiff)
+                {
+                    best = e.patch;
+                    bestDiff = d;
+                    fromLibrary = "l:" + e.id;
+                }
+    if (! best)
+        return;
+
+    originalLocation = best->location();
+    reference = *best;
+    reference.setLocation (std::nullopt);
+    loadedFrom = fromLibrary;
+    source = (originalLocation ? "Peak " + juce::String (originalLocation->name()) : juce::String ("My Banks")) + " (edited)";
+    changed.sendChangeMessage();
+}
+
 bool PeakModel::requestFromPeak()
 {
     return connection->sendSysex (peak::currentSoundRequest()) && connection->sendSysex (peak::settingsRequest(), 300.0)
@@ -325,6 +370,8 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
                 for (int i = 0; i < 512 && ! originalLocation; ++i)
                     if (const auto& stored = library->syncedSlot ({ i / 128, i % 128 }); stored && stored->sameSound (*p))
                         originalLocation = peak::Patch::Location { i / 128, i % 128 };
+                if (! originalLocation)
+                    findEditedOrigin();
             }
         }
 

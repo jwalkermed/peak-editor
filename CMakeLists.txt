@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Target architectures")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum macOS version")
 
-project(PeakEditor VERSION 1.0.1 LANGUAGES C CXX)
+project(PeakEditor VERSION 1.0.2 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -28,6 +28,7 @@ set(PEAK_CORE_SOURCES
     Source/peak/core/ParamMidi.cpp
     Source/peak/core/ParamFormat.cpp
     Source/peak/core/Settings.cpp
+    Source/peak/core/WavetableInfo.cpp
     Source/peak/core/Patch.cpp)
 
 juce_add_plugin(PeakEditor
@@ -68,6 +69,7 @@ target_sources(PeakEditor PRIVATE
     Source/ui/DrawerStyle.cpp
     Source/ui/LibraryDrawer.cpp
     Source/ui/ModMatrixDrawer.cpp
+    Source/ui/ModAssign.cpp
     Source/ui/SettingsDrawer.cpp)
 
 target_include_directories(PeakEditor PRIVATE Source)
@@ -111,6 +113,7 @@ target_sources(PanelSnapshot PRIVATE
     Source/ui/DrawerStyle.cpp
     Source/ui/LibraryDrawer.cpp
     Source/ui/ModMatrixDrawer.cpp
+    Source/ui/ModAssign.cpp
     Source/ui/SettingsDrawer.cpp)
 target_include_directories(PanelSnapshot PRIVATE Source)
 target_compile_definitions(PanelSnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)

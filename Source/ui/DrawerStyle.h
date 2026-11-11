@@ -40,6 +40,11 @@ public:
         else
             juce::Slider::mouseDoubleClick (e);
     }
+
+    // A right-click is for the modulation menu: it doesn't move the value.
+    void mouseDown (const juce::MouseEvent& e) override { if (! e.mods.isPopupMenu()) juce::Slider::mouseDown (e); }
+    void mouseDrag (const juce::MouseEvent& e) override { if (! e.mods.isPopupMenu()) juce::Slider::mouseDrag (e); }
+    void mouseUp (const juce::MouseEvent& e) override { if (! e.mods.isPopupMenu()) juce::Slider::mouseUp (e); }
 };
 
 // Where the editor's patch was loaded from, as a Library row key: "p:<bank>:<slot>" (Peak memory,

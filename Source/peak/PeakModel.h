@@ -41,7 +41,7 @@ public:
     bool isComparing() const noexcept { return comparing; }
     // Revert: drops every edit, back to the patch as loaded, and sends it to the Peak.
     bool revert();
-    bool isModified() const { return patch.body() != reference.body(); }
+    bool isModified() const { return ! patch.sameSound (reference); }
     const peak::Patch& getReference() const noexcept { return reference; } // the patch as loaded
     // The library row the patch was loaded from ("l:<id>"), if the Library loaded it; cleared by loadPatch.
     void setLoadedFrom (const juce::String& key) { loadedFrom = key; }
@@ -101,6 +101,7 @@ private:
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
     void timerCallback() override;
     void followPeakSlot (peak::Patch::Location); // the Peak changed patch (or we told it to)
+    void findEditedOrigin(); // the current sound matched no stored patch: is it an edited one?
 
     juce::SharedResourcePointer<PeakConnection> connection;
     juce::SharedResourcePointer<PatchLibrary> library;

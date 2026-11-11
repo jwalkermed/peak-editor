@@ -1,9 +1,11 @@
 #include "FrontPanel.h"
 
 #include "peak/core/ParamFormat.h"
+#include "peak/core/WavetableInfo.h"
 #include "ui/ParamRows.h"
 #include "ui/CardStyle.h"
 #include "ui/DrawerStyle.h"
+#include "ui/ModAssign.h"
 #include "ui/SlotWriter.h"
 
 #include <cstring>
@@ -268,14 +270,33 @@ private:
 // once); Close keeps it, Cancel or Esc goes back to the one it started with. The user wavetables'
 // names are read from the Peak (Refresh reads them again).
 class WavePicker final : public ClosableCard,
-                         private juce::ChangeListener
+                         private juce::ChangeListener,
+                         private juce::Timer
 {
 public:
     WavePicker (PeakModel& m, int oscillator, int waveBefore)
         : model (m), osc (oscillator), more (*peak::findParam ("osc" + std::to_string (oscillator) + "_wave_more")),
-          wave (*peak::findParam ("osc" + std::to_string (oscillator) + "_wave")), startWave (waveBefore), startMore (m.get (more))
+          wave (*peak::findParam ("osc" + std::to_string (oscillator) + "_wave")),
+          shape (*peak::findParam ("osc" + std::to_string (oscillator) + "_manual_shape")), startWave (waveBefore), startMore (m.get (more)), startShape (m.get (shape))
     {
         setLookAndFeel (&CardStyle::look());
+
+        // Wave Table Position: the oscillator's manual Shape Amount, which moves through the wavetable.
+        position.setRange (shape.min, shape.max, 1);
+        position.textFromValueFunction = [this] (double v) { return juce::String (peak::formatValue (shape, (int) v)); };
+        position.resetValue = [this] { return model.getStored (shape); };
+        position.getProperties().set ("centre", peak::defaultValue (shape));
+        position.setTextBoxStyle (juce::Slider::TextBoxRight, false, 44, 20);
+        position.setTextBoxIsEditable (false);
+        position.setScrollWheelEnabled (false);
+        position.setTooltip ("The oscillator's Shape Amount (Manual): moves through the wavetable's waves");
+        position.setValue (model.get (shape), juce::dontSendNotification);
+        position.onValueChange = [this] { if (! updating) model.set (shape, (int) position.getValue()); };
+        addAndMakeVisible (position);
+        positionLabel.setFont (juce::FontOptions (13.0f));
+        positionLabel.setColour (juce::Label::textColourId, CardStyle::text);
+        positionLabel.setBorderSize ({ 0, 0, 0, 0 });
+        addAndMakeVisible (positionLabel);
         refresh.onClick = [this] { model.requestUserWavetableNames(); };
         cancel.onClick = [this] { goBack(); };
         close.onClick = [this] { if (onClose) onClose(); };
@@ -285,6 +306,7 @@ public:
             addAndMakeVisible (b);
         onEscape = [this] { goBack(); };
         model.changed.addChangeListener (this);
+        sendLookAndFeelChange(); // the position bar's value box in the card style
         setSize (2 * pad + cols * cellW + (cols - 1) * gap, userTop() + 2 * (cellH + gap) + 74);
     }
 
@@ -326,6 +348,8 @@ public:
         g.setFont (juce::FontOptions (12.0f));
         g.drawText ("USER WAVETABLES  (names read from the Peak)", pad, y + 8, 400, 16, juce::Justification::centredLeft);
 
+        paintInfo (g);
+
         g.setColour (CardStyle::dim);
         auto note = getLocalBounds().reduced (pad, 0).removeFromBottom (56).withWidth (300);
         g.drawFittedText ("Click or use the arrow keys to hear one on the Peak.\nDouble-click or Close keeps it;\n"
@@ -335,6 +359,10 @@ public:
 
     void resized() override
     {
+        // Under the factory wavetables, as wide as three columns: the name, then the line and its value.
+        auto row = juce::Rectangle<int> (pad, gridTop + 10 * (cellH + gap) + 2, 3 * cellW + 2 * gap, 28);
+        positionLabel.setBounds (row.removeFromLeft (132));
+        position.setBounds (row);
         auto r = getLocalBounds().reduced (pad, 0).removeFromBottom (56).withSizeKeepingCentre (getWidth() - 2 * pad, 30);
         close.setBounds (r.removeFromRight (100));
         r.removeFromRight (10);
@@ -344,6 +372,15 @@ public:
     }
 
     void mouseMove (const juce::MouseEvent& e) override { setHover (cellAt (e.getPosition())); }
+
+    // Shows the notes card for a wavetable at once, as if hovered (for snapshots).
+    void previewInfo (int waveMore)
+    {
+        for (int i = 0; i < 70; ++i)
+            if (valueAt (i) == waveMore)
+                hover = i;
+        showInfo = true;
+    }
     void mouseExit (const juce::MouseEvent&) override { setHover (-1); }
 
     void mouseDown (const juce::MouseEvent& e) override
@@ -375,11 +412,11 @@ public:
     }
 
 private:
-    static constexpr int cols = 6, cellW = 118, cellH = 30, gap = 6, pad = 18, gridTop = 64;
+    static constexpr int cols = 6, cellW = 118, cellH = 30, gap = 6, pad = 18, gridTop = 64, positionRow = 40;
 
     static int valueAt (int i) { return i < 60 ? 4 + i : 64 + (i - 60); } // 60 factory, then 10 user
     static juce::String label (int v) { return v >= 64 ? "U" + juce::String (v - 63) : juce::String (v - 3).paddedLeft ('0', 2); }
-    static int userTop() { return gridTop + 10 * (cellH + gap) + 40; }
+    static int userTop() { return gridTop + 10 * (cellH + gap) + 40 + positionRow; }
 
     static juce::Rectangle<int> cellBounds (int i)
     {
@@ -398,8 +435,60 @@ private:
 
     void setHover (int i)
     {
-        if (std::exchange (hover, i) != i)
-            repaint();
+        if (std::exchange (hover, i) == i)
+            return;
+        // The notes card appears after a moment over a factory wavetable.
+        showInfo = false;
+        stopTimer();
+        if (i >= 0 && peak::wavetableInfo (valueAt (i)) != nullptr)
+            startTimer (450);
+        repaint();
+    }
+
+    void timerCallback() override
+    {
+        stopTimer();
+        showInfo = true;
+        repaint();
+    }
+
+    // The listener's notes on the hovered wavetable (from the r/synthesizers table): what it
+    // sounds like, its texture and what it suits. Below the cell, or above it near the bottom.
+    void paintInfo (juce::Graphics& g) const
+    {
+        if (! showInfo || hover < 0)
+            return;
+        const auto v = valueAt (hover);
+        const auto* info = peak::wavetableInfo (v);
+        if (info == nullptr)
+            return;
+
+        constexpr float width = 300.0f, inset = 12.0f;
+        juce::AttributedString text;
+        text.setWordWrap (juce::AttributedString::byWord);
+        text.append (juce::String (peak::formatValue (more, v)) + "\n", juce::FontOptions (14.0f, juce::Font::bold), CardStyle::blue);
+        text.append (juce::String (info->description) + "\n\n", juce::FontOptions (13.0f), CardStyle::text);
+        text.append ("Texture  ", juce::FontOptions (12.0f), CardStyle::dim);
+        text.append (juce::String (info->texture) + "\n", juce::FontOptions (12.0f), CardStyle::text);
+        text.append ("Usage  ", juce::FontOptions (12.0f), CardStyle::dim);
+        text.append (info->usage, juce::FontOptions (12.0f), CardStyle::text);
+        juce::TextLayout layout;
+        layout.createLayout (text, width - 2.0f * inset);
+
+        const auto cell = cellBounds (hover).toFloat();
+        const auto h = layout.getHeight() + 2.0f * inset;
+        auto box = juce::Rectangle<float> (width, h).withPosition (cell.getX(), cell.getBottom() + 6.0f);
+        if (box.getBottom() > (float) getHeight() - 8.0f)
+            box.setY (cell.getY() - 6.0f - h);
+        box.setX (juce::jlimit (8.0f, (float) getWidth() - width - 8.0f, box.getX()));
+
+        g.setColour (juce::Colours::black.withAlpha (0.35f));
+        g.fillRoundedRectangle (box.translated (0.0f, 3.0f), 8.0f);
+        g.setColour (CardStyle::cellHover);
+        g.fillRoundedRectangle (box, 8.0f);
+        g.setColour (CardStyle::border);
+        g.drawRoundedRectangle (box.reduced (0.5f), 8.0f, 1.0f);
+        layout.draw (g, box.reduced (inset));
     }
 
     void audition (int i)
@@ -415,17 +504,27 @@ private:
     {
         model.set (more, startMore);
         model.set (wave, startWave);
+        model.set (shape, startShape);
         if (onClose)
             onClose();
     }
 
-    void changeListenerCallback (juce::ChangeBroadcaster*) override { repaint(); } // e.g. user names read
+    void changeListenerCallback (juce::ChangeBroadcaster*) override // e.g. user names read, or the knob turned
+    {
+        const juce::ScopedValueSetter<bool> svs (updating, true);
+        if (! position.isMouseButtonDown())
+            position.setValue (model.get (shape), juce::dontSendNotification);
+        repaint();
+    }
 
     PeakModel& model;
     const int osc;
-    const peak::ParamDef &more, &wave;
-    const int startWave, startMore;
+    const peak::ParamDef &more, &wave, &shape;
+    const int startWave, startMore, startShape;
     int hover = -1;
+    bool showInfo = false, updating = false;
+    DrawerStyle::ResetSlider position { juce::Slider::LinearHorizontal, juce::Slider::TextBoxRight };
+    juce::Label positionLabel { {}, "Wave Table Position" };
     juce::TextButton refresh { "Refresh user list" }, cancel { "Cancel" }, close { "Close" };
 };
 } // namespace
@@ -457,7 +556,8 @@ FrontPanel::FrontPanel (PeakModel& m) : model (m)
     static const juce::StringArray replacedByScreen { "soft1", "soft2", "soft3", "page_prev", "page_next", "page_select",
                                                       "data_encoder", "value_down", "value_up", "value_label", "menu_patch",
                                                       "master_volume", "title_master", // the Peak has no MIDI master volume
-                                                      "patch_encoder" };                // Patch -/+ and Bank -/+ (and the arrow keys) instead
+                                                      "patch_encoder",                  // Patch -/+ and Bank -/+ (and the arrow keys) instead
+                                                      "vca_frame" };                    // the grey box round VCA Gain
     for (const auto& e : PanelLayout::get().elements)
     {
         if (replacedByScreen.contains (e.id))
@@ -475,9 +575,9 @@ FrontPanel::FrontPanel (PeakModel& m) : model (m)
         }
         else if (std::strcmp (e.id, "patch_down") == 0 || std::strcmp (e.id, "patch_up") == 0 || std::strcmp (e.id, "patch_pm_label") == 0)
         {
-            // Up where the patch knob was: the buttons' tops level with the screen's.
+            // Below Bank -/+, which is level with the top of the screen.
             auto& moved = changedElements.emplace_back (e);
-            moved.y -= 187.0f;
+            moved.y -= 124.0f;
             c.e = &moved;
         }
         else if (juce::String (e.bind).startsWith ("menu:") && e.type == PanelElement::button)
@@ -542,10 +642,10 @@ FrontPanel::FrontPanel (PeakModel& m) : model (m)
         controls.push_back (std::move (c));
     }
 
-    // Bank -/+ below Patch -/+, where Patch -/+ sat on the hardware.
-    for (const auto& added : { PanelElement { PanelElement::button, "bank_down", 251.9f, 314.0f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_down", 0, false, "dark" },
-                               PanelElement { PanelElement::button, "bank_up", 336.3f, 314.1f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_up", 0, false, "dark" },
-                               PanelElement { PanelElement::text, "bank_pm_label", 290.7f, 347.4f, 0.0f, 0.0f, 12.0f, 0.0f, "–      Bank      +", "", 0, false, "centre" } })
+    // Bank -/+ above Patch -/+, the buttons' tops level with the screen's.
+    for (const auto& added : { PanelElement { PanelElement::button, "bank_down", 251.9f, 251.0f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_down", 0, false, "dark" },
+                               PanelElement { PanelElement::button, "bank_up", 336.3f, 251.1f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_up", 0, false, "dark" },
+                               PanelElement { PanelElement::text, "bank_pm_label", 290.7f, 284.4f, 0.0f, 0.0f, 12.0f, 0.0f, "–      Bank      +", "", 0, false, "centre" } })
     {
         Control c;
         c.e = &changedElements.emplace_back (added);
@@ -686,6 +786,14 @@ void FrontPanel::mouseDown (const juce::MouseEvent& ev)
         return toggleFavourite();
     if (helpButtonArea().contains (toDesign (ev.position)))
         return showHelp();
+    if (ev.mods.isPopupMenu())
+    {
+        // Right-click: modulate this control (or send its source somewhere), as in the TEO-5 editor.
+        if (auto* c = controlAt (toDesign (ev.position)))
+            if (const auto* p = c->source.param != nullptr && c->alternatives.empty() ? c->source.param : resolve (*c))
+                ModAssign::showMenu (model, *p);
+        return;
+    }
     dragging = controlAt (toDesign (ev.position));
     dragParam = nullptr;
     if (dragging == nullptr)
@@ -1209,15 +1317,24 @@ void FrontPanel::showCard (std::unique_ptr<juce::Component> card)
     overlay->grabKeyboardFocus();
 }
 
+void FrontPanel::closeCard()
+{
+    if (overlay)
+        overlay->close();
+}
+
 void FrontPanel::resized()
 {
     if (overlay)
         overlay->setBounds (getLocalBounds());
 }
 
-std::unique_ptr<juce::Component> FrontPanel::createWavePicker (PeakModel& model, int oscillator, int waveBefore)
+std::unique_ptr<juce::Component> FrontPanel::createWavePicker (PeakModel& model, int oscillator, int waveBefore, int previewWave)
 {
-    return std::make_unique<WavePicker> (model, oscillator, waveBefore);
+    auto picker = std::make_unique<WavePicker> (model, oscillator, waveBefore);
+    if (previewWave >= 0)
+        picker->previewInfo (previewWave);
+    return picker;
 }
 
 //==============================================================================

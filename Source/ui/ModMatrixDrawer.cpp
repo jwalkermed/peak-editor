@@ -291,6 +291,15 @@ public:
         g.drawText (slot.label, r.withTrimmedLeft (17.0f), juce::Justification::centredLeft, false);
     }
 
+    void paintOverChildren (juce::Graphics& g) override
+    {
+        if (owner.getFocusedRow() == index) // the slot a right-click on the panel just added or chose
+        {
+            g.setColour (accent);
+            g.drawRect (getLocalBounds(), 2);
+        }
+    }
+
     void resized() override
     {
         auto r = getLocalBounds().reduced (0, 2);
@@ -483,11 +492,15 @@ void ModMatrixDrawer::apply (const State& s)
 
 void ModMatrixDrawer::userEdit (const juce::String& what)
 {
+    // Editing the outlined slot keeps it outlined; editing any other clears it.
+    if (focusedRow >= 0 && ! what.endsWith ("slot " + slots[(size_t) focusedRow].label))
+        clearFocus();
     undoStack.push_back ({ capture(), what });
     if (undoStack.size() > 100)
         undoStack.erase (undoStack.begin());
     redoStack.clear();
-    setHint ({});
+    if (focusedRow < 0) // the outlined slot's message stays while it's being edited
+        setHint ({});
     updateButtons();
 }
 
@@ -536,4 +549,28 @@ void ModMatrixDrawer::updateButtons()
 void ModMatrixDrawer::setHint (const juce::String& text)
 {
     hint.setText (text.isEmpty() ? defaultHint : text, juce::dontSendNotification);
+    hint.setColour (juce::Label::textColourId, focusedRow >= 0 && text.isNotEmpty() ? accent : silkscreen.withAlpha (0.65f));
+}
+
+void ModMatrixDrawer::focusSlot (int row, const juce::String& message)
+{
+    focusedRow = row;
+    setHint (message);
+    for (auto* r : rows)
+        r->repaint();
+}
+
+void ModMatrixDrawer::clearFocus()
+{
+    if (std::exchange (focusedRow, -1) < 0)
+        return;
+    setHint ({});
+    for (auto* r : rows)
+        r->repaint();
+}
+
+void ModMatrixDrawer::visibilityChanged()
+{
+    if (! isShowing())
+        clearFocus();
 }

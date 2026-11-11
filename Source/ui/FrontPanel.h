@@ -36,6 +36,7 @@ public:
     void stepBank (int delta);
 
     void showMessage (const juce::String&);
+    void closeCard(); // closes an open menu page or the wavetable picker
 
     // Panel area in reference-photo pixels, including the wooden end cheeks.
     static juce::Rectangle<float> designBounds();
@@ -45,7 +46,8 @@ public:
     // A menu button's page ("Osc", "Animate", ...), or nullptr if it has none.
     static std::unique_ptr<juce::Component> createMenuPage (PeakModel&, const juce::String& menu);
     // The wavetable picker for oscillator 1-3 (waveBefore: its Wave before More was chosen).
-    static std::unique_ptr<juce::Component> createWavePicker (PeakModel&, int oscillator, int waveBefore);
+    // previewWave: show that wavetable's notes card as if hovered (snapshots).
+    static std::unique_ptr<juce::Component> createWavePicker (PeakModel&, int oscillator, int waveBefore, int previewWave = -1);
 
     void resized() override;
 
