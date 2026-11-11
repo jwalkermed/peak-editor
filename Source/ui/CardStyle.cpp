@@ -22,6 +22,30 @@ Look::Look()
 void Look::drawLinearSlider (juce::Graphics& g, int x, int y, int w, int h, float pos, float, float, juce::Slider::SliderStyle style,
                              juce::Slider& slider)
 {
+    if (style == juce::Slider::LinearHorizontal)
+    {
+        // A line with a round handle (like the keyboard's velocity), coloured from the centre (or the
+        // minimum) to the handle.
+        const auto cy = (float) y + (float) h * 0.5f;
+        const auto track = juce::Rectangle<float> ((float) x, cy - 1.5f, (float) w, 3.0f);
+        g.setColour (line.brighter (0.15f));
+        g.fillRoundedRectangle (track, 1.5f);
+        const auto centre = slider.getProperties()["centre"];
+        const auto from = centre.isVoid() ? (float) x : (float) slider.getPositionOfValue ((double) centre);
+        g.setColour (blue);
+        g.fillRoundedRectangle (juce::Rectangle<float>::leftTopRightBottom (juce::jmin (from, pos), cy - 1.5f, juce::jmax (from, pos), cy + 1.5f), 1.5f);
+        if (! centre.isVoid())
+        {
+            g.setColour (dim);
+            g.fillRect (juce::Rectangle<float> (1.0f, 9.0f).withCentre ({ from, cy }));
+        }
+        const auto knob = juce::Rectangle<float> (14.0f, 14.0f).withCentre ({ pos, cy });
+        g.setColour (slider.isMouseOverOrDragging() ? juce::Colours::white : text);
+        g.fillEllipse (knob);
+        g.setColour (blue);
+        g.drawEllipse (knob.reduced (0.5f), 1.0f);
+        return;
+    }
     if (style != juce::Slider::LinearBar)
         return LookAndFeel_V4::drawLinearSlider (g, x, y, w, h, pos, 0.0f, 0.0f, style, slider);
 
@@ -45,6 +69,14 @@ void Look::drawLinearSlider (juce::Graphics& g, int x, int y, int w, int h, floa
     }
     g.setColour (slider.isMouseOverOrDragging() ? dim : line);
     g.drawRoundedRectangle (box, 5.0f, 1.0f);
+
+    // An optional name inside the bar, at the left ("label" in the slider's properties).
+    if (const auto label = slider.getProperties()["label"].toString(); label.isNotEmpty())
+    {
+        g.setColour (text);
+        g.setFont (juce::FontOptions (13.0f));
+        g.drawText (label, box.reduced (10.0f, 0.0f), juce::Justification::centredLeft);
+    }
 }
 
 juce::Label* Look::createSliderTextBox (juce::Slider& slider)

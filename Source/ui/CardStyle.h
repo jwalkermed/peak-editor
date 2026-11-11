@@ -14,7 +14,8 @@ inline const juce::Colour card { 0xff1e1f22 }, border { 0xff464a50 }, cell { 0xf
     blue { 0xff7098be },     // titles and headings: the bars' blue, lighter so it reads as text
     closeFill { 0xff3a3020 };
 
-// Rounded value bars (fill from the minimum, or from "centre" in the slider's properties),
+// Rounded value bars (fill from the minimum, or from "centre" in the slider's properties; a "label"
+// property is written inside the bar at the left),
 // drop-downs and buttons ("primary" in a button's properties: the amber Close).
 class Look final : public juce::LookAndFeel_V4
 {

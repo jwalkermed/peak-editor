@@ -42,8 +42,13 @@ private:
 
     struct DoubleClicks final : juce::MouseListener
     {
-        std::function<void (juce::Component*)> onDoubleClick;
+        std::function<void (juce::Component*)> onDoubleClick, onRightClick;
         void mouseDoubleClick (const juce::MouseEvent& e) override { if (onDoubleClick) onDoubleClick (e.eventComponent); }
+        void mouseDown (const juce::MouseEvent& e) override
+        {
+            if (e.mods.isPopupMenu() && onRightClick)
+                onRightClick (e.eventComponent);
+        }
     } resetOnDoubleClick;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ParamRows)

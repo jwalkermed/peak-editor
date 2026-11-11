@@ -1,5 +1,10 @@
 #include "PluginEditor.h"
 
+#include "ui/CardStyle.h"
+#include "ui/ModAssign.h"
+
+#include "peak/core/ParamFormat.h"
+
 #include <juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h>
 
 #include "ui/DrawerStyle.h"
@@ -8,15 +13,66 @@ namespace
 {
 constexpr int headerHeight = 44;
 
-// Front panel with the playable keyboard strip underneath.
+// A small on/off switch with a label, for the bar under the panel.
+class FooterSwitch final : public juce::Component,
+                           public juce::SettableTooltipClient
+{
+public:
+    explicit FooterSwitch (const juce::String& labelText) : label (labelText) {}
+
+    bool on = true;
+    std::function<void (bool)> onChange;
+
+    void paint (juce::Graphics& g) override
+    {
+        auto r = getLocalBounds().toFloat();
+        const auto track = r.removeFromRight (26.0f).withSizeKeepingCentre (26.0f, 12.0f);
+        g.setColour (on ? CardStyle::barFill.brighter (0.3f) : juce::Colour (0xff2a2c30));
+        g.fillRoundedRectangle (track, 6.0f);
+        g.setColour (juce::Colour (0xff3c3f44));
+        g.drawRoundedRectangle (track, 6.0f, 1.0f);
+        g.setColour (on ? juce::Colours::white : juce::Colours::white.withAlpha (0.55f));
+        g.fillEllipse (juce::Rectangle<float> (10.0f, 10.0f).withCentre ({ on ? track.getRight() - 7.0f : track.getX() + 7.0f, track.getCentreY() }));
+        g.setColour (juce::Colours::white.withAlpha (isMouseOver() ? 0.8f : 0.45f));
+        g.setFont (juce::FontOptions (11.0f));
+        g.drawText (label, r.withTrimmedRight (6.0f), juce::Justification::centredRight);
+    }
+
+    void mouseDown (const juce::MouseEvent&) override
+    {
+        on = ! on;
+        repaint();
+        if (onChange)
+            onChange (on);
+    }
+    void mouseEnter (const juce::MouseEvent&) override { repaint(); }
+    void mouseExit (const juce::MouseEvent&) override { repaint(); }
+
+private:
+    juce::String label;
+};
+
+// Front panel with the playable keyboard strip underneath (it can be hidden from the bar below the panel).
 class PanelPage final : public juce::Component
 {
 public:
-    PanelPage (PeakModel& model, std::function<void (const juce::String&)> showTab) : panel (model), keys (model.getConnection())
+    PanelPage (PeakModel& model, std::function<void (const juce::String&)> showTab)
+        : panel (model), keys (model.getConnection()), settings (model.getConnection().getUserSettings())
     {
         panel.onShowTab = std::move (showTab);
         addAndMakeVisible (panel);
         addAndMakeVisible (keys);
+        keyboardSwitch.on = settings == nullptr || settings->getBoolValue ("showKeyboard", true);
+        keys.setVisible (keyboardSwitch.on);
+        keyboardSwitch.setTooltip ("Show or hide the keyboard under the panel");
+        keyboardSwitch.onChange = [this] (bool show) {
+            keys.setVisible (show);
+            if (settings != nullptr)
+                settings->setValue ("showKeyboard", show);
+            resized();
+            repaint();
+        };
+        addAndMakeVisible (keyboardSwitch);
         setWantsKeyboardFocus (true);
     }
 
@@ -44,12 +100,14 @@ public:
     void resized() override
     {
         auto r = getLocalBounds();
-        keys.setBounds (r.removeFromBottom (KeyboardStrip::preferredHeight));
+        if (keys.isVisible())
+            keys.setBounds (r.removeFromBottom (KeyboardStrip::preferredHeight));
         footer = r.removeFromBottom (footerHeight);
+        keyboardSwitch.setBounds (footer.reduced (12, 0).removeFromRight (90));
         panel.setBounds (r);
     }
 
-    // A black bar under the panel with the editor's version at the left.
+    // A black bar under the panel: the editor's version at the left, the keyboard switch at the right.
     void paint (juce::Graphics& g) override
     {
         g.setColour (juce::Colour (0xff0d0e0f));
@@ -64,6 +122,8 @@ public:
 private:
     static constexpr int footerHeight = 18;
     KeyboardStrip keys;
+    juce::PropertiesFile* settings;
+    FooterSwitch keyboardSwitch { "Keyboard" };
     juce::Rectangle<int> footer;
 };
 } // namespace
@@ -144,7 +204,30 @@ PeakEditorEditor::PeakEditorEditor (PeakEditorProcessor& p)
         if (saved) // after Cancel the screen just shows the patch again
             page->panel.showMessage (what);
     };
-    tabs.addTab ("Mod Matrix", DrawerStyle::background, new ModMatrixDrawer (p.getModel()), true);
+    auto* modMatrix = new ModMatrixDrawer (p.getModel());
+    tabs.addTab ("Mod Matrix", DrawerStyle::background, modMatrix, true);
+
+    // Right-click modulation (panel controls and menu rows): a new slot, or an existing one, opens
+    // on the Mod Matrix tab outlined, as in the TEO-5 editor.
+    auto& model = p.getModel();
+    ModAssign::handler().add = [&model, modMatrix, page, showTab] (int source, int destination, bool fx) {
+        const auto& srcName = (fx ? peak::fxSourceNames() : peak::modSourceNames())[(size_t) source];
+        const auto& destName = (fx ? peak::fxDestinationNames() : peak::modDestinationNames())[(size_t) destination];
+        modMatrix->userEdit ("add " + juce::String (srcName) + " to " + juce::String (destName));
+        const auto slot = ModAssign::assign (model, source, destination, fx);
+        if (slot < 0)
+            return;
+        page->panel.closeCard();
+        showTab ("Mod Matrix");
+        modMatrix->focusSlot (fx ? 16 + slot : slot, "New in " + juce::String (fx ? "FX slot " : "slot ") + juce::String (slot + 1) + ": "
+                                                       + juce::String (srcName) + " to " + juce::String (destName)
+                                                       + ", depth 0 (no change yet). Drag the depth to set it.");
+    };
+    ModAssign::handler().show = [modMatrix, page, showTab] (int row, const juce::String& message) {
+        page->panel.closeCard();
+        showTab ("Mod Matrix");
+        modMatrix->focusSlot (row, message);
+    };
     tabs.addTab ("Settings", DrawerStyle::background, new SettingsDrawer (p.getModel()), true);
     tabs.addTab ("MIDI Monitor", tabColour, new MidiMonitorPanel (p.getModel().getConnection()), true);
     tabs.setTabBarDepth (30);

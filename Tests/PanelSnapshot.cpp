@@ -3,6 +3,8 @@
 #include "peak/PeakModel.h"
 #include "ui/FrontPanel.h"
 #include "ui/LibraryDrawer.h"
+#include "ui/ModAssign.h"
+#include "peak/core/ParamFormat.h"
 #include "ui/ModMatrixDrawer.h"
 #include "ui/SettingsDrawer.h"
 
@@ -31,6 +33,20 @@ int main (int argc, char** argv)
                 model->loadPatch (*p, "snapshot");
     }
 
+    // "modassign": list each parameter's right-click modulation targets (a check of ModAssign's mapping).
+    if (juce::String (argc > 2 ? argv[2] : "") == "modassign")
+    {
+        for (const auto& p : peak::allParams())
+        {
+            const auto d = ModAssign::destinationFor (p), f = ModAssign::fxDestinationFor (p);
+            const auto s = ModAssign::sourcesFor (p);
+            if (d >= 0 || f >= 0 || ! s.isEmpty())
+                std::printf ("%-24s dest=%-18s fx=%-18s sources=%d\n", p.id, d >= 0 ? peak::modDestinationNames()[(size_t) d].c_str() : "-",
+                             f >= 0 ? peak::fxDestinationNames()[(size_t) f].c_str() : "-", s.size());
+        }
+        return 0;
+    }
+
     // "library", "settings", "modmatrix" or "menu:<button>" as the width renders that drawer instead of the panel.
     std::unique_ptr<juce::Component> view;
     if (juce::String (argc > 2 ? argv[2] : "") == "library")
@@ -47,7 +63,9 @@ int main (int argc, char** argv)
     }
     else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("wave:"))
     {
-        view = FrontPanel::createWavePicker (*model, juce::String (argv[2]).getTrailingIntValue(), 2);
+        // wave:<oscillator>[:<WaveMore value whose notes card to show>]
+        const auto spec = juce::StringArray::fromTokens (juce::String (argv[2]).fromFirstOccurrenceOf ("wave:", false, false), ":", "");
+        view = FrontPanel::createWavePicker (*model, spec[0].getIntValue(), 2, spec.size() > 1 ? spec[1].getIntValue() : -1);
     }
     else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("menu:"))
     {

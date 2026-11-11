@@ -2,6 +2,7 @@
 
 #include "peak/core/ParamFormat.h"
 #include "ui/CardStyle.h"
+#include "ui/ModAssign.h"
 #include "ui/DrawerStyle.h"
 
 #include <cstring>
@@ -19,6 +20,12 @@ ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& pa
         for (auto& r : rows)
             if (r.label.get() == c)
                 model.set (*r.def, model.getStored (*r.def));
+    };
+    // Right-clicking a row's name or value: the modulation menu (as on the panel).
+    resetOnDoubleClick.onRightClick = [this] (juce::Component* c) {
+        for (auto& r : rows)
+            if (r.label.get() == c || &r.control() == c || r.control().isParentOf (c))
+                ModAssign::showMenu (model, *r.def);
     };
     const char* lastSection = "";
     for (const auto* pp : params)
@@ -49,6 +56,7 @@ ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& pa
             for (size_t i = 0; i < names.size(); ++i)
                 row.choices->addItem (juce::String::fromUTF8 (names[i].c_str()), (int) i + 1);
             row.choices->setTooltip (tooltip);
+            row.choices->addMouseListener (&resetOnDoubleClick, true);
             row.choices->onChange = [this, def = row.def, c = row.choices.get()] {
                 if (! updating && c->getSelectedId() > 0)
                     model.set (*def, def->min + c->getSelectedId() - 1);
@@ -71,6 +79,7 @@ ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& pa
         if (const auto centre = peak::defaultValue (p); centre != p.min) // shown as -/+: the bar fills from the centre
             row.slider->getProperties().set ("centre", centre);
         row.slider->setTooltip (tooltip);
+        row.slider->addMouseListener (&resetOnDoubleClick, true);
         row.slider->onValueChange = [this, def = row.def, s = row.slider.get()] {
             if (! updating)
                 model.set (*def, (int) s->getValue());

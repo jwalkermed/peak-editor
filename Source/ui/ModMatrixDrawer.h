@@ -37,6 +37,11 @@ public:
     // Called by a row just before an edit made here, so each edit is one undo step.
     void userEdit (const juce::String& what);
     void setHint (const juce::String&);
+    // Outlines a slot (0-15 main, 16-19 FX) and shows `message` in the hint line, e.g. after a
+    // right-click on a panel control added it. Editing another slot or leaving the tab clears it.
+    void focusSlot (int row, const juce::String& message);
+    int getFocusedRow() const noexcept { return focusedRow; }
+    void visibilityChanged() override;
     PeakModel& getModel() { return model; }
 
 private:
@@ -64,6 +69,8 @@ private:
     juce::Label title { {}, "MOD MATRIX" }, fxTitle { {}, "FX MOD MATRIX" }, summary, hint;
     juce::TextButton clearAllButton { "Clear all" }, revertButton { "Revert" }, undoButton { "Undo" }, redoButton { "Redo" };
     juce::String defaultHint;
+    int focusedRow = -1;
+    void clearFocus();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ModMatrixDrawer)
 };

@@ -57,6 +57,9 @@ public:
     // reach the Peak (Save: an empty slot has nothing to audition). Muting stops held notes.
     void setNotesMuted (bool);
 
+    // The editor's own preferences (e.g. whether the keyboard strip is shown), kept with the MIDI ports.
+    juce::PropertiesFile* getUserSettings() { return settings.getUserSettings(); }
+
     // MIDI clock from the plugin (DAW tempo): a realtime byte (F8 clock, FA start, FC stop),
     // scheduled `delayMs` ahead. Safe on the audio thread.
     void sendRealtime (uint8_t status, double delayMs);

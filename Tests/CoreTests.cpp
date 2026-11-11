@@ -5,6 +5,7 @@
 #include "peak/core/ParamMidi.h"
 #include "peak/core/Patch.h"
 #include "peak/core/Settings.h"
+#include "peak/core/WavetableInfo.h"
 #include "peak/core/Sysex.h"
 
 #include <cstdio>
@@ -294,6 +295,14 @@ int main()
         CHECK (! rate.hasMidi() && encodeParam (rate, 97, 0).empty());
         CHECK (Patch::fromSysex (readFixture ("current-init-patch.syx"))->get (rate) == 120);
         CHECK (formatValue (rate, 97) == "97 BPM");
+    });
+
+    test ("wavetable notes: one for each factory wavetable, none for the user ones", [] {
+        for (int v = 4; v <= 63; ++v)
+            CHECK (wavetableInfo (v) != nullptr && *wavetableInfo (v)->description != 0 && *wavetableInfo (v)->usage != 0);
+        CHECK (wavetableInfo (3) == nullptr && wavetableInfo (64) == nullptr);
+        CHECK (std::string (wavetableInfo (37)->description).find ("reverse version of \"Glassy\"") != std::string::npos); // Grow
+        CHECK (std::string (wavetableInfo (63)->description) == "Sounds like what the name suggests!");                   // Yeah
     });
 
     test ("wavetable names: request 0x47, reply type 07 (verified on the Peak 2026-11-11)", [] {
