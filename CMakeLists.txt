@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Target architectures")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum macOS version")
 
-project(PeakEditor VERSION 1.0.3 LANGUAGES C CXX)
+project(PeakEditor VERSION 1.0.4 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -66,6 +66,7 @@ target_sources(PeakEditor PRIVATE
     Source/ui/KeyboardStrip.cpp
     Source/ui/SlotWriter.cpp
     Source/ui/CardStyle.cpp
+    Source/ui/DisplayGraphs.cpp
     Source/ui/DrawerStyle.cpp
     Source/ui/LibraryDrawer.cpp
     Source/ui/ModMatrixDrawer.cpp
@@ -110,6 +111,7 @@ target_sources(PanelSnapshot PRIVATE
     Source/ui/PanelLayout.cpp
     Source/ui/FrontPanel.cpp
     Source/ui/CardStyle.cpp
+    Source/ui/DisplayGraphs.cpp
     Source/ui/DrawerStyle.cpp
     Source/ui/LibraryDrawer.cpp
     Source/ui/ModMatrixDrawer.cpp

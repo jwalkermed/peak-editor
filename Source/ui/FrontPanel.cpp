@@ -4,6 +4,7 @@
 #include "peak/core/WavetableInfo.h"
 #include "ui/ParamRows.h"
 #include "ui/CardStyle.h"
+#include "ui/DisplayGraphs.h"
 #include "ui/DrawerStyle.h"
 #include "ui/ModAssign.h"
 #include "ui/SlotWriter.h"
@@ -707,6 +708,8 @@ float FrontPanel::parameterAlpha() const
 {
     if (shownParam == nullptr)
         return 0.0f;
+    if (dragParam == shownParam) // held while the control is being dragged
+        return 1.0f;
     const auto age = juce::Time::getMillisecondCounterHiRes() - shownSince;
     return (float) juce::jlimit (0.0, 1.0, 1.0 - (age - parameterHoldMs) / parameterFadeMs);
 }
@@ -872,6 +875,8 @@ void FrontPanel::mouseUp (const juce::MouseEvent&)
     if (animatePressed != nullptr)
         setParam (*animatePressed, animatePressed->min);
     animatePressed = nullptr;
+    if (dragParam != nullptr && dragParam == shownParam)
+        shownSince = juce::Time::getMillisecondCounterHiRes(); // the screen holds a moment after letting go, then fades
     dragging = nullptr;
     dragParam = nullptr;
 }
@@ -1090,6 +1095,56 @@ void FrontPanel::showHelp()
     text->setSize (560, 520);
     const auto area = helpButtonArea().transformedBy (designToScreen()).toNearestInt();
     juce::CallOutBox::launchAsynchronously (std::move (text), localAreaToGlobal (area), nullptr);
+}
+
+bool FrontPanel::drawGraph (juce::Graphics& g, juce::Rectangle<float> inner, float lineH, float alpha) const
+{
+    const juce::String id (shownParam->id);
+    const auto value = [this] (const juce::String& paramId) { return model.get (*peak::findParam (paramId.toStdString())); };
+
+    std::function<void (juce::Graphics&, juce::Rectangle<float>)> paint;
+    if (id == "filter_frequency" || id == "filter_resonance" || id == "filter_slope" || id == "filter_shape")
+    {
+        const DisplayGraph::Filter f { value ("filter_frequency"), value ("filter_resonance"), value ("filter_shape"), value ("filter_slope") != 0 };
+        paint = [f] (juce::Graphics& gg, juce::Rectangle<float> area) { DisplayGraph::drawFilter (gg, area, f, colours::oled); };
+    }
+    else
+    {
+        // Amp Envelope or Mod Envelope 1/2: one of its time or level stages.
+        const auto env = id.upToFirstOccurrenceOf ("_", false, false);
+        const auto stage = id.fromFirstOccurrenceOf ("_", false, false);
+        static const juce::StringArray stages { "delay", "attack", "holdtime", "decay", "sustain", "release" };
+        if (! (env == "ampenv" || env == "modenv1" || env == "modenv2") || ! stages.contains (stage))
+            return false;
+        DisplayGraph::Envelope e;
+        e.delay = value (env + "_delay");
+        e.attack = value (env + "_attack");
+        e.hold = value (env + "_holdtime");
+        e.decay = value (env + "_decay");
+        e.sustain = value (env + "_sustain");
+        e.release = value (env + "_release");
+        e.focus = stage == "delay" ? 'y' : stage == "holdtime" ? 'h' : stage[0];
+        paint = [e] (juce::Graphics& gg, juce::Rectangle<float> area) { DisplayGraph::drawEnvelope (gg, area, e, colours::oled); };
+    }
+
+    g.beginTransparencyLayer (alpha);
+    auto area = inner;
+    auto line = area.removeFromBottom (lineH * 1.4f);
+    paint (g, area.reduced (0.0f, 2.0f));
+
+    // "AmpEnv Decay        90 (68)": the name at the left, the value and saved value at the right,
+    // smaller if they wouldn't fit (the name already says which envelope).
+    const auto& p = *shownParam;
+    const auto v = juce::String (peak::formatValue (p, model.get (p)));
+    const auto saved = p.isStored() ? " (" + juce::String (peak::formatValue (p, model.getStored (p))) + ")" : juce::String();
+    const auto chars = juce::String (p.name).length() + v.length() + saved.length() + 3;
+    const auto size = juce::jmin (lineH, line.getWidth() / (float) chars / 0.6f);
+    g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), size, juce::Font::plain)));
+    g.setColour (colours::oled);
+    g.drawText (juce::String (p.name), line, juce::Justification::centredLeft);
+    g.drawText (v + saved, line, juce::Justification::centredRight);
+    g.endTransparencyLayer();
+    return true;
 }
 
 void FrontPanel::chooseCategory()
@@ -1769,6 +1824,11 @@ void FrontPanel::drawDisplay (juce::Graphics& g, const PanelElement& e) const
         }
     }
 
+    // An envelope or filter control: its graph, with its name and value on one line below
+    // (as in the OB-6 and TEO-5 editors).
+    if (paramAlpha > 0.0f && drawGraph (g, inner, smallH, paramAlpha))
+        return;
+
     // A touched parameter: its section, its name, and its value with the saved value in brackets.
     if (paramAlpha > 0.0f)
     {
@@ -1782,7 +1842,10 @@ void FrontPanel::drawDisplay (juce::Graphics& g, const PanelElement& e) const
         g.drawText (p.name, paramNameArea, juce::Justification::centred);
 
         const auto value = juce::String (peak::formatValue (p, model.get (p)));
-        const auto saved = p.isStored() ? "  (" + juce::String (peak::formatValue (p, model.getStored (p))) + ")" : juce::String();
+        // No saved value for a selector that only picks which depth the panel knob shows (Amp Env / Mod Env 1):
+        // which one is stored makes no difference to the sound.
+        const auto showSaved = p.isStored() && std::strcmp (p.id, "filter_env_select") != 0;
+        const auto saved = showSaved ? "  (" + juce::String (peak::formatValue (p, model.getStored (p))) + ")" : juce::String();
         const auto valueArea = inner.withTrimmedTop (inner.getHeight() * 0.50f);
         auto big = fitted (value + saved, r.getHeight() * 0.30f, inner.getWidth());
         auto small = mono (big.getHeight() * 0.6f);

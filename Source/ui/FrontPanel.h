@@ -114,6 +114,8 @@ private:
     mutable juce::Rectangle<float> starArea, nameArea, categoryArea; // on the screen's patch view, in design coordinates
     void toggleFavourite();
     void chooseCategory();
+    // The envelope or filter graph for the parameter on screen; false if it has none.
+    bool drawGraph (juce::Graphics&, juce::Rectangle<float> inner, float lineHeight, float alpha) const;
     void setCategoryAndSave (int category);
     void showCard (std::unique_ptr<juce::Component>); // a menu page or the wavetable picker, over the panel
     std::unique_ptr<CardStyle::Overlay> overlay;

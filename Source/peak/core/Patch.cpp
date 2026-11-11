@@ -121,9 +121,11 @@ std::string_view Patch::body() const
 bool Patch::sameSound (const Patch& other) const
 {
     static const auto chance = static_cast<size_t> (findParam ("arp_chance")->offset);
+    // Which envelope the filter's Env Depth knob shows (Amp Env / Mod Env 1) doesn't change the sound.
+    static const auto envSelect = static_cast<size_t> (findParam ("filter_env_select")->offset);
     const auto normal = [] (uint8_t v) { return v == 0 ? uint8_t (100) : v; };
     for (size_t i = nameOffset; i < dumpSize - 1; ++i)
-        if (i == chance ? normal (raw[i]) != normal (other.raw[i]) : raw[i] != other.raw[i])
+        if (i != envSelect && (i == chance ? normal (raw[i]) != normal (other.raw[i]) : raw[i] != other.raw[i]))
             return false;
     return true;
 }
