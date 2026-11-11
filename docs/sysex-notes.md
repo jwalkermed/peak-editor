@@ -181,5 +181,13 @@ Stored patches hold **Arp Chance 0** where the same patch as the current sound r
   values 2h and 2h+1 are its sine and cosine parts, full scale 8191. Values 0–1 (DC) and 256 are unused.
   An empty slot is one harmonic at 8191 in all 5 waves (a sine). Noisia (User 1) rebuilds to 5 distinct waves
   (`Tests/fixtures/wavetables/`, `docs/screenshots/wavetables-decoded.png`).
-- **Not known yet:** the overall polarity (Noisia may be drawn upside down compared to Components), the upload
-  message (probably type 06 sent to the Peak) and how a name is set.
+- **Uploading (verified 2026-11-11):** send what the Peak sends back, in Components' order:
+  a **name** `F0 00 20 29 01 10 00 7E 07 00 00 00 00 00 <slot 0-9> <7 ASCII chars> F7`, then the **5 waves**
+  `F0 00 20 29 01 10 00 7E 06 00 00 00 00 00 <slot> <wave 0-4> <514 data bytes> F7`, about 20 ms apart
+  (this is exactly what Components' Send to Peak and Live Edit send). The Peak plays it at once, and reads back
+  exactly what was sent.
+- **Uploads are temporary:** they're lost at power-off, over the network session or USB alike, with or without a
+  wait, and with or without the 0x49 message Components' files may end with. Components behaves the same.
+  **To keep a wavetable, save it on the Peak:** Osc menu, page 9 "User Waves", select the wavetable, press that
+  page's own Save (not the patch Save). Novation's article "Saving User Wavetables to Peak/Summit" describes this.
+- **Not known yet:** the overall polarity (Noisia may be drawn upside down compared to Components).
