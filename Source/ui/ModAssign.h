@@ -14,7 +14,10 @@ namespace ModAssign
 // slot (0-15 main, 16-19 FX) with a message for the hint line.
 struct Handler
 {
-    std::function<void (int source, int destination, bool fx)> add;
+    // A new slot: source (and, if >= 0, a Source B that scales it) to destination.
+    std::function<void (int source, int destination, bool fx, int sourceB)> add;
+    // An existing slot (0-15 main, 0-3 FX) gets `source` as its Source B.
+    std::function<void (int slot, bool fx, int source)> scale;
     std::function<void (int row, const juce::String& message)> show;
 };
 Handler& handler(); // set by the editor
@@ -34,8 +37,12 @@ int firstFreeSlot (const PeakModel&, bool fx);
 juce::Array<int> slotsFor (const PeakModel&, int destination, bool fx);
 juce::Array<int> slotsFrom (const PeakModel&, int source, bool fx);
 juce::Array<int> slotsScaledBy (const PeakModel&, int source, bool fx);
-// Fills the first free slot with source -> destination at depth none. Returns the slot, or -1.
-int assign (PeakModel&, int source, int destination, bool fx);
+// Fills the first free slot with source (x sourceB, if >= 0) -> destination at depth none. Returns the slot, or -1.
+int assign (PeakModel&, int source, int destination, bool fx, int sourceB = -1);
+// Sets a slot's Source B.
+void setSourceB (PeakModel&, int slot, bool fx, int source);
+// "Slot 3: Mod Wheel x LFO 1 +/- -> Filter Freq (+30)": a slot's sources, destination and depth.
+juce::String describe (const PeakModel&, int slot, bool fx);
 
 // The menu for a parameter (nothing if it can't be modulated and isn't a source).
 void showMenu (const PeakModel&, const peak::ParamDef&);

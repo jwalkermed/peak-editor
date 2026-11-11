@@ -8,6 +8,33 @@
 #include "ui/SettingsDrawer.h"
 #include "ui/MidiMonitorPanel.h"
 
+// Keeps the window in the front panel's proportions while it's dragged: dragging a side or corner
+// sets the height from the width; dragging only the top or bottom sets the width from the height.
+class PanelAspect final : public juce::ComponentBoundsConstrainer
+{
+public:
+    std::function<int (int)> heightFor, widthFor;
+
+    void checkBounds (juce::Rectangle<int>& bounds, const juce::Rectangle<int>& previous, const juce::Rectangle<int>& limits,
+                      bool top, bool left, bool bottom, bool right) override
+    {
+        if (heightFor && widthFor)
+        {
+            if (left || right || ! (top || bottom))
+                bounds.setHeight (heightFor (bounds.getWidth()));
+            else
+                bounds.setWidth (widthFor (bounds.getHeight()));
+            if (top)
+                bounds.setY (previous.getBottom() - bounds.getHeight()); // the bottom edge stays put
+            if (left)
+                bounds.setX (previous.getRight() - bounds.getWidth());
+        }
+        juce::ComponentBoundsConstrainer::checkBounds (bounds, previous, limits, top, left, bottom, right);
+        if (heightFor) // the width limits may have moved it: keep the height in step
+            bounds.setHeight (juce::jlimit (getMinimumHeight(), getMaximumHeight(), heightFor (bounds.getWidth())));
+    }
+};
+
 class PeakEditorEditor final : public juce::AudioProcessorEditor,
                                private juce::ChangeListener
 {
@@ -23,6 +50,7 @@ private:
 
     PeakEditorProcessor& peakProcessor;
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
+    PanelAspect aspect;
     juce::ToggleButton forwardMidi { juce::String::fromUTF8 ("Track MIDI \xe2\x86\x92 Peak") };
     juce::TextButton optionsButton { "Options" }; // standalone: audio/MIDI settings and saved states
     void parentHierarchyChanged() override;

@@ -33,6 +33,25 @@ void confirmAndWrite (PeakModel& model, peak::Patch::Location where, juce::Compo
     });
 }
 
+juce::String writePatch (PeakModel& model, peak::Patch patch, peak::Patch::Location where, bool& ok)
+{
+    ok = false;
+    auto& library = model.getLibrary();
+    const auto canBackup = library.knownSlots (where.bank) == 128;
+    juce::File backup;
+    if (canBackup)
+        if (const auto r = library.backupBank (where.bank, &backup); r.failed())
+            return "Not written: backup failed (" + r.getErrorMessage() + ")";
+    patch.setLocation (where);
+    if (! model.getConnection().sendSysex (patch.toSysex()))
+        return "Not written: no MIDI output to the Peak";
+    library.storePeakSlot (patch);
+    library.discardUnsent (where);
+    model.getConnection().sendSysex (peak::slotRequest (where.bank, where.slot), 800.0); // read back
+    ok = true;
+    return "Saved to " + juce::String (where.name()) + (canBackup ? ", backup: " + backup.getFileName() : juce::String());
+}
+
 juce::String write (PeakModel& model, peak::Patch::Location where, bool& ok)
 {
     ok = false;
