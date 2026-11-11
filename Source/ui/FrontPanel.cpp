@@ -285,7 +285,7 @@ public:
             addAndMakeVisible (b);
         onEscape = [this] { goBack(); };
         model.changed.addChangeListener (this);
-        setSize (2 * pad + cols * cellW + (cols - 1) * gap, userTop() + 2 * (cellH + gap) + 66);
+        setSize (2 * pad + cols * cellW + (cols - 1) * gap, userTop() + 2 * (cellH + gap) + 74);
     }
 
     ~WavePicker() override
@@ -328,8 +328,9 @@ public:
 
         g.setColour (CardStyle::dim);
         auto note = getLocalBounds().reduced (pad, 0).removeFromBottom (56).withWidth (300);
-        g.drawFittedText ("Click to hear it on the Peak. Close keeps it;\nEsc or Cancel goes back to where you started.", note,
-                          juce::Justification::centredLeft, 2);
+        g.drawFittedText ("Click or use the arrow keys to hear one on the Peak.\nDouble-click or Close keeps it;\n"
+                          "Esc or Cancel goes back to where you started.",
+                          note.withWidth (340), juce::Justification::centredLeft, 3);
     }
 
     void resized() override
@@ -347,14 +348,30 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
-        const auto i = cellAt (e.getPosition());
-        if (i < 0)
-            return;
-        // Audition: the wavetable goes to the Peak now (and the oscillator to More).
-        model.set (more, valueAt (i));
-        if (model.get (wave) != 4)
-            model.set (wave, 4);
-        repaint();
+        if (const auto i = cellAt (e.getPosition()); i >= 0)
+            audition (i);
+    }
+
+    // Double-click: keep it and close, like Close.
+    void mouseDoubleClick (const juce::MouseEvent& e) override
+    {
+        if (cellAt (e.getPosition()) >= 0 && onClose)
+            onClose();
+    }
+
+    // Arrow keys browse the wavetables (instead of patches and banks) while the picker is open.
+    bool keyPressed (const juce::KeyPress& key) override
+    {
+        const int step = key.isKeyCode (juce::KeyPress::leftKey) ? -1 : key.isKeyCode (juce::KeyPress::rightKey) ? 1
+                       : key.isKeyCode (juce::KeyPress::upKey)   ? -cols : key.isKeyCode (juce::KeyPress::downKey) ? cols : 0;
+        if (step == 0)
+            return false;
+        int current = 0;
+        for (int i = 0; i < 70; ++i)
+            if (valueAt (i) == model.get (more))
+                current = i;
+        audition (juce::jlimit (0, 69, current + step));
+        return true;
     }
 
 private:
@@ -383,6 +400,15 @@ private:
     {
         if (std::exchange (hover, i) != i)
             repaint();
+    }
+
+    void audition (int i)
+    {
+        // The wavetable goes to the Peak now (and the oscillator to More).
+        model.set (more, valueAt (i));
+        if (model.get (wave) != 4)
+            model.set (wave, 4);
+        repaint();
     }
 
     void goBack()
