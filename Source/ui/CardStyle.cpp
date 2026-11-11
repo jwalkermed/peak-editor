@@ -15,6 +15,8 @@ Look::Look()
     setColour (juce::PopupMenu::textColourId, text);
     setColour (juce::PopupMenu::highlightedBackgroundColourId, cellHover);
     setColour (juce::PopupMenu::highlightedTextColourId, amber);
+    setColour (juce::ScrollBar::thumbColourId, barFill);
+    setColour (juce::ScrollBar::trackColourId, juce::Colours::transparentBlack);
 }
 
 void Look::drawLinearSlider (juce::Graphics& g, int x, int y, int w, int h, float pos, float, float, juce::Slider::SliderStyle style,
@@ -168,6 +170,8 @@ void Overlay::mouseDown (const juce::MouseEvent& e)
 
 bool Overlay::keyPressed (const juce::KeyPress& key)
 {
+    if (card->keyPressed (key)) // e.g. the wavetable picker's arrow keys
+        return true;
     if (key.isKeyCode (juce::KeyPress::escapeKey))
     {
         if (onEscape)

@@ -9,8 +9,10 @@
 namespace CardStyle
 {
 inline const juce::Colour card { 0xff1e1f22 }, border { 0xff464a50 }, cell { 0xff2a2c30 }, cellHover { 0xff383b40 },
-    line { 0xff3c3f44 }, text { 0xffe6e6e6 }, dim { 0xff969aa0 }, blue { 0xff62a6dc }, amber { 0xffffa63c },
-    barFill { 0xff344e68 }, closeFill { 0xff3a3020 };
+    line { 0xff3c3f44 }, text { 0xffe6e6e6 }, dim { 0xff969aa0 }, amber { 0xffffa63c },
+    barFill { 0xff344e68 },  // value bars and the scroll bar
+    blue { 0xff7098be },     // titles and headings: the bars' blue, lighter so it reads as text
+    closeFill { 0xff3a3020 };
 
 // Rounded value bars (fill from the minimum, or from "centre" in the slider's properties),
 // drop-downs and buttons ("primary" in a button's properties: the amber Close).
