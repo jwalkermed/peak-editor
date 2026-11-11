@@ -170,3 +170,16 @@ Stored patches hold **Arp Chance 0** where the same patch as the current sound r
 - **Name request:** `F0 00 20 29 01 10 00 7E 47 00 00 <n> 00 00 F7`, with n = the WaveMore number (0–73; 0–3 are Sine, Triangle, Sawtooth, Pulse). The reply has type 07, n in byte 14 and up to **7** name characters from byte 15 (e.g. `Noisia`, `User 2`).
 - Command **46** returns wavetable sample data (531 bytes); not used yet.
 - The Peak spells two factory tables differently from the User Guide: **Grow** (guide: Drow) and **E.Piano**.
+
+## User wavetable data (read 2026-11-11, firmware 2.2; branch wave-table-editor)
+- **Request:** `F0 00 20 29 01 10 00 7E 46 00 00 <slot> <wave> 00 F7`, slot 0–9 = User 1–10, wave 0–4.
+  Slots 11+ don't answer. Slot 10 answers with data that doesn't decode to musical waves (perhaps a work buffer).
+  The factory wavetables can't be read this way.
+- **Reply:** 531 bytes, type 06 (byte 8), the slot in byte 14 and the wave in byte 15, then 514 data bytes from byte 16.
+  It answers in about 20 ms, so a whole table (5 waves) reads in about 0.1 s.
+- **Data:** 257 signed 14-bit values (two 7-bit bytes, high first). They're a **spectrum**: for harmonic h (1–127),
+  values 2h and 2h+1 are its sine and cosine parts, full scale 8191. Values 0–1 (DC) and 256 are unused.
+  An empty slot is one harmonic at 8191 in all 5 waves (a sine). Noisia (User 1) rebuilds to 5 distinct waves
+  (`Tests/fixtures/wavetables/`, `docs/screenshots/wavetables-decoded.png`).
+- **Not known yet:** the overall polarity (Noisia may be drawn upside down compared to Components), the upload
+  message (probably type 06 sent to the Peak) and how a name is set.
