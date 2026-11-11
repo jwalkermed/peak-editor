@@ -25,6 +25,8 @@ struct Lookup
     {
         for (const auto& p : allParams())
         {
+            if (! p.hasMidi())
+                continue;
             if (p.kind == MidiKind::nrpn)
                 byNrpn.emplace_back (p.number, &p);
             else
@@ -54,6 +56,8 @@ std::vector<ShortMessage> encodeParam (const ParamDef& def, int value, int chann
 {
     value = std::clamp (value, def.min, def.max);
     const auto status = static_cast<uint8_t> (0xB0 | (channel & 0x0F));
+    if (! def.hasMidi())
+        return {};
 
     switch (def.kind)
     {

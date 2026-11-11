@@ -56,6 +56,13 @@ public:
     // While muted, notes from the on-screen keyboard, a controller and the DAW track don't
     // reach the Peak (Save: an empty slot has nothing to audition). Muting stops held notes.
     void setNotesMuted (bool);
+
+    // MIDI clock from the plugin (DAW tempo): a realtime byte (F8 clock, FA start, FC stop),
+    // scheduled `delayMs` ahead. Safe on the audio thread.
+    void sendRealtime (uint8_t status, double delayMs);
+    // What the plugin is sending, for the Clock status line: running, and the DAW's tempo.
+    std::atomic<bool> dawClockRunning { false }, dawClockSent { false };
+    std::atomic<double> dawClockBpm { 0.0 };
     // Sends a long run of CC/NRPN messages spaced out so DIN/network bridges keep up.
     bool sendPaced (const std::vector<peak::ShortMessage>& messages, double msBetween = 2.0);
 

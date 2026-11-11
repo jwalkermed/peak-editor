@@ -20,11 +20,13 @@ struct ParamDef
     const char* name;    // display name
     const char* section; // front-panel / menu grouping
     MidiKind kind;
-    int number;          // CC number (MSB for pairs) or NRPN number (msb << 7 | lsb)
+    int number;          // CC number (MSB for pairs) or NRPN number (msb << 7 | lsb); -1: no MIDI control
     int min, max;        // raw MIDI value range, as in the User Guide chart
     int offset;          // byte index in the 527-byte patch dump, or -1 if not stored
 
     bool isStored() const noexcept { return offset >= 0; }
+    // Clock Rate has no MIDI message; it reaches the Peak inside a patch dump.
+    bool hasMidi() const noexcept { return number >= 0; }
 };
 
 const std::vector<ParamDef>& allParams();

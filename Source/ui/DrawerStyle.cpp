@@ -23,11 +23,6 @@ const peak::Patch& emptyPatch()
     return patch;
 }
 
-int initValue (const peak::ParamDef& p)
-{
-    return p.isStored() ? emptyPatch().get (p) : peak::defaultValue (p);
-}
-
 juce::String loadedPatchKey (const PeakModel& model)
 {
     if (! model.hasPatch())

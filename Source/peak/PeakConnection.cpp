@@ -205,6 +205,12 @@ bool PeakConnection::sendSysex (const peak::Bytes& message, double delayMs)
     return true;
 }
 
+void PeakConnection::sendRealtime (uint8_t status, double delayMs)
+{
+    if (status >= 0xF8)
+        transport.sendShort (&status, 1, delayMs);
+}
+
 void PeakConnection::setNotesMuted (bool muted)
 {
     if (muted && ! notesMuted.exchange (true))

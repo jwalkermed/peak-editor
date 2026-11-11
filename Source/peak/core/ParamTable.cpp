@@ -192,6 +192,7 @@ const std::vector<ParamDef>& allParams()
     { "chorus_lp", "Chorus LP", "Chorus", MidiKind::nrpn, 113, 0, 127, 248 },
     { "chorus_hp", "Chorus HP", "Chorus", MidiKind::nrpn, 114, 0, 127, 249 },
     { "chorus_mode", "Chorus Mode", "Chorus", MidiKind::nrpn, 115, 0, 2, 250 },
+    { "clock_rate", "Clock Rate", "Clock", MidiKind::ccPair, -1, 40, 240, 251 },
     { "arp_sync_rate", "Arp Sync Rate", "Arp", MidiKind::nrpn, 116, 0, 18, 253 },
     { "arp_type", "Arp Type", "Arp", MidiKind::nrpn, 117, 0, 6, 254 },
     { "arp_rhythm", "Arp Rhythm", "Arp", MidiKind::nrpn, 118, 0, 32, 255 },

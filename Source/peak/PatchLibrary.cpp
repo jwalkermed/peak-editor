@@ -480,6 +480,19 @@ juce::Result PatchLibrary::backupBank (int bank, juce::File* written) const // t
     return juce::Result::ok();
 }
 
+juce::Result PatchLibrary::backupPatches (const std::vector<peak::Patch>& patches, const juce::String& name, juce::File* written) const
+{
+    std::vector<peak::Bytes> messages;
+    for (const auto& p : patches)
+        messages.push_back (p.toSysex());
+    const auto file = backupsDir.getChildFile (name + "-" + juce::Time::getCurrentTime().formatted ("%Y%m%d-%H%M%S") + ".syx");
+    if (! writeBytes (file, peak::joinSysex (messages)))
+        return juce::Result::fail ("Could not write " + file.getFullPathName());
+    if (written != nullptr)
+        *written = file;
+    return juce::Result::ok();
+}
+
 void PatchLibrary::savePeakBank (int bank) const
 {
     std::vector<peak::Bytes> messages;

@@ -2,7 +2,7 @@
 
 namespace
 {
-constexpr int sendIntervalMs = 15;
+constexpr int sendIntervalMs = 15, dumpIntervalMs = 150;
 }
 
 PeakModel::PeakModel()
@@ -45,7 +45,9 @@ void PeakModel::set (const peak::ParamDef& def, int value)
     comparing = false; // editing ends a compare, as on the hardware
     lastTouched = &def;
     pendingSends[peak::indexOf (def)] = value;
-    if (! isTimerRunning())
+    if (! def.hasMidi())
+        startTimer (dumpIntervalMs); // sent as a whole patch once the change settles
+    else if (! isTimerRunning())
         startTimer (sendIntervalMs);
 
     changed.sendChangeMessage();
@@ -55,9 +57,18 @@ void PeakModel::timerCallback()
 {
     stopTimer();
     const auto& all = peak::allParams();
+    bool needsDump = false;
     for (const auto& [index, value] : pendingSends)
-        connection->sendParam (all[(size_t) index], value);
+    {
+        const auto& def = all[(size_t) index];
+        if (def.hasMidi())
+            connection->sendParam (def, value);
+        else
+            needsDump = true;
+    }
     pendingSends.clear();
+    if (needsDump)
+        sendPatchToPeak();
 }
 
 void PeakModel::loadPatch (const peak::Patch& newPatch, const juce::String& newSource)
@@ -176,7 +187,12 @@ void PeakModel::followPeakSlot (peak::Patch::Location where)
 {
     // The Peak plays what is stored in the slot (not any NOT SENT change to it).
     if (const auto& stored = library->syncedSlot (where))
+    {
         loadPatch (*stored, "Peak " + juce::String (where.name()));
+        // Check the copy is still what the Peak holds (it may have changed outside the editor).
+        checkingSlot = *stored;
+        connection->sendSysex (peak::slotRequest (where.bank, where.slot));
+    }
     else
     {
         // Not read yet: ask the Peak for that slot and load it when it arrives.
@@ -258,7 +274,23 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
         {
             if (p->location())
             {
+                if (checkingSlot && checkingSlot->location() == p->location())
+                {
+                    const auto old = *std::exchange (checkingSlot, std::nullopt);
+                    if (! old.sameSound (*p))
+                    {
+                        juce::File backup;
+                        library->backupPatches ({ old }, "slot-" + juce::String (old.location()->name()) + "-before-sync", &backup);
+                        library->storePeakSlot (*p);
+                        if (originalLocation == p->location() && ! isModified())
+                            loadPatch (*p, "Peak " + juce::String (p->location()->name()) + " (changed on the Peak)");
+                        if (onSlotChangedOutside)
+                            onSlotChangedOutside (*p->location(), backup);
+                    }
+                }
                 library->storePeakSlot (*p); // bank dumps fill the Peak memory view
+                if (onSlotStored)
+                    onSlotStored (*p->location());
                 if (p->location() == awaitedSlot)
                 {
                     awaitedSlot.reset();

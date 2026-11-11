@@ -155,3 +155,12 @@ The dump header with a request command in byte 8 makes the Peak send a dump:
 - `... 7E 44 00 00 00 00 00 F7`: the global settings (type 04 reply).
 
 Stored patches hold **Arp Chance 0** where the same patch as the current sound reports **100** (the default), so patches are compared with that difference ignored.
+
+## Clock (verified 2026-11-10, firmware 2.2)
+- **Clock Rate** (40–240 BPM) is stored in each patch at 0xFB/0xFC with the CC-pair encoding (120 = `3C 00`, 97 = `30 40`). It has **no MIDI control** (the chart says NA), so the editor changes it by sending the whole patch.
+- **Clock Source** is a global setting, NRPN **64:6**: 0 Auto, 1 Internal, 2 Ext-Auto, 3 MIDI, 4 USB.
+- The status line ("INT 97.00bpm") is only on the Peak's screen. The Peak sent **no MIDI clock** while idle, and nothing reports whether it is locked to an external clock.
+
+## Reading memory directly (verified 2026-11-10/11)
+- Slot requests (`41`) answer in about 12 ms each over the network session, so a bank reads in about 2 s.
+- Nothing announces changes made to the Peak's memory from elsewhere (e.g. Components). The editor compares its copy with the Peak at startup and whenever the Peak selects a slot.

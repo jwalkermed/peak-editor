@@ -3541,6 +3541,16 @@
    "encoding": "byte",
    "status": "verified",
    "note": "Verified 2026-11-10: NRPN 18:1 stepped 1-16 on the Peak; Current dump showed FX slot 2 byte +1 = 16."
+  },
+  {
+   "name": "Clock Rate",
+   "kind": "pair",
+   "num": -1,
+   "lo": 40,
+   "hi": 240,
+   "offset": 251,
+   "encoding": "pair",
+   "status": "verified: no MIDI control (chart: NA); 120 and 97 BPM read from current-sound dumps 2026-11-10"
   }
  ]
 }

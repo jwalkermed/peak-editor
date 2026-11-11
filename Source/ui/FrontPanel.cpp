@@ -79,7 +79,7 @@ std::vector<const char*> menuSections (const juce::String& menu)
     if (menu == "Env") return { "Amp Envelope", "Mod Envelope 1", "Mod Envelope 2" };
     if (menu == "Animate") return { "Animate" };
     if (menu == "LFO") return { "LFO 1", "LFO 2", "LFO 3", "LFO 4" };
-    if (menu == "Arp/Clock") return { "Arp" };
+    if (menu == "Arp/Clock") return { "Arp" }; // the Clock section is drawn above it (ClockRows)
     if (menu == "Mod") return { "Mod Matrix" };
     if (menu == "Voice") return { "Voice", "Glide", "Mixer" };
     if (menu == "FX") return { "Effects", "Chorus", "Delay", "Reverb" }; // the FX matrix is on the Mod Matrix tab
@@ -103,24 +103,112 @@ struct MenuCloseWatcher final : juce::ComponentListener
     std::function<void()> onClose;
 };
 
+// The Arp/Clock menu's Clock section: Clock Rate (in the patch, no MIDI: sent as a patch dump),
+// Source (a global setting, NRPN 64:6) and the status line the Peak shows (INT 97.00bpm).
+class ClockRows final : public juce::Component,
+                        private juce::Timer
+{
+public:
+    explicit ClockRows (PeakModel& m) : model (m)
+    {
+        header.setFont (juce::FontOptions (14.0f, juce::Font::bold));
+        header.setColour (juce::Label::textColourId, juce::Colours::white);
+        for (auto* l : { &rateLabel, &sourceLabel, &statusLabel })
+            l->setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.75f));
+        status.setColour (juce::Label::textColourId, juce::Colours::white);
+        status.setFont (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), 14.0f, juce::Font::plain));
+        status.setTooltip ("As the Peak shows it while no external clock is coming in");
+
+        const auto& p = *peak::findParam ("clock_rate");
+        rate.setRange (p.min, p.max, 1);
+        rate.textFromValueFunction = [&p] (double v) { return juce::String (peak::formatValue (p, (int) v)); };
+        rate.resetValue = [this, &p] { return model.getStored (p); };
+        rate.setTextBoxIsEditable (false);
+        rate.setScrollWheelEnabled (false); // drag only, as in the other menu rows
+        rate.setColour (juce::Slider::trackColourId, juce::Colour (0xff62a6dc).withAlpha (0.55f));
+        rate.setTooltip ("Stored in the patch; the Peak has no MIDI message for it, so changes go as the whole patch");
+        rate.onValueChange = [this, &p] { if (! updating) model.set (p, (int) rate.getValue()); };
+
+        const auto& s = *peak::findSetting ("clock_source");
+        for (size_t i = 0; i < s.names.size(); ++i)
+            source.addItem (s.names[i], (int) i + 1);
+        source.setTooltip ("Global setting: the Peak's clock source (NRPN 64:6)");
+        source.onChange = [this, &s] { if (! updating && source.getSelectedId() > 0) model.setSetting (s, source.getSelectedId() - 1); };
+
+        for (auto* c : std::initializer_list<juce::Component*> { &header, &rateLabel, &rate, &sourceLabel, &source, &statusLabel, &status })
+            addAndMakeVisible (c);
+        setSize (360, 30 + 3 * 24 + 6);
+        refresh();
+        startTimerHz (4); // the DAW's clock can start, stop or change tempo at any time
+    }
+
+    void refresh()
+    {
+        const juce::ScopedValueSetter<bool> svs (updating, true);
+        const auto& p = *peak::findParam ("clock_rate");
+        const auto bpm = model.get (p);
+        if (! rate.isMouseButtonDown()) // not while it's being dragged
+            rate.setValue (bpm, juce::dontSendNotification);
+        const auto src = model.getSetting (*peak::findSetting ("clock_source"));
+        source.setSelectedId (src >= 0 ? src + 1 : 0, juce::dontSendNotification);
+        // As the Peak shows it. With the plugin sending the DAW's clock, the Peak follows it unless
+        // Source is Internal; when the DAW stops, Auto goes back to Clock Rate and the others
+        // "flywheel" at the last tempo (FLY). Clock from elsewhere can't be seen from here.
+        const auto& c = model.getConnection();
+        const juce::String port = src == 4 ? "USB" : "MIDI";
+        juce::String text = (src == 3 || src == 4 ? port : juce::String ("INT")) + "  " + juce::String (bpm) + ".00bpm";
+        if (src != 1 && c.dawClockRunning)
+            text = port + "  " + juce::String (c.dawClockBpm.load(), 2) + "bpm";
+        else if (src != 1 && src != 0 && c.dawClockSent)
+            text = "FLY  " + juce::String (c.dawClockBpm.load(), 2) + "bpm";
+        status.setText (text, juce::dontSendNotification);
+    }
+
+    void resized() override
+    {
+        auto r = getLocalBounds().withTrimmedLeft (8).withTrimmedRight (8);
+        header.setBounds (r.removeFromTop (30).withTrimmedTop (8));
+        for (auto [label, control] : { std::pair<juce::Component*, juce::Component*> { &rateLabel, &rate }, { &sourceLabel, &source }, { &statusLabel, &status } })
+        {
+            auto row = r.removeFromTop (24).reduced (0, 2);
+            label->setBounds (row.removeFromLeft (150));
+            control->setBounds (row);
+        }
+    }
+
+private:
+    void timerCallback() override { refresh(); }
+
+    PeakModel& model;
+    juce::Label header { {}, "CLOCK" }, rateLabel { {}, "Clock Rate" }, sourceLabel { {}, "Source" }, statusLabel { {}, "Status" }, status;
+    DrawerStyle::ResetSlider rate { juce::Slider::LinearBar, juce::Slider::TextBoxRight };
+    juce::ComboBox source;
+    bool updating = false;
+};
+
 // A menu page shown in a call-out: the section's parameters as sliders.
 class MenuPage final : public juce::Component,
                        private juce::ChangeListener
 {
 public:
-    MenuPage (PeakModel& m, const juce::String& title, std::vector<const peak::ParamDef*> params)
+    MenuPage (PeakModel& m, const juce::String& title, std::vector<const peak::ParamDef*> params, bool withClock = false)
         : model (m), rows (m, params)
     {
         heading.setText (title.toUpperCase(), juce::dontSendNotification);
         heading.setFont (font (16.0f, true));
         heading.setColour (juce::Label::textColourId, colours::rule);
         addAndMakeVisible (heading);
+        if (withClock)
+        {
+            clock = std::make_unique<ClockRows> (m);
+            addAndMakeVisible (*clock);
+        }
         viewport.setViewedComponent (&rows, false);
         viewport.setScrollBarsShown (true, false);
         addAndMakeVisible (viewport);
         rows.refresh();
         rows.layout (720, 360);
-        setSize (740, juce::jmin (560, rows.getHeight() + 44));
+        setSize (740, juce::jmin (560, rows.getHeight() + 44 + (clock ? clock->getHeight() : 0)));
         model.changed.addChangeListener (this);
     }
 
@@ -130,14 +218,22 @@ public:
     {
         auto r = getLocalBounds();
         heading.setBounds (r.removeFromTop (30).withTrimmedLeft (8));
+        if (clock)
+            clock->setBounds (r.removeFromTop (clock->getHeight()).withWidth (360));
         viewport.setBounds (r);
     }
 
 private:
-    void changeListenerCallback (juce::ChangeBroadcaster*) override { rows.refresh(); }
+    void changeListenerCallback (juce::ChangeBroadcaster*) override
+    {
+        rows.refresh();
+        if (clock)
+            clock->refresh();
+    }
 
     PeakModel& model;
     juce::Label heading;
+    std::unique_ptr<ClockRows> clock;
     ParamRows rows;
     juce::Viewport viewport;
 };
@@ -155,7 +251,7 @@ std::unique_ptr<juce::Component> FrontPanel::createMenuPage (PeakModel& model, c
 
     if (params.empty())
         return nullptr;
-    return std::make_unique<MenuPage> (model, name + " menu", params);
+    return std::make_unique<MenuPage> (model, name + " menu", params, name == "Arp/Clock");
 }
 
 juce::Rectangle<float> FrontPanel::designBounds()
@@ -485,7 +581,7 @@ void FrontPanel::mouseDoubleClick (const juce::MouseEvent& ev)
         return renamePatch();
     if (auto* c = controlAt (toDesign (ev.position)); c != nullptr && (c->e->type == PanelElement::knob || c->e->type == PanelElement::fader))
         if (const auto* p = resolve (*c))
-            setParam (*p, DrawerStyle::initValue (*p));
+            setParam (*p, model.getStored (*p)); // back to the patch's saved value
 }
 
 void FrontPanel::mouseWheelMove (const juce::MouseEvent& ev, const juce::MouseWheelDetails& wheel)
@@ -656,7 +752,7 @@ void FrontPanel::showHelp()
         "FRONT PANEL HELP\n\n"
         "Knobs and sliders\n"
         "\xe2\x80\xa2 Drag up/down (or scroll) to change a value. Changes go straight to the Peak.\n"
-        "\xe2\x80\xa2 Double-click a knob or slider to reset it to its Init Patch value.\n"
+        "\xe2\x80\xa2 Double-click a knob, slider or menu value to put it back as saved in the patch.\n"
         "\xe2\x80\xa2 The screen shows the parameter, its value and (in brackets) the saved value, then fades back to the patch.\n"
         "\xe2\x80\xa2 The LEDs and the small buttons under them choose waves, ranges and sources. Click an LED to pick it directly.\n"
         "\xe2\x80\xa2 Turning a knob on the Peak moves it here too.\n\n"
@@ -666,8 +762,8 @@ void FrontPanel::showHelp()
         "\xe2\x80\xa2 Double-click the name to rename the patch, then overwrite it or save it somewhere new.\n"
         "\xe2\x80\xa2 \"Edited\" (amber) means the sound differs from the saved patch.\n\n"
         "Patch\n"
-        "\xe2\x80\xa2 Patch \xe2\x80\x93/+ (or the Up/Down arrow keys) steps through patches: Peak banks A\xe2\x80\x93" "D, then My Banks.\n"
-        "\xe2\x80\xa2 Bank \xe2\x80\x93/+ (or the Left/Right arrow keys) moves to the same position in the previous/next bank.\n"
+        "\xe2\x80\xa2 Patch \xe2\x80\x93/+ (or the Left/Right arrow keys) steps through patches: Peak banks A\xe2\x80\x93" "D, then My Banks.\n"
+        "\xe2\x80\xa2 Bank \xe2\x80\x93/+ (or the Up/Down arrow keys) moves to the same position in the previous/next bank.\n"
         "\xe2\x80\xa2 Save opens the Library to choose where the patch goes; click a slot to hear what's there, then Confirm.\n"
         "\xe2\x80\xa2 Compare switches between your edit and the saved patch. Revert throws your edits away.\n"
         "\xe2\x80\xa2 Initialise loads the Init Patch (nothing is saved until you Save).\n\n"
@@ -1227,7 +1323,22 @@ void FrontPanel::drawDisplay (juce::Graphics& g, const PanelElement& e) const
         g.setColour (colours::oled.withMultipliedAlpha (1.0f - paramAlpha));
         g.setFont (mono (smallH));
         const auto top = inner.withHeight (smallH * 1.2f);
-        if (const auto where = model.getOriginalLocation())
+        // Where the patch is: its Peak slot, or (loaded from My Banks) the bank's name and position,
+        // cut short to stay clear of the category.
+        const auto place = currentPlace (model);
+        if (place.bank >= 4)
+        {
+            // As much of the name as fits, leaving a two-character gap before the category.
+            auto bankName = model.getLibrary().getBanks()[place.bank - 4];
+            const auto& categoryParam = *peak::findParam ("patch_category");
+            const auto category = juce::String (peak::formatValue (categoryParam, model.get (categoryParam)));
+            const auto charW = smallH * 0.6f;
+            const auto maxChars = juce::jmax (4, (int) (top.getWidth() / charW) - category.length() - 2);
+            if (bankName.length() > maxChars)
+                bankName = bankName.substring (0, maxChars - 1).trimEnd() + juce::String::fromUTF8 ("\xe2\x80\xa6");
+            g.drawText (bankName, top, juce::Justification::centredLeft);
+        }
+        else if (const auto where = model.getOriginalLocation())
             g.drawText (juce::String (where->name()), top, juce::Justification::centredLeft);
         if (! model.hasPatch())
         {

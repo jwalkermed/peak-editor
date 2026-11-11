@@ -103,7 +103,7 @@ struct Format
     int centre = -1;                  // bipolar: raw value shown as 0
     const Names* names = nullptr;     // enumerated names
     int namesBase = 0;                // raw value of names[0]
-    bool onOff = false, offAtZero = false, offAtCentre = false, percent = false, phase = false;
+    bool onOff = false, offAtZero = false, offAtCentre = false, percent = false, phase = false, bpm = false;
     const std::vector<std::string>* list = nullptr; // mod matrix source/destination names
 };
 
@@ -131,6 +131,7 @@ const Format& formatFor (const ParamDef& p)
             f.offAtZero = matches (q, "(_fixed_note|_repeats)$");
             f.phase = matches (q, "^lfo\\d_phase$");
             f.percent = matches (q, "^arp_(chance|swing)$");
+            f.bpm = matches (q, "^clock_rate$");
             f.onOff = q.min == 0 && q.max == 1 && f.names == nullptr && ! matches (q, "^(patch|mod\\d|fxmod)");
             all.push_back (f);
         }
@@ -234,6 +235,8 @@ std::string formatValue (const ParamDef& p, int v)
         return "Off";
     if (f.phase)
         return v == 0 ? "Free" : std::to_string ((v - 1) * 3) + "\u00b0";
+    if (f.bpm)
+        return std::to_string (v) + " BPM";
     if (f.percent)
         return std::to_string (v) + "%";
     if (f.centre >= 0)

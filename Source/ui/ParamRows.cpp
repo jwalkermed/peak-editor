@@ -13,6 +13,12 @@ constexpr int rowHeight = 24, headerHeight = 30;
 
 ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& params) : model (m)
 {
+    // Double-clicking a row's name puts its value back as saved in the patch (also for drop-downs).
+    resetOnDoubleClick.onDoubleClick = [this] (juce::Component* c) {
+        for (auto& r : rows)
+            if (r.label.get() == c)
+                model.set (*r.def, model.getStored (*r.def));
+    };
     const char* lastSection = "";
     for (const auto* pp : params)
     {
@@ -45,6 +51,7 @@ ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& pa
                 if (! updating && c->getSelectedId() > 0)
                     model.set (*def, def->min + c->getSelectedId() - 1);
             };
+            row.label->addMouseListener (&resetOnDoubleClick, false);
             addAndMakeVisible (*row.label);
             addAndMakeVisible (*row.choices);
             rows.push_back (std::move (row));
@@ -52,17 +59,20 @@ ParamRows::ParamRows (PeakModel& m, const std::vector<const peak::ParamDef*>& pa
             continue;
         }
 
-        row.slider = std::make_unique<juce::Slider> (juce::Slider::LinearBar, juce::Slider::TextBoxRight);
+        auto slider = std::make_unique<DrawerStyle::ResetSlider> (juce::Slider::LinearBar, juce::Slider::TextBoxRight);
+        slider->resetValue = [this, def = row.def] { return model.getStored (*def); }; // double-click: as saved in the patch
+        row.slider = std::move (slider);
         row.slider->setRange (p.min, p.max, 1);
         row.slider->textFromValueFunction = [def = row.def] (double v) { return juce::String (peak::formatValue (*def, (int) v)); };
-        row.slider->setDoubleClickReturnValue (true, DrawerStyle::initValue (p));
         row.slider->setTextBoxIsEditable (false); // double-click resets instead of typing a value
+        row.slider->setScrollWheelEnabled (false); // drag only: the wheel scrolls the page instead
         row.slider->setColour (juce::Slider::trackColourId, MidiMonitorPanel::accentColour.withAlpha (0.55f));
         row.slider->setTooltip (tooltip);
         row.slider->onValueChange = [this, def = row.def, s = row.slider.get()] {
             if (! updating)
                 model.set (*def, (int) s->getValue());
         };
+        row.label->addMouseListener (&resetOnDoubleClick, false);
         addAndMakeVisible (*row.label);
         addAndMakeVisible (*row.slider);
         rows.push_back (std::move (row));

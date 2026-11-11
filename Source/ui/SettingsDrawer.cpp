@@ -18,6 +18,7 @@ public:
     {
         setRange (d.min, d.max, 1);
         setMouseDragSensitivity (250);
+        setScrollWheelEnabled (false); // drag only: the wheel scrolls the page
         setDoubleClickReturnValue (true, d.centre >= 0 ? d.centre : (d.min + d.max) / 2);
     }
 

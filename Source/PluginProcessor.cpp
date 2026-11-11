@@ -67,7 +67,36 @@ void PeakEditorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 connection->sendPerformance (data, (size_t) metadata.numBytes, 1000.0 * metadata.samplePosition / currentSampleRate);
         }
 
+    if (! isStandalone())
+        sendClock (buffer.getNumSamples());
     midi.clear();
+}
+
+void PeakEditorProcessor::sendClock (int numSamples)
+{
+    // 24 clocks per quarter note at the DAW's tempo, each scheduled at its place in the block;
+    // Start when the transport starts, Stop when it stops (or the option is turned off).
+    const auto pos = getPlayHead() != nullptr ? getPlayHead()->getPosition() : std::nullopt;
+    const bool playing = sendDawClock && pos && pos->getIsPlaying() && pos->getBpm() && pos->getPpqPosition();
+    if (! playing)
+    {
+        if (std::exchange (clockRunning, false))
+            connection->sendRealtime (0xFC, 0.0);
+        connection->dawClockRunning = false;
+        return;
+    }
+    const auto bpm = *pos->getBpm(), ppq = *pos->getPpqPosition();
+    const auto msPerPpq = 60000.0 / bpm, blockPpq = numSamples / currentSampleRate * 1000.0 / msPerPpq;
+    if (! std::exchange (clockRunning, true) || std::abs (nextTickPpq - ppq) > 1.0) // started, or the playhead jumped
+    {
+        connection->sendRealtime (0xFA, 0.0);
+        nextTickPpq = std::ceil (ppq * 24.0) / 24.0;
+    }
+    for (; nextTickPpq < ppq + blockPpq; nextTickPpq += 1.0 / 24.0)
+        connection->sendRealtime (0xF8, juce::jmax (0.0, (nextTickPpq - ppq) * msPerPpq));
+    connection->dawClockBpm = bpm;
+    connection->dawClockRunning = true;
+    connection->dawClockSent = true;
 }
 
 //==============================================================================
@@ -114,6 +143,7 @@ void PeakEditorProcessor::getStateInformation (juce::MemoryBlock& dest)
     juce::ValueTree state ("PeakEditor");
     state.setProperty ("version", 1, nullptr);
     state.setProperty ("forwardTrackMidi", forwardTrackMidi.load(), nullptr);
+    state.setProperty ("sendDawClock", sendDawClock.load(), nullptr);
     if (model->hasPatch())
     {
         const auto bytes = model->getPatch().toSysex();
@@ -136,6 +166,7 @@ void PeakEditorProcessor::setStateInformation (const void* data, int size)
         return;
 
     forwardTrackMidi = (bool) state.getProperty ("forwardTrackMidi", true);
+    sendDawClock = (bool) state.getProperty ("sendDawClock", false);
 
     juce::MemoryOutputStream decoded;
     if (isStandalone() || ! juce::Base64::convertFromBase64 (decoded, state.getProperty ("patch").toString()))

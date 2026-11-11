@@ -4,6 +4,8 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include <map>
+
 #include <set>
 
 // Left-side librarian drawer, in the style of the TEO-5 and OB-6 editors: the
@@ -105,7 +107,17 @@ private:
     void sendBankToPeak (const juce::String& bank, int peakBank);
     void renameOnPeak (const peak::Patch&);
     void copyPeakToLibrary();
-    void showFetchHelp();
+    // Fetch: reads banks straight from the Peak, one slot at a time (request 0x41 per slot).
+    void fetchMenu();
+    // expected: patches just written, by bank * 128 + slot; the fetch then checks each arrived intact.
+    void startFetch (const std::vector<int>& banks, std::map<int, peak::Patch> expected = {});
+    void fetchNext();
+    void stopFetch (const juce::String& why);
+    // At startup: read all four banks quietly and compare with the editor's copy. Banks changed
+    // outside the editor (e.g. by Components) are reported; the old copy goes to Backups/ first.
+    void startSyncCheck();
+    void finishSyncCheck();
+    void warnOutOfSync (const juce::String& what, const juce::StringArray& backups);
     // allowEmpty: OK with an empty field still calls back.
     void askText (const juce::String& title, const juce::String& prompt, const juce::String& initial, std::function<void (const juce::String&)>, bool allowEmpty = false);
     void setStatus (const juce::String&);
@@ -135,6 +147,16 @@ private:
     bool saving = false, auditioned = false;
     juce::String saveTarget; // a row key while saving
     std::unique_ptr<SavePanel> savePanel;
+    std::vector<peak::Patch::Location> fetchQueue;
+    size_t fetchIndex = 0;
+    int fetchRetries = 0, fetchMissed = 0;
+    juce::String fetchWhat;
+    std::map<int, peak::Patch> fetchExpected;
+    bool syncCheck = false;
+    std::array<std::vector<std::optional<peak::Patch>>, 4> syncBefore; // the editor's copy when the check began
+    std::array<juce::StringArray, 4> syncChanged;
+    juce::StringArray fetchMismatches;
+    juce::TimedCallback fetchTimeout { [this] { fetchTimeout.stopTimer(); if (++fetchRetries > 2) { ++fetchMissed; ++fetchIndex; fetchRetries = 0; } fetchNext(); } };
     std::unique_ptr<juce::FileChooser> chooser;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LibraryDrawer)

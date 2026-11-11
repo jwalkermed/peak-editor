@@ -1,5 +1,7 @@
 #include "PluginEditor.h"
 
+#include <juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h>
+
 #include "ui/DrawerStyle.h"
 
 namespace
@@ -19,15 +21,15 @@ public:
     }
 
     // Arrow keys (also when the on-screen keyboard has focus, which passes them up):
-    // Up/Down step through patches, Left/Right through banks.
+    // Left/Right step through patches, Up/Down through banks.
     bool keyPressed (const juce::KeyPress& key) override
     {
         if (key.getModifiers().isAnyModifierKeyDown())
             return false;
-        if (key.isKeyCode (juce::KeyPress::upKey) || key.isKeyCode (juce::KeyPress::downKey))
-            panel.stepPatch (key.isKeyCode (juce::KeyPress::upKey) ? 1 : -1);
-        else if (key.isKeyCode (juce::KeyPress::leftKey) || key.isKeyCode (juce::KeyPress::rightKey))
-            panel.stepBank (key.isKeyCode (juce::KeyPress::rightKey) ? 1 : -1);
+        if (key.isKeyCode (juce::KeyPress::leftKey) || key.isKeyCode (juce::KeyPress::rightKey))
+            panel.stepPatch (key.isKeyCode (juce::KeyPress::rightKey) ? 1 : -1);
+        else if (key.isKeyCode (juce::KeyPress::upKey) || key.isKeyCode (juce::KeyPress::downKey))
+            panel.stepBank (key.isKeyCode (juce::KeyPress::upKey) ? 1 : -1);
         else
             return false;
         return true;
@@ -43,13 +45,26 @@ public:
     {
         auto r = getLocalBounds();
         keys.setBounds (r.removeFromBottom (KeyboardStrip::preferredHeight));
+        footer = r.removeFromBottom (footerHeight);
         panel.setBounds (r);
+    }
+
+    // A black bar under the panel with the editor's version at the left.
+    void paint (juce::Graphics& g) override
+    {
+        g.setColour (juce::Colour (0xff0d0e0f));
+        g.fillRect (footer);
+        g.setColour (juce::Colours::white.withAlpha (0.45f));
+        g.setFont (juce::FontOptions (11.0f));
+        g.drawText ("Peak Editor v" JucePlugin_VersionString, footer.reduced (12, 0), juce::Justification::centredLeft);
     }
 
     FrontPanel panel;
 
 private:
+    static constexpr int footerHeight = 18;
     KeyboardStrip keys;
+    juce::Rectangle<int> footer;
 };
 } // namespace
 
@@ -68,6 +83,36 @@ PeakEditorEditor::PeakEditorEditor (PeakEditorProcessor& p)
     forwardMidi.onClick = [this] { peakProcessor.forwardTrackMidi = forwardMidi.getToggleState(); };
     addChildComponent (forwardMidi);
     forwardMidi.setVisible (! p.isStandalone());
+    sendClock.setToggleState (p.sendDawClock, juce::dontSendNotification);
+    sendClock.setTooltip ("Send the DAW's tempo to the Peak as MIDI clock (Start/Stop follow the transport). "
+                          "Set the Peak's clock Source to Auto, Ext-Auto or the port it arrives on.");
+    sendClock.setColour (juce::ToggleButton::textColourId, juce::Colours::white.withAlpha (0.8f));
+    sendClock.onClick = [this] { peakProcessor.sendDawClock = sendClock.getToggleState(); };
+    addChildComponent (sendClock);
+    sendClock.setVisible (! p.isStandalone());
+
+    // The standalone app: JUCE's Options menu moves here, since the window uses the macOS title bar.
+    optionsButton.setTooltip ("Audio/MIDI settings, and saving or loading the app's state");
+    optionsButton.setTriggeredOnMouseDown (true);
+    optionsButton.onClick = [this] {
+        juce::PopupMenu menu;
+        menu.addItem (1, "Audio/MIDI Settings...");
+        menu.addSeparator();
+        menu.addItem (2, "Save current state...");
+        menu.addItem (3, "Load a saved state...");
+        menu.addSeparator();
+        menu.addItem (4, "Reset to default state");
+        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&optionsButton),
+                            [window = juce::Component::SafePointer<juce::StandaloneFilterWindow> (findParentComponentOfClass<juce::StandaloneFilterWindow>())] (int result) {
+                                // Run after the menu has gone: "Reset" rebuilds this editor.
+                                juce::MessageManager::callAsync ([window, result] {
+                                    if (window != nullptr && result > 0)
+                                        window->handleMenuResult (result);
+                                });
+                            });
+    };
+    addChildComponent (optionsButton);
+    optionsButton.setVisible (p.isStandalone());
 
     projectMessage.setColour (juce::Label::textColourId, juce::Colours::white);
     sendProjectPatch.setTooltip ("Replace the Peak's current sound with the project's patch (nothing is saved on the Peak)");
@@ -111,6 +156,21 @@ PeakEditorEditor::PeakEditorEditor (PeakEditorProcessor& p)
     changeListenerCallback (nullptr);
 }
 
+void PeakEditorEditor::parentHierarchyChanged()
+{
+    // The standalone window gets the usual macOS title bar (close/minimise/full screen at the top
+    // left) instead of JUCE's own. With a maximise button and resizing, macOS shows the green
+    // button's full-screen arrows rather than a zoom "+".
+    if (auto* window = findParentComponentOfClass<juce::StandaloneFilterWindow>(); window != nullptr && ! window->isUsingNativeTitleBar())
+        juce::MessageManager::callAsync ([safe = juce::Component::SafePointer<juce::StandaloneFilterWindow> (window)] {
+            if (safe != nullptr && ! safe->isUsingNativeTitleBar())
+            {
+                safe->setTitleBarButtonsRequired (juce::DocumentWindow::allButtons, true);
+                safe->setUsingNativeTitleBar (true);
+            }
+        });
+}
+
 PeakEditorEditor::~PeakEditorEditor()
 {
     peakProcessor.projectPatchChanged.removeChangeListener (this);
@@ -132,12 +192,14 @@ void PeakEditorEditor::paint (juce::Graphics& g)
     g.fillAll (MidiMonitorPanel::panelColour);
 
     auto header = getLocalBounds().removeFromTop (headerHeight).reduced (16, 0);
+    // PEAK in the panel's own lettering.
+    constexpr float logoH = 18.0f;
+    const auto logoW = logoH * 1177.0f / 210.0f;
     g.setColour (juce::Colours::white);
-    g.setFont (juce::FontOptions (22.0f, juce::Font::bold));
-    g.drawText ("PEAK", header, juce::Justification::centredLeft);
+    g.fillPath (FrontPanel::peakLogo ((float) header.getX() + logoW, ((float) headerHeight - logoH) * 0.5f, logoH));
     g.setColour (juce::Colours::white.withAlpha (0.6f));
     g.setFont (juce::FontOptions (13.0f));
-    g.drawText ("Editor / Librarian", header.withTrimmedLeft (74), juce::Justification::centredLeft);
+    g.drawText ("Editor / Librarian", header.withTrimmedLeft (juce::roundToInt (logoW) + 12), juce::Justification::centredLeft);
 
     g.setColour (MidiMonitorPanel::accentColour);
     g.fillRect (16, headerHeight - 2, getWidth() - 32, 2);
@@ -153,7 +215,9 @@ void PeakEditorEditor::resized()
 {
     auto area = getLocalBounds();
     auto header = area.removeFromTop (headerHeight).reduced (16, 8);
+    optionsButton.setBounds (header.removeFromRight (80).withSizeKeepingCentre (80, 24));
     forwardMidi.setBounds (header.removeFromRight (160));
+    sendClock.setBounds (header.removeFromRight (160));
 
     if (projectMessage.isVisible())
     {
