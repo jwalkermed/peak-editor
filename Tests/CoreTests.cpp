@@ -288,6 +288,9 @@ int main()
         CHECK (a.sameSound (b) && b.sameSound (a));
         b.set (*findParam ("arp_chance"), 50);
         CHECK (! a.sameSound (b));
+        auto c = a;
+        c.set (*findParam ("filter_env_select"), 1 - a.get (*findParam ("filter_env_select")));
+        CHECK (a.sameSound (c)); // which depth the Env Depth knob shows isn't an edit
     });
 
     test ("Clock Rate: in the patch at 0xFB/0xFC, no MIDI (read from the Peak 2026-11-10)", [] {
