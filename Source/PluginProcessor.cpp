@@ -56,6 +56,7 @@ bool PeakEditorProcessor::isBusesLayoutSupported (const BusesLayout& layouts) co
 void PeakEditorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     buffer.clear();
+    samplePreview->render (buffer, currentSampleRate);
 
     // Forward the track's channel messages to the Peak, each scheduled at its position in
     // the block. The standalone app's MIDI input is handled by the keyboard strip instead.

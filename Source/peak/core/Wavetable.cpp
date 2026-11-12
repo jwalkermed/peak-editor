@@ -193,6 +193,11 @@ std::optional<Wavetable> Wavetable::fromSysex (const std::vector<Bytes>& message
     return t;
 }
 
+bool hasWavetableName (const std::vector<Bytes>& messages)
+{
+    return std::any_of (messages.begin(), messages.end(), [] (const Bytes& m) { return parseWavetableName (m).has_value(); });
+}
+
 Bytes wavetableDataRequest (int slot, int wave)
 {
     return { 0xF0, 0x00, 0x20, 0x29, 0x01, 0x10, 0x00, 0x7E, 0x46, 0x00, 0x00,
@@ -226,6 +231,66 @@ Wave make (Kind kind, unsigned seed)
     return Wave::fromSamples (s);
 }
 } // namespace Shapes
+
+namespace Slicing
+{
+int detectPeriod (const float* s, int count, int start, double sampleRate)
+{
+    const int window = 2048;
+    const int minLag = std::max (2, (int) (sampleRate / 2000.0)), maxLag = std::min (window - 1, (int) (sampleRate / 30.0));
+    if (start < 0 || start + window + maxLag > count)
+        return 0;
+    double energy = 0.0;
+    for (int i = 0; i < window; ++i)
+        energy += (double) s[start + i] * s[start + i];
+    if (energy < 1.0e-6)
+        return 0;
+    // The first lag whose correlation is close to the best: the period, not a multiple of it.
+    std::vector<double> corr ((size_t) maxLag + 1, 0.0);
+    double best = 0.0;
+    for (int lag = minLag; lag <= maxLag; ++lag)
+    {
+        double c = 0.0;
+        for (int i = 0; i < window; ++i)
+            c += (double) s[start + i] * s[start + i + lag];
+        corr[(size_t) lag] = c / energy;
+        best = std::max (best, corr[(size_t) lag]);
+    }
+    if (best < 0.5)
+        return 0;
+    for (int lag = minLag + 1; lag < maxLag; ++lag)
+        if (corr[(size_t) lag] >= 0.9 * best && corr[(size_t) lag] >= corr[(size_t) lag - 1] && corr[(size_t) lag] >= corr[(size_t) lag + 1])
+            return lag;
+    return 0;
+}
+
+std::vector<Span> spans (const float* s, int count, int start, double sampleRate, int waves)
+{
+    std::vector<Span> out;
+    const int slice = std::max (16, (int) std::lround (sliceLength * sampleRate / 44100.0));
+    for (int w = 0; w < waves; ++w)
+    {
+        int from = std::clamp (start + w * slice, 0, std::max (0, count - 1));
+        const int period = detectPeriod (s, count, from, sampleRate);
+        const int length = period > 0 ? period : slice;
+        for (int i = from; i < std::min (count - 1, from + length); ++i) // a rising zero crossing, so the cycle joins up
+            if (s[i] <= 0.0f && s[i + 1] > 0.0f)
+            {
+                from = i + 1;
+                break;
+            }
+        out.push_back ({ from, std::min (length, count - from) });
+    }
+    return out;
+}
+
+Wave waveFrom (const float* s, int count, Span span)
+{
+    if (span.length < 8 || span.start < 0 || span.start + span.length > count)
+        return {};
+    return WaveOps::normalise (Wave::fromSamples (std::vector<float> (s + span.start, s + span.start + span.length)));
+}
+} // namespace Slicing
 
 namespace WaveOps
 {

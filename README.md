@@ -96,7 +96,13 @@ Peak follows; turn one on the Peak and the editor follows.
   clicking a wave or moving Wave Table Position moves the Peak there.
 - A sent wavetable is kept only once it's **saved on the Peak** (Osc menu, page 9 "User Waves", Save); the slot is
   marked "unsaved on Peak" until you say you have.
-- **Import** a WAV/AIFF (single cycle, Serum-style frames or any sample) or `.syx`; **Save** a `.syx` that
+- Drag a wave onto another to swap them.
+- **File Browser:** add folders (chosen in Finder) to its Home list, browse them with Back, Forward, Up and Home,
+  and double-click to load. Wavetables with fewer than five frames fill the first waves and leave the rest flat. It lists what
+  Components imports: `.syx`/`.sysex` wavetables (loaded at once), and WAV or MP3 files, loaded either as a
+  wavetable (single cycle or 2048-sample frames, e.g. Serum) or as an **audio sample**: play and scrub through it,
+  pick a point, then **Import Waveform** (one cycle into the selected wave) or **Import Wavetable** (five successive
+  cycles into all five waves). **Import…** opens a single file from anywhere; **Save** writes a `.syx` that
   Components can load. The **?** explains the rest.
 
 **Settings**

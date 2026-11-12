@@ -7,6 +7,7 @@
 #include "peak/core/Settings.h"
 #include "peak/core/WavetableInfo.h"
 #include "peak/core/Wavetable.h"
+#include "peak/core/WavFile.h"
 #include "peak/core/Sysex.h"
 
 #include <cstdio>
@@ -356,6 +357,51 @@ int main()
         sq.waves[0] = Shapes::make (Shapes::square);
         const auto first = parseWavetableData (sq.toSysex (0)[1]);
         CHECK (first && std::abs (first->second.sine[1] - 1.0f) < 1.0e-3f && std::abs (first->second.sine[3] - 1.0f / 3.0f) < 2.0e-3f);
+    });
+
+    test ("waves taken from a recording: one cycle each, found by pitch", [] {
+        // 441 Hz at 44.1 kHz: a period of 100 samples, rising through zero at multiples of 100.
+        std::vector<float> s (44100);
+        for (size_t i = 0; i < s.size(); ++i)
+            s[i] = 0.7f * (float) std::sin (2.0 * 3.141592653589793 * 441.0 * (double) i / 44100.0)
+                   + 0.2f * (float) std::sin (2.0 * 3.141592653589793 * 1323.0 * (double) i / 44100.0);
+        CHECK (Slicing::detectPeriod (s.data(), (int) s.size(), 1000, 44100.0) == 100);
+        const auto spans = Slicing::spans (s.data(), (int) s.size(), 1050, 44100.0, 5);
+        CHECK (spans.size() == 5 && spans[0].length == 100 && (spans[0].start == 1100 || spans[0].start == 1101) // at the zero crossing
+               && spans[1].start - spans[0].start == 500); // the next 512-sample slice's first crossing
+        // A cycle comes back as the sound's shape: the fundamental and its third harmonic.
+        const auto w = Slicing::waveFrom (s.data(), (int) s.size(), spans[0]);
+        CHECK (w.level (1) > 0.5f && w.level (3) > 0.1f && w.level (2) < 0.01f);
+        // Noise has no pitch: a 512-sample slice instead.
+        std::vector<float> noise (44100);
+        unsigned seed = 3;
+        for (auto& v : noise)
+            v = Shapes::at (Shapes::noise, 0.0f, seed);
+        CHECK (Slicing::detectPeriod (noise.data(), (int) noise.size(), 0, 44100.0) == 0);
+    });
+
+    test ("WAV files read directly, including a data chunk longer than the file (as some Serum tables have)", [] {
+        // 16-bit stereo, 4 frames, but the data chunk claims 64 bytes.
+        const auto le = [] (Bytes& b, uint32_t v, int n) { for (int i = 0; i < n; ++i) b.push_back ((uint8_t) (v >> (8 * i))); };
+        Bytes wav { 'R', 'I', 'F', 'F' };
+        le (wav, 1000, 4);
+        for (char c : std::string ("WAVEfmt ")) wav.push_back ((uint8_t) c);
+        le (wav, 16, 4); le (wav, 1, 2); le (wav, 2, 2); le (wav, 48000, 4); le (wav, 48000 * 4, 4); le (wav, 4, 2); le (wav, 16, 2);
+        for (char c : std::string ("data")) wav.push_back ((uint8_t) c);
+        le (wav, 64, 4);
+        for (const int16_t v : { 16384, 0, -16384, -16384, 32767, 32767, 0, 0 })
+            le (wav, (uint16_t) v, 2);
+        const auto a = readWav (wav.data(), wav.size());
+        CHECK (a && a->sampleRate == 48000.0 && a->samples.size() == 4);
+        CHECK (a && std::abs (a->samples[0] - 0.25f) < 1.0e-4f && std::abs (a->samples[1] + 0.5f) < 1.0e-4f && a->samples[3] == 0.0f);
+        CHECK (! readWav (wav.data(), 20)); // no data chunk
+        // The Serum 2 table that wouldn't load, if it's on this Mac: 4096 samples (two 2048-sample frames).
+        std::ifstream in ("/Library/Audio/Presets/Xfer Records/Serum 2 Presets/Tables/S2 Tables/Analog/AT Alter.wav", std::ios::binary);
+        if (const Bytes alter { std::istreambuf_iterator<char> (in), {} }; ! alter.empty())
+        {
+            const auto t = readWav (alter.data(), alter.size());
+            CHECK (t && t->samples.size() == 4096 && t->sampleRate == 44100.0);
+        }
     });
 
     test ("wavetable notes: one for each factory wavetable, none for the user ones", [] {

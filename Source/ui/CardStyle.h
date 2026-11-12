@@ -48,6 +48,8 @@ void styleHeading (juce::Label&);
 void paintTabHeader (juce::Graphics&, juce::Rectangle<int> tabBounds, const juce::String& title, int titleX = 12);
 // The heading lettering (Exo 2 Bold).
 juce::Font headingFont (float height);
+// A folder, as drawn in the file browser and the folder picker (filled, amber).
+juce::Path folderShape (juce::Rectangle<float>);
 
 // Holds one card over the front panel: clicks outside it close it (like Close); Esc is passed to
 // `onEscape` (or closes). The card is centred and kept inside the panel.
