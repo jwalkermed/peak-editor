@@ -1,6 +1,7 @@
 #pragma once
 
 #include "peak/PeakModel.h"
+#include "ui/CardStyle.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -158,6 +159,12 @@ private:
     juce::StringArray fetchMismatches;
     juce::TimedCallback fetchTimeout { [this] { fetchTimeout.stopTimer(); if (++fetchRetries > 2) { ++fetchMissed; ++fetchIndex; fetchRetries = 0; } fetchNext(); } };
     std::unique_ptr<juce::FileChooser> chooser;
+    std::unique_ptr<CardStyle::Overlay> helpOverlay;
+
+public:
+    void showHelp(); // the help card (the ? button)
+
+private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LibraryDrawer)
 };

@@ -214,4 +214,58 @@ bool Overlay::keyPressed (const juce::KeyPress& key)
     }
     return false;
 }
+
+//==============================================================================
+HelpCard::HelpCard (const juce::String& t, std::vector<Section> sections, int width) : title (t)
+{
+    float y = 0.0f;
+    const auto add = [&] (bool bullet, const juce::String& words, juce::FontOptions font, juce::Colour colour, float spaceBefore) {
+        juce::AttributedString text (words);
+        text.setFont (font);
+        text.setColour (colour);
+        text.setLineSpacing (2.0f);
+        Line l { bullet, y + spaceBefore, {} };
+        l.layout.createLayout (text, (float) (width - 2 * pad - (bullet ? indent : 0)));
+        y = l.y + l.layout.getHeight() + 3.0f;
+        lines.push_back (std::move (l));
+    };
+    for (size_t i = 0; i < sections.size(); ++i)
+    {
+        add (false, sections[i].heading.toUpperCase(), juce::FontOptions (12.5f).withStyle ("Bold"), blue, i > 0 ? 14.0f : 0.0f);
+        for (const auto& point : sections[i].points)
+            add (true, point, juce::FontOptions (14.0f), CardStyle::text, 0.0f);
+    }
+    setSize (width, top + 14 + (int) std::ceil (y) + bottom);
+
+    closeButton.getProperties().set ("primary", true);
+    closeButton.setLookAndFeel (&look());
+    closeButton.onClick = [this] {
+        if (auto* overlay = findParentComponentOfClass<Overlay>())
+            overlay->close();
+    };
+    addAndMakeVisible (closeButton);
+}
+
+void HelpCard::paint (juce::Graphics& g)
+{
+    paintCard (g, getLocalBounds(), title);
+    g.setColour (line);
+    g.fillRect (pad, top, getWidth() - 2 * pad, 1);
+    const auto origin = juce::Point<float> ((float) pad, (float) top + 14.0f);
+    for (const auto& l : lines)
+    {
+        const auto x = origin.x + (l.bullet ? (float) indent : 0.0f);
+        if (l.bullet)
+        {
+            g.setColour (amber);
+            g.fillEllipse (origin.x + 2.0f, origin.y + l.y + 7.0f, 5.0f, 5.0f);
+        }
+        l.layout.draw (g, { x, origin.y + l.y, l.layout.getWidth(), l.layout.getHeight() });
+    }
+}
+
+void HelpCard::resized()
+{
+    closeButton.setBounds (getLocalBounds().removeFromBottom (bottom).removeFromRight (100 + pad).withTrimmedRight (pad).withSizeKeepingCentre (100, 30));
+}
 } // namespace CardStyle

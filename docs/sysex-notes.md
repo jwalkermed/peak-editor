@@ -177,8 +177,13 @@ Stored patches hold **Arp Chance 0** where the same patch as the current sound r
   The factory wavetables can't be read this way.
 - **Reply:** 531 bytes, type 06 (byte 8), the slot in byte 14 and the wave in byte 15, then 514 data bytes from byte 16.
   It answers in about 20 ms, so a whole table (5 waves) reads in about 0.1 s.
-- **Data:** 257 signed 14-bit values (two 7-bit bytes, high first). They're a **spectrum**: for harmonic h (1–127),
-  values 2h and 2h+1 are its sine and cosine parts, full scale 8191. Values 0–1 (DC) and 256 are unused.
+- **Data:** 257 signed 14-bit values (two 7-bit bytes, high first). They're a **spectrum**: value 0 is DC, then for
+  harmonic h (1–128) value 2h−1 is its cosine part and value 2h its sine part, full scale 8191 (this is how
+  Components' `generateSyx` writes it: DC, then x and y for partials 1–128). An earlier reading paired values 2h
+  and 2h+1, which put every cosine part one harmonic up: sine-only waves (saw, square) were right, a pulse wasn't.
+  Value 0 is the offset (DC), at the same scale. With it, the spectrum gives back a 256-sample drawing exactly.
+  Components scales each wave down when sending if any value or point would pass full scale (so a full-height
+  square, whose first harmonic is 4/π, isn't clipped); the editor does the same.
   An empty slot is one harmonic at 8191 in all 5 waves (a sine). Noisia (User 1) rebuilds to 5 distinct waves
   (`Tests/fixtures/wavetables/`, `docs/screenshots/wavetables-decoded.png`).
 - **Uploading (verified 2026-11-11):** send what the Peak sends back, in Components' order:
@@ -193,4 +198,6 @@ Stored patches hold **Arp Chance 0** where the same patch as the current sound r
 - **Saving sends nothing:** pressing that Save sends no MIDI (only the usual NRPN 62:0 when the Osc menu opens),
   so the editor can't trigger or detect it; the save stays a step on the Peak.
 - **Polarity:** a sawtooth sent as sine parts (-1)^(h+1)/h rises slowly and drops sharply on an oscilloscope, so
-  positive sine parts are drawn upward (as decoded).
+  positive sine parts are drawn upward (as decoded). Components draws a wave as Σ x·cos − y·sin, the opposite
+  way up, so the editor negates the cosine part to match: what the scope shows is −(Components' drawing).
+  (To confirm with a 25% pulse: high for a quarter of the cycle, not three quarters.)

@@ -2,6 +2,7 @@
 
 #include "ui/CardStyle.h"
 #include "ui/ModAssign.h"
+#include "ui/WavetableEditor.h"
 
 #include "peak/core/ParamFormat.h"
 
@@ -247,7 +248,8 @@ PeakEditorEditor::PeakEditorEditor (PeakEditorProcessor& p)
         modMatrix->focusSlot (row, message);
     };
     tabs.addTab ("Settings", DrawerStyle::background, new SettingsDrawer (p.getModel()), true);
-    tabs.addTab ("MIDI Monitor", tabColour, new MidiMonitorPanel (p.getModel().getConnection()), true);
+    tabs.addTab ("Wavetables", DrawerStyle::background, new WavetableEditor (p.getModel()), true);
+    tabs.addTab ("MIDI", tabColour, new MidiMonitorPanel (p.getModel().getConnection()), true);
     tabs.setTabBarDepth (30);
     tabs.setOutline (0);
     addAndMakeVisible (tabs);

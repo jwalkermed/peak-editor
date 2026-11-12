@@ -6,6 +6,7 @@
 #include "peak/core/Patch.h"
 #include "peak/core/Settings.h"
 #include "peak/core/WavetableInfo.h"
+#include "peak/core/Wavetable.h"
 #include "peak/core/Sysex.h"
 
 #include <cstdio>
@@ -298,6 +299,63 @@ int main()
         CHECK (! rate.hasMidi() && encodeParam (rate, 97, 0).empty());
         CHECK (Patch::fromSysex (readFixture ("current-init-patch.syx"))->get (rate) == 120);
         CHECK (formatValue (rate, 97) == "97 BPM");
+    });
+
+    test ("user wavetables: read, rebuilt and sent back exactly (fixtures from the Peak 2026-11-11)", [] {
+        const auto noisia = splitSysex (readFixture ("wavetables/user1-noisia.syx"));
+        const auto table = Wavetable::fromSysex (noisia);
+        CHECK (table.has_value());
+        // Re-encoded for slot 0, the 5 wave messages are byte for byte what the Peak sent.
+        const auto out = table->toSysex (0);
+        CHECK (out.size() == 6 && out[0].size() == 23);
+        for (int w = 0; w < 5; ++w)
+            CHECK (out[(size_t) w + 1] == noisia[(size_t) w]);
+        // An empty slot is a sine in every wave.
+        const auto empty = Wavetable::fromSysex (splitSysex (readFixture ("wavetables/user2-empty.syx")));
+        CHECK (empty && std::abs (empty->waves[3].sine[1] - 1.0f) < 1.0e-3f && empty->waves[3].level (2) < 1.0e-6f);
+        // The layout (as Components writes it): DC, then for each harmonic its cosine part (negated), then its sine.
+        Bytes raw (noisia[0]);
+        std::fill (raw.begin() + 16, raw.end() - 1, 0);
+        raw[16 + 2] = 0x20; // value 1: harmonic 1's cosine part, +0.5
+        const auto cos1 = parseWavetableData (raw);
+        CHECK (cos1 && std::abs (cos1->second.cosine[1] + 0.5f) < 1.0e-3f && cos1->second.level (2) == 0.0f);
+        CHECK (toHex (wavetableDataRequest (9, 4).data(), 15) == "F0 00 20 29 01 10 00 7E 46 00 00 09 04 00 F7");
+        // The name message is what the Peak accepted for User 10.
+        Wavetable t;
+        t.name = "SineSaw";
+        CHECK (toHex (t.toSysex (9)[0].data(), 23) == "F0 00 20 29 01 10 00 7E 07 00 00 00 00 00 09 53 69 6E 65 53 61 77 F7");
+    });
+
+    test ("wavetable shapes and operations", [] {
+        // samples -> harmonics -> samples gives the drawing back (band-limited)
+        const auto saw = Shapes::make (Shapes::saw);
+        const auto again = Wave::fromSamples (saw.samples());
+        for (int h = 1; h <= 20; ++h)
+            CHECK (std::abs (again.sine[(size_t) h] - saw.sine[(size_t) h]) < 1.0e-3f);
+        // the sawtooth rises then drops (checked on an oscilloscope): just before mid-cycle it's at its top
+        const auto s = saw.samples();
+        CHECK (s[120] > 0.4f && s[136] < -0.4f);
+        CHECK (WaveOps::invert (saw).sine[1] == -saw.sine[1]);
+        CHECK (WaveOps::reverse (WaveOps::reverse (saw)) == saw);
+        const auto loud = WaveOps::normalise (Shapes::make (Shapes::triangle));
+        float peak = 0;
+        for (auto v : loud.samples (1024)) peak = std::max (peak, std::abs (v));
+        CHECK (std::abs (peak - 1.0f) < 0.01f);
+        CHECK (WaveOps::blend (Shapes::make (Shapes::sine), saw, 0.5f).sine[2] == saw.sine[2] * 0.5f);
+        CHECK (WaveOps::smooth (saw, 1.0f).level (60) < saw.level (60) * 0.1f);
+        // A drawing comes back exactly as drawn at 256 points, offset included (a shape in the top half only).
+        std::vector<float> drawn (256, 0.0f);
+        for (size_t i = 0; i < 64; ++i)
+            drawn[i] = 0.5f + 0.5f * (i < 32 ? 1.0f : -1.0f);
+        const auto back = Wave::fromSamples (drawn).samples();
+        float worst = 0;
+        for (size_t i = 0; i < 256; ++i) worst = std::max (worst, std::abs (back[i] - drawn[i]));
+        CHECK (worst < 1.0e-4f);
+        // A full-height square is scaled down when sent, so its first harmonic (4/pi) isn't clipped.
+        Wavetable sq;
+        sq.waves[0] = Shapes::make (Shapes::square);
+        const auto first = parseWavetableData (sq.toSysex (0)[1]);
+        CHECK (first && std::abs (first->second.sine[1] - 1.0f) < 1.0e-3f && std::abs (first->second.sine[3] - 1.0f / 3.0f) < 2.0e-3f);
     });
 
     test ("wavetable notes: one for each factory wavetable, none for the user ones", [] {

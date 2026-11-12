@@ -4,8 +4,8 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-// Phase 1 debugging view: port selection, live MIDI log, raw CC/SysEx sender,
-// and saving captured incoming SysEx to .syx for reverse-engineering dumps.
+// The MIDI tab: port and channel selection and the live MIDI log. "Developer tools" (off by default)
+// adds a raw CC/SysEx sender and saving captured incoming SysEx to .syx, used to work out the protocol.
 class MidiMonitorPanel final : public juce::Component,
                                private juce::ChangeListener,
                                private juce::ListBoxModel
@@ -33,6 +33,7 @@ private:
     void sendSysexText();
     void saveCaptured();
     void setStatus (const juce::String& text, bool isError = false);
+    void showDeveloperTools (bool);
 
     PeakConnection& connection;
     std::vector<PeakConnection::LogEntry> rows;
@@ -41,6 +42,7 @@ private:
     juce::Label inputLabel { {}, "MIDI In" }, outputLabel { {}, "MIDI Out" }, channelLabel { {}, "Channel" };
     juce::ComboBox inputBox, outputBox, channelBox;
     juce::TextButton rescanButton { "Rescan" };
+    juce::ToggleButton developerTools { "Developer tools" };
 
     juce::Label ccLabel { {}, "CC" }, ccValueLabel { {}, "Value" };
     juce::Slider ccNumber { juce::Slider::IncDecButtons, juce::Slider::TextBoxLeft };

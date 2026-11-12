@@ -64,4 +64,31 @@ private:
     std::function<void()> onClosed;
     bool closing = false;
 };
+// A help card: the title, then sections (a blue heading, then bullet points), and Close. Put it in an
+// Overlay; Close closes the overlay.
+class HelpCard final : public juce::Component
+{
+public:
+    struct Section
+    {
+        juce::String heading;
+        juce::StringArray points;
+    };
+    HelpCard (const juce::String& title, std::vector<Section>, int width = 620);
+
+    void paint (juce::Graphics&) override;
+    void resized() override;
+
+private:
+    struct Line
+    {
+        bool bullet;              // a point (else a heading)
+        float y;                  // from the top of the text
+        juce::TextLayout layout;  // wrapped beside the bullet, so a long point's lines line up
+    };
+    juce::String title;
+    std::vector<Line> lines;
+    juce::TextButton closeButton { "Close" };
+    static constexpr int pad = 22, top = 52, bottom = 60, indent = 16;
+};
 } // namespace CardStyle

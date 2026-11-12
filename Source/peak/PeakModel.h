@@ -4,6 +4,7 @@
 #include "peak/PeakConnection.h"
 #include "peak/core/Patch.h"
 #include "peak/core/Settings.h"
+#include "peak/core/Wavetable.h"
 
 #include <map>
 
@@ -72,6 +73,13 @@ public:
     // Reads the 10 user wavetables' names from the Peak (they change when wavetables are loaded
     // with Components); the names update as the replies arrive.
     bool requestUserWavetableNames();
+
+    // User wavetables (slot 0-9 = User 1-10): read one from the Peak (its 5 waves arrive, then
+    // onWavetableRead), or upload one (name, then 5 waves, as Components sends them). An upload
+    // plays at once but is only kept if it's saved on the Peak (Osc menu, page 9 "User Waves", Save).
+    bool requestUserWavetable (int slot);
+    bool sendUserWavetable (int slot, const peak::Wavetable&);
+    std::function<void (int slot, const peak::Wavetable&)> onWavetableRead;
     // Called (on the message thread) each time a patch from a Peak slot arrives and is stored.
     std::function<void (peak::Patch::Location)> onSlotStored;
     // A slot the Peak selected turned out to hold something other than the editor's copy (changed
@@ -105,6 +113,12 @@ private:
     void timerCallback() override;
     void followPeakSlot (peak::Patch::Location); // the Peak changed patch (or we told it to)
     void findEditedOrigin(); // the current sound matched no stored patch: is it an edited one?
+    // The Peak doesn't announce some changes (its Initialise, for one), so every couple of seconds,
+    // when nothing else is going on, the editor quietly asks for the current sound and compares.
+    void checkPeakSound();
+    void peakSoundChecked (const peak::Patch&);
+    juce::TimedCallback checkTimer { [this] { checkPeakSound(); } };
+    double checkSentMs = 0.0; // when the last check went out (0: no reply awaited)
 
     juce::SharedResourcePointer<PeakConnection> connection;
     juce::SharedResourcePointer<PatchLibrary> library;
@@ -120,7 +134,8 @@ private:
     std::optional<peak::Patch::Location> originalLocation;
     std::optional<peak::Patch::Location> awaitedSlot;
     std::optional<peak::Patch> checkingSlot; // the editor's copy of a slot being checked against the Peak
-    juce::String loadedFrom; // a slot asked for because its bank hadn't been read
+    juce::String loadedFrom;
+    std::array<std::array<std::optional<peak::Wave>, peak::Wavetable::waveCount>, peak::Wavetable::slots> wavesArriving; // a slot asked for because its bank hadn't been read
     bool comparing = false;
     std::vector<int> unstoredValues; // parameters the dump doesn't hold (e.g. Animate Hold)
     std::map<int, int> pendingSends; // param index -> latest value

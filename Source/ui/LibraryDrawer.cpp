@@ -88,18 +88,6 @@ juce::MessageBoxOptions confirmOptions (const juce::String& title, const juce::S
         .withAssociatedComponent (parent);
 }
 
-const char* helpText =
-    "PEAK (left) shows banks A-D as last read from the synth. Fetch reads them from the Peak (one bank or all four); "
-    "a bank sent from the Peak's Backup page fills in here too.\n\n"
-    "MY BANKS (right) is your library: imported .syx files become banks, and you can make your own.\n\n"
-    "Double-click a patch to audition it: it replaces the Peak's current sound without saving.\n"
-    "Drag from PEAK to MY BANKS to copy, or within MY BANKS to reorder (the Empty row at the end of a bank adds to it). "
-    "Dragging within PEAK swaps patches; dragging from MY BANKS onto PEAK slots replaces them. These changes (and renaming or "
-    "re-categorising PEAK patches) go into the library's copy of the Peak, marked NOT SENT. Save all changes writes them to "
-    "the synth after listing what they overwrite; each bank is backed up to Application Support/Peak Editor/Backups first.\n"
-    "Undo/Redo (Cmd+Z, Shift+Cmd+Z) covers every library change, but not writes already sent.\n"
-    "Deleting a PEAK patch leaves the slot Empty (the Peak's Init Patch is written there when you save).\n"
-    "Right-click a patch or bank for more. Search accepts cat:pad.";
 } // namespace
 
 juce::String LibraryDrawer::Row::key() const
@@ -749,7 +737,7 @@ LibraryDrawer::LibraryDrawer (PeakModel& m) : model (m), library (m.getLibrary()
     pushButton.setTooltip ("Put one of your banks into a Peak bank, as NOT SENT changes");
 
     helpButton.onClick = [this] {
-        juce::AlertWindow::showAsync (juce::MessageBoxOptions().withTitle ("Library").withMessage (helpText).withButton ("OK", 0).withAssociatedComponent (this), [] (int) {});
+        showHelp();
     };
     fetchButton.onClick = [this] {
         if (fetchQueue.empty())
@@ -897,8 +885,31 @@ void LibraryDrawer::paint (juce::Graphics& g)
     g.drawText (juce::String::fromUTF8 ("\xe2\x87\x84"), juce::Rectangle<int> (x - 9, viewports[0].getY() - 22, 18, 18), juce::Justification::centred, false);
 }
 
+void LibraryDrawer::showHelp()
+{
+    auto card = std::make_unique<CardStyle::HelpCard> ("Library", std::vector<CardStyle::HelpCard::Section> {
+        { "Peak (left)", { "Banks A to D as last read from the Peak.", "Fetch reads them from the Peak: one bank, or all four.",
+                           "A bank sent from the Peak's Backup page fills in here too." } },
+        { "My Banks (right)", { "Your own library: imported .syx files become banks, and you can make new ones." } },
+        { "Auditioning", { "Double-click a patch to hear it. It replaces the Peak's current sound without saving." } },
+        { "Moving patches", { "Drag from Peak to My Banks to copy, or within My Banks to reorder. The Empty row at the end of a bank adds to it.",
+                              "Dragging within Peak swaps patches. Dragging from My Banks onto Peak slots replaces them." } },
+        { "Saving to the Peak", { "Changes to Peak banks (moves, renames, categories) are marked NOT SENT until you save them.",
+                                  "Save all changes lists what will be overwritten, then writes to the Peak.",
+                                  "Each bank is backed up first, to Application Support/Peak Editor/Backups.",
+                                  "Deleting a Peak patch leaves the slot Empty; the Init Patch is written there when you save." } },
+        { "Undo and more", { "Undo and Redo (Cmd+Z, Shift+Cmd+Z) cover every library change, but not writes already sent.",
+                             "Right-click a patch or bank for more.", "Search accepts cat:pad to find a category." } } });
+    helpOverlay = std::make_unique<CardStyle::Overlay> (std::move (card), [this] { helpOverlay.reset(); });
+    addAndMakeVisible (*helpOverlay);
+    helpOverlay->setBounds (getLocalBounds());
+    helpOverlay->grabKeyboardFocus();
+}
+
 void LibraryDrawer::resized()
 {
+    if (helpOverlay != nullptr)
+        helpOverlay->setBounds (getLocalBounds());
     auto r = getLocalBounds().reduced (12, 8);
     r.removeFromRight (2);
 

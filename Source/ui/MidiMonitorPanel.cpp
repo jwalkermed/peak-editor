@@ -83,7 +83,10 @@ MidiMonitorPanel::MidiMonitorPanel (PeakConnection& c) : connection (c)
 
     capturedLabel.setColour (juce::Label::textColourId, ledColour);
 
-    for (auto* comp : std::initializer_list<juce::Component*> { &inputBox, &outputBox, &channelBox, &rescanButton, &ccNumber, &ccValue,
+    developerTools.setTooltip ("Send raw CC and SysEx messages, and save captured SysEx (for working out the Peak's protocol)");
+    developerTools.onClick = [this] { showDeveloperTools (developerTools.getToggleState()); };
+
+    for (auto* comp : std::initializer_list<juce::Component*> { &inputBox, &outputBox, &channelBox, &rescanButton, &developerTools, &ccNumber, &ccValue,
                                                                 &sendCcButton, &sysexText, &sendSysexButton, &showRealtime, &pauseButton,
                                                                 &clearButton, &saveButton, &forgetButton, &capturedLabel, &statusLabel,
                                                                 &logList, &detail })
@@ -95,6 +98,15 @@ MidiMonitorPanel::MidiMonitorPanel (PeakConnection& c) : connection (c)
 
     refreshPorts();
     refreshLog();
+    showDeveloperTools (false);
+}
+
+void MidiMonitorPanel::showDeveloperTools (bool show)
+{
+    for (auto* comp : std::initializer_list<juce::Component*> { &ccLabel, &ccNumber, &ccValueLabel, &ccValue, &sendCcButton, &sysexText,
+                                                                &sendSysexButton, &saveButton, &forgetButton, &capturedLabel })
+        comp->setVisible (show);
+    resized();
 }
 
 MidiMonitorPanel::~MidiMonitorPanel()
@@ -121,10 +133,14 @@ void MidiMonitorPanel::resized()
     channelLabel.setBounds (row.removeFromLeft (64));
     channelBox.setBounds (row.removeFromLeft (64).reduced (4, 0));
     rescanButton.setBounds (row.removeFromLeft (80).reduced (4, 0));
+    developerTools.setBounds (row.removeFromRight (140));
     statusLabel.setBounds (row.withTrimmedLeft (8));
 
-    area.removeFromTop (gap);
-    row = area.removeFromTop (rowH);
+    if (developerTools.getToggleState())
+    {
+        area.removeFromTop (gap);
+        row = area.removeFromTop (rowH);
+    }
     ccLabel.setBounds (row.removeFromLeft (30));
     ccNumber.setBounds (row.removeFromLeft (110).reduced (4, 0));
     ccValueLabel.setBounds (row.removeFromLeft (48));

@@ -85,6 +85,17 @@ Peak follows; turn one on the Peak and the editor follows.
 
 ![The Library](docs/screenshots/library.png)
 
+**Wavetables**
+- Draw and edit the Peak's **user wavetables** (U1–U10): 5 waves each, with Pencil, Line and shape drawing
+  (click a shape and drag a box; double-click to fill the wave), Snap to grid, harmonic level and phase bars,
+  Copy to all, Blend 1 → 5, Normalise, Reverse, Invert, Reset and Undo/Redo.
+- **Load from Peak** reads a user slot; **Send to Peak** plays it at once. **Live Edit** sends every change, and
+  clicking a wave or moving Wave Table Position moves the Peak there.
+- A sent wavetable is kept only once it's **saved on the Peak** (Osc menu, page 9 "User Waves", Save); the slot is
+  marked "unsaved on Peak" until you say you have.
+- **Import** a WAV/AIFF (single cycle, Serum-style frames or any sample) or `.syx`; **Save** a `.syx` that
+  Components can load. The **?** explains the rest.
+
 **Settings**
 - The Peak's global settings (Clock Source, Brightness, pedals, MIDI and so on), read from the Peak and written
   back to it.
@@ -135,7 +146,7 @@ Do the same for the plugins.
      the Peak's knobs.
    - **MIDI Enable > Bank/Patch** set to **Rec+Tran** lets the editor follow patch changes made on the Peak.
    - Note the Peak's **MIDI channel**.
-3. **In the editor, open the MIDI Monitor tab** and choose the Peak's input and output ports and the same
+3. **In the editor, open the MIDI tab** and choose the Peak's input and output ports and the same
    channel.
 
 When the editor opens, it asks the Peak for its current sound, its settings and the user wavetable names, then
@@ -157,7 +168,7 @@ checks its stored banks against the Peak.
 | Change the category | Click the category on the screen (saved straight away) |
 | Favourite | Click the star next to the name |
 | Show/hide the keyboard | The **Keyboard** switch under the panel |
-| Help | The **?** at the top left of the panel |
+| Help | The **?** at the top left of the panel, the Library and the Wavetables tab |
 
 ---
 
@@ -228,6 +239,10 @@ The protocol details were worked out on the hardware and are recorded in
 - **Dump requests** (header `F0 00 20 29 01 10 00 7E`, then a command): `40` the current sound, `41` a stored
   slot, `44` the global settings, `47` a wavetable's name.
 - **Global settings** go back as a whole settings dump; the Peak ignores them sent one at a time.
+- **User wavetables:** `46` reads one wave of a user slot; uploads are a name (`07`) and 5 waves (`06`), each a
+  spectrum (an offset, then a cosine and sine part for harmonics 1–128).
+- **Changes the Peak doesn't announce** (its Initialise, for one) are picked up by quietly asking for the current
+  sound every couple of seconds when nothing else is going on.
 - **Animate** is CC 114/115 with 127 for pressed and 0 for released.
 - **Clock Rate** is stored in the patch and has no MIDI message of its own.
 
