@@ -7,6 +7,8 @@
 #include "peak/core/ParamFormat.h"
 #include "ui/ModMatrixDrawer.h"
 #include "ui/SettingsDrawer.h"
+#include "ui/WavetableEditor.h"
+#include "ui/MidiMonitorPanel.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -56,10 +58,34 @@ int main (int argc, char** argv)
         drawer->setAllExpanded (true);
         view = std::move (drawer);
     }
+    else if (juce::String (argc > 2 ? argv[2] : "") == "libraryhelp")
+    {
+        auto drawer = std::make_unique<LibraryDrawer> (*model);
+        drawer->setSize (900, 640);
+        drawer->showHelp();
+        view = std::move (drawer);
+    }
     else if (juce::String (argc > 2 ? argv[2] : "") == "settings")
     {
         view = std::make_unique<SettingsDrawer> (*model);
         view->setSize (900, 640);
+    }
+    else if (juce::String (argc > 2 ? argv[2] : "") == "wavetables")
+    {
+        view = std::make_unique<WavetableEditor> (*model);
+        view->setSize (1400, 860);
+    }
+    else if (juce::String (argc > 2 ? argv[2] : "") == "wavetablehelp")
+    {
+        auto editor = std::make_unique<WavetableEditor> (*model);
+        editor->setSize (1400, 860);
+        editor->showHelp();
+        view = std::move (editor);
+    }
+    else if (juce::String (argc > 2 ? argv[2] : "") == "midi")
+    {
+        view = std::make_unique<MidiMonitorPanel> (model->getConnection());
+        view->setSize (1200, 500);
     }
     else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("wave:"))
     {

@@ -1,5 +1,7 @@
 #include "PeakConnection.h"
 
+#include "peak/core/Wavetable.h"
+
 #include "peak/core/MidiDescribe.h"
 #include "peak/core/Patch.h"
 #include "peak/core/Settings.h"
@@ -187,6 +189,8 @@ bool PeakConnection::send (const juce::MidiMessage& message)
     if (! transport.send (message.getRawData(), (size_t) message.getRawDataSize()))
         return false;
 
+    if (const auto status = message.getRawData()[0]; status == 0xF0 || (status & 0xF0) == 0xB0 || (status & 0xF0) == 0xC0)
+        lastActivityMs = juce::Time::getMillisecondCounterHiRes();
     addToLog (true, message.getRawData(), message.getRawDataSize());
     return true;
 }
@@ -201,7 +205,16 @@ bool PeakConnection::sendSysex (const peak::Bytes& message, double delayMs)
 
     if (! transport.send (message.data(), message.size(), delayMs))
         return false;
+    lastActivityMs = juce::Time::getMillisecondCounterHiRes() + delayMs;
     addToLog (true, message.data(), (int) message.size());
+    return true;
+}
+
+bool PeakConnection::sendQuietRequest (const peak::Bytes& message)
+{
+    if (message.size() < 2 || message.front() != 0xF0 || message.back() != 0xF7 || ! transport.send (message.data(), message.size()))
+        return false;
+    quietReplyExpected = true;
     return true;
 }
 
@@ -267,7 +280,14 @@ void PeakConnection::takeIncoming (std::vector<peak::ParamChange>& changes, std:
 
 void PeakConnection::handleIncoming (const uint8_t* data, size_t size)
 {
-    addToLog (false, data, (int) size);
+    const bool isDump = size > 0 && data[0] == 0xF0;
+    const bool quietReply = isDump && peak::Patch::looksLikePatchDump (data, size) && quietReplyExpected.exchange (false);
+    if (! quietReply) // the background check's reply isn't logged, and isn't activity
+    {
+        addToLog (false, data, (int) size);
+        if ((isDump && size > 100) || (size >= 2 && ((data[0] & 0xF0) == 0xB0 || (data[0] & 0xF0) == 0xC0)))
+            lastActivityMs = juce::Time::getMillisecondCounterHiRes(); // a dump, or a knob or patch change on the Peak
+    }
 
     bool notify = false;
     const auto onOurChannel = size >= 2 && (data[0] & 0x0F) == channel.load();
@@ -293,7 +313,8 @@ void PeakConnection::handleIncoming (const uint8_t* data, size_t size)
             notify = true;
         }
     }
-    else if (peak::Patch::looksLikePatchDump (data, size) || peak::SettingsDump::isSettingsDump (data, size) || peak::isWavetableName (data, size))
+    else if (peak::Patch::looksLikePatchDump (data, size) || peak::SettingsDump::isSettingsDump (data, size) || peak::isWavetableName (data, size)
+             || peak::isWavetableData (data, size))
     {
         const juce::ScopedLock sl (logLock);
         pendingDumps.emplace_back (data, data + size);

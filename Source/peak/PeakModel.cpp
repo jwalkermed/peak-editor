@@ -2,11 +2,23 @@
 
 #include "peak/core/ParamFormat.h"
 
+#include "BinaryData.h"
+
 #include <limits>
 
 namespace
 {
 constexpr int sendIntervalMs = 15, dumpIntervalMs = 150;
+constexpr int checkIntervalMs = 2000, quietBeforeCheckMs = 3000;
+
+const peak::Patch& initPatch()
+{
+    static const auto patch = [] {
+        const auto* bytes = reinterpret_cast<const uint8_t*> (BinaryData::InitPatch_syx);
+        return peak::Patch::fromSysex (peak::Bytes (bytes, bytes + BinaryData::InitPatch_syxSize)).value_or (peak::Patch());
+    }();
+    return patch;
+}
 }
 
 PeakModel::PeakModel()
@@ -23,6 +35,7 @@ PeakModel::PeakModel()
     }
 
     connection->incoming.addChangeListener (this);
+    checkTimer.startTimer (checkIntervalMs);
 }
 
 PeakModel::~PeakModel()
@@ -225,10 +238,72 @@ void PeakModel::findEditedOrigin()
     changed.sendChangeMessage();
 }
 
+void PeakModel::checkPeakSound()
+{
+    const auto now = juce::Time::getMillisecondCounterHiRes();
+    if (checkSentMs > 0.0 && now - checkSentMs < 1500.0)
+        return; // still waiting for the last reply
+    checkSentMs = 0.0;
+    // Only when the editor has a sound, nothing is being sent or read, and nothing was for a moment.
+    if (! loaded || comparing || isTimerRunning() || awaitedSlot || checkingSlot || ! connection->isInputOpen() || ! connection->isOutputOpen()
+        || now - connection->getLastActivityMs() < quietBeforeCheckMs)
+        return;
+    if (connection->sendQuietRequest (peak::currentSoundRequest()))
+        checkSentMs = now;
+}
+
+void PeakModel::peakSoundChecked (const peak::Patch& p)
+{
+    // Ignored if the editor sent anything since asking (the reply may be from before it).
+    const auto asked = std::exchange (checkSentMs, 0.0);
+    if (connection->getLastActivityMs() > asked || isTimerRunning() || p.sameSound (patch))
+        return;
+    if (p.sameSound (initPatch()))
+    {
+        // Initialise on the Peak: as the editor's own Initialise.
+        loadPatch (p, "Init Patch (not saved)");
+        return;
+    }
+    // Some other change made on the Peak without MIDI (e.g. its own Compare or a reverted edit):
+    // the editor's sound follows; where it came from and its saved version stay.
+    patch = p;
+    patch.setLocation (std::nullopt);
+    lastTouched = nullptr;
+    changed.sendChangeMessage();
+}
+
 bool PeakModel::requestFromPeak()
 {
     return connection->sendSysex (peak::currentSoundRequest()) && connection->sendSysex (peak::settingsRequest(), 300.0)
         && requestUserWavetableNames();
+}
+
+bool PeakModel::requestUserWavetable (int slot)
+{
+    if (! juce::isPositiveAndBelow (slot, peak::Wavetable::slots))
+        return false;
+    for (auto& w : wavesArriving[(size_t) slot])
+        w.reset();
+    bool ok = true;
+    for (int w = 0; w < peak::Wavetable::waveCount; ++w)
+        ok = connection->sendSysex (peak::wavetableDataRequest (slot, w), 30.0 * w) && ok;
+    return ok;
+}
+
+bool PeakModel::sendUserWavetable (int slot, const peak::Wavetable& table)
+{
+    if (! juce::isPositiveAndBelow (slot, peak::Wavetable::slots))
+        return false;
+    const auto messages = table.toSysex (slot);
+    bool ok = true;
+    for (size_t i = 0; i < messages.size(); ++i)
+        ok = connection->sendSysex (messages[i], 20.0 * (double) i) && ok; // Components' spacing
+    if (ok)
+    {
+        peak::userWavetableNames()[(size_t) slot] = juce::String (table.name).trimEnd().substring (0, peak::Wavetable::nameLength).toStdString();
+        changed.sendChangeMessage();
+    }
+    return ok;
 }
 
 bool PeakModel::requestUserWavetableNames()
@@ -328,7 +403,28 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
 
     bool namesChanged = false;
     for (const auto& d : dumps)
-        if (const auto name = peak::parseWavetableName (d))
+        if (const auto wave = peak::parseWavetableData (d))
+        {
+            // A wave of a user wavetable: when all 5 of a slot are in, it's read.
+            const auto [slot, index] = wave->first;
+            if (slot < peak::Wavetable::slots && index < peak::Wavetable::waveCount)
+            {
+                auto& arriving = wavesArriving[(size_t) slot];
+                arriving[(size_t) index] = wave->second;
+                if (std::all_of (arriving.begin(), arriving.end(), [] (const auto& w) { return w.has_value(); }))
+                {
+                    peak::Wavetable table;
+                    table.name = peak::userWavetableNames()[(size_t) slot];
+                    for (size_t i = 0; i < arriving.size(); ++i)
+                        table.waves[i] = *arriving[i];
+                    for (auto& w : arriving)
+                        w.reset();
+                    if (onWavetableRead)
+                        onWavetableRead (slot, table);
+                }
+            }
+        }
+        else if (const auto name = peak::parseWavetableName (d))
         {
             auto& names = peak::userWavetableNames();
             if (name->first >= 64 && name->first - 64 < (int) names.size() && ! name->second.empty() && names[(size_t) (name->first - 64)] != name->second)
@@ -371,6 +467,8 @@ void PeakModel::changeListenerCallback (juce::ChangeBroadcaster*)
                     loadPatch (*p, "Peak " + juce::String (p->location()->name()));
                 }
             }
+            else if (checkSentMs > 0.0)
+                peakSoundChecked (*p);
             else
             {
                 loadPatch (*p, "Received from Peak at " + juce::Time::getCurrentTime().toString (false, true, false));

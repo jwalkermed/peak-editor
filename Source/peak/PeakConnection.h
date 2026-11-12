@@ -50,6 +50,12 @@ public:
     bool send (const juce::MidiMessage& message);
     bool sendSysex (const peak::Bytes& message, double delayMs = 0.0); // must include F0 ... F7; CoreMIDI schedules delayed sends
     bool sendParam (const peak::ParamDef&, int value);
+    // The background check for changes made on the Peak that it doesn't announce (e.g. its Initialise):
+    // sends a current-sound request without logging it, and keeps its reply out of the log too.
+    bool sendQuietRequest (const peak::Bytes&);
+    // When the editor last sent SysEx or a controller to the Peak, or received a SysEx dump
+    // (Time::getMillisecondCounterHiRes); the background check waits for a quiet moment.
+    double getLastActivityMs() const noexcept { return lastActivityMs.load(); }
     // Audio thread: a channel message from the DAW track, moved to the Peak's channel and
     // scheduled delayMs ahead. No allocation and not logged (the monitor would allocate).
     void sendPerformance (const uint8_t* data, size_t size, double delayMs);
@@ -127,6 +133,8 @@ private:
 
     std::atomic<int> channel { 0 }; // read on the MIDI thread
     std::atomic<bool> notesMuted { false };
+    std::atomic<double> lastActivityMs { 0.0 };
+    std::atomic<bool> quietReplyExpected { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PeakConnection)
 };
