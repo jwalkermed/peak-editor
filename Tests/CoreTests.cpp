@@ -7,6 +7,7 @@
 #include "peak/core/Settings.h"
 #include "peak/core/WavetableInfo.h"
 #include "peak/core/Wavetable.h"
+#include "peak/core/Version.h"
 #include "peak/core/WavFile.h"
 #include "peak/core/Sysex.h"
 
@@ -402,6 +403,14 @@ int main()
             const auto t = readWav (alter.data(), alter.size());
             CHECK (t && t->samples.size() == 4096 && t->sampleRate == 44100.0);
         }
+    });
+
+    test ("update check: a release is newer only if its version number is higher", [] {
+        CHECK (isNewerVersion ("v1.3.0", "1.2.0") && isNewerVersion ("v1.2.1", "1.2.0") && isNewerVersion ("v2.0", "1.9.9"));
+        CHECK (isNewerVersion ("v1.10.0", "1.9.0")); // by number, not as text
+        CHECK (! isNewerVersion ("v1.2.0", "1.2.0") && ! isNewerVersion ("v1.1.9", "1.2.0") && ! isNewerVersion ("1.2", "1.2.0"));
+        CHECK (! isNewerVersion ("", "1.2.0") && ! isNewerVersion ("latest", "1.2.0"));
+        CHECK (isNewerVersion ("v1.3.0-beta", "1.2.0"));
     });
 
     test ("wavetable notes: one for each factory wavetable, none for the user ones", [] {
