@@ -70,6 +70,16 @@ KeyboardStrip::KeyboardStrip (PeakConnection& c)
     connection.stateChanged.addChangeListener (this);
     refreshInputs();
     shiftOctave (0);
+    startTimerHz (30);
+}
+
+void KeyboardStrip::timerCallback()
+{
+    // Shown without sending (they've been sent already); not while being dragged here.
+    if (! pitchWheel.isMouseButtonDown())
+        pitchWheel.setValue (connection.pitchBend.load() - 8192, juce::dontSendNotification);
+    if (! modWheel.isMouseButtonDown())
+        modWheel.setValue (connection.modWheel.load(), juce::dontSendNotification);
 }
 
 KeyboardStrip::~KeyboardStrip()

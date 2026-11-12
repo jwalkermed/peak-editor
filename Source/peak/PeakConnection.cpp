@@ -191,6 +191,7 @@ bool PeakConnection::send (const juce::MidiMessage& message)
 
     if (const auto status = message.getRawData()[0]; status == 0xF0 || (status & 0xF0) == 0xB0 || (status & 0xF0) == 0xC0)
         lastActivityMs = juce::Time::getMillisecondCounterHiRes();
+    noteWheels (message.getRawData(), (size_t) message.getRawDataSize());
     addToLog (true, message.getRawData(), message.getRawDataSize());
     return true;
 }
@@ -239,6 +240,17 @@ void PeakConnection::sendPerformance (const uint8_t* data, size_t size, double d
         return; // note-ons only: offs still go, so nothing hangs
     uint8_t msg[3] { uint8_t ((data[0] & 0xF0) | channel.load()), size > 1 ? data[1] : uint8_t (0), size > 2 ? data[2] : uint8_t (0) };
     transport.sendShort (msg, size, delayMs);
+    noteWheels (msg, size);
+}
+
+void PeakConnection::noteWheels (const uint8_t* data, size_t size)
+{
+    if (size < 3 || (data[0] & 0x0F) != channel.load())
+        return;
+    if ((data[0] & 0xF0) == 0xE0)
+        pitchBend = data[1] | (data[2] << 7);
+    else if ((data[0] & 0xF0) == 0xB0 && data[1] == 1)
+        modWheel = data[2];
 }
 
 bool PeakConnection::sendParam (const peak::ParamDef& def, int value)
@@ -291,6 +303,7 @@ void PeakConnection::handleIncoming (const uint8_t* data, size_t size)
 
     bool notify = false;
     const auto onOurChannel = size >= 2 && (data[0] & 0x0F) == channel.load();
+    noteWheels (data, size); // the Peak's own wheels
 
     // Patch selection on the Peak: CC 32 (bank, A = 1) then Program Change (slot).
     if (onOurChannel && (data[0] & 0xF0) == 0xB0 && data[1] == 32 && size == 3)

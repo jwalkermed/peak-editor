@@ -8,7 +8,8 @@
 // keyboard (mouse or computer keyboard), octave/velocity, and the choice
 // of a hardware keyboard input whose notes are forwarded to the Peak.
 class KeyboardStrip final : public juce::Component,
-                            private juce::ChangeListener
+                            private juce::ChangeListener,
+                            private juce::Timer
 {
 public:
     explicit KeyboardStrip (PeakConnection&);
@@ -21,6 +22,7 @@ public:
 
 private:
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
+    void timerCallback() override; // the wheels follow bend and mod wheel from a controller, the DAW or the Peak
     void refreshInputs();
     void shiftOctave (int delta);
     void sendController (int cc, int value);

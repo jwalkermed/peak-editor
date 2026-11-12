@@ -75,6 +75,11 @@ public:
     // Sends a long run of CC/NRPN messages spaced out so DIN/network bridges keep up.
     bool sendPaced (const std::vector<peak::ShortMessage>& messages, double msBetween = 2.0);
 
+    // The latest pitch bend (0-16383, 8192 = centre) and mod wheel (CC 1, 0-127) on the Peak's channel,
+    // from wherever they came: the on-screen wheels, a controller keyboard, the DAW track or the Peak's
+    // own wheels. The keyboard strip's wheels follow them. Safe on any thread.
+    std::atomic<int> pitchBend { 8192 }, modWheel { 0 };
+
     // Notes for the Peak. Anything that presses keys here (the on-screen keyboard,
     // a computer keyboard, or the hardware keyboard input) is played on the Peak.
     juce::MidiKeyboardState keyboardState;
@@ -112,6 +117,7 @@ private:
     void handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int note, float velocity) override;
     void handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int note, float velocity) override;
     void addToLog (bool outgoing, const juce::uint8* data, int size);
+    void noteWheels (const uint8_t* data, size_t size); // keeps pitchBend / modWheel current
 
     static constexpr size_t maxLogEntries = 5000;
     static constexpr size_t maxCaptured = 2048;
