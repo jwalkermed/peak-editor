@@ -75,6 +75,39 @@ int main (int argc, char** argv)
         view = std::make_unique<WavetableEditor> (*model);
         view->setSize (1400, 860);
     }
+    else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("wavetablebrowser:"))
+    {
+        // wavetablebrowser:<folder>[|<file to select>]
+        auto editor = std::make_unique<WavetableEditor> (*model);
+        editor->setSize (1400, 860);
+        const auto spec = juce::String (argv[2]).fromFirstOccurrenceOf (":", false, false);
+        editor->browse (juce::File (spec.upToFirstOccurrenceOf ("|", false, false)), juce::File (spec.fromFirstOccurrenceOf ("|", false, false)));
+        view = std::move (editor);
+    }
+    else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("wavetablesample:") || juce::String (argc > 2 ? argv[2] : "").startsWith ("wavetablechoice:"))
+    {
+        // wavetablesample:<folder>|<file>|<seconds>, or wavetablechoice:<folder>|<file>
+        auto editor = std::make_unique<WavetableEditor> (*model);
+        editor->setSize (1400, 860);
+        const auto parts = juce::StringArray::fromTokens (juce::String (argv[2]).fromFirstOccurrenceOf (":", false, false), "|", "");
+        editor->browse (juce::File (parts[0]), juce::File (parts[1]));
+        if (juce::String (argv[2]).startsWith ("wavetablesample:"))
+            editor->openSample (juce::File (parts[1]), parts[2].getDoubleValue());
+        else
+            editor->askHowToLoad (juce::File (parts[1]));
+        view = std::move (editor);
+    }
+    else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("wavetablehome:"))
+    {
+        // wavetablehome:<folder>|<folder>|...: the file browser's Home list
+        auto editor = std::make_unique<WavetableEditor> (*model);
+        editor->setSize (1400, 860);
+        juce::Array<juce::File> folders;
+        for (const auto& f : juce::StringArray::fromTokens (juce::String (argv[2]).fromFirstOccurrenceOf (":", false, false), "|", ""))
+            folders.add (juce::File (f));
+        editor->browseHome (folders);
+        view = std::move (editor);
+    }
     else if (juce::String (argc > 2 ? argv[2] : "") == "wavetablehelp")
     {
         auto editor = std::make_unique<WavetableEditor> (*model);

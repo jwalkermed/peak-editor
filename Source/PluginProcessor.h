@@ -1,6 +1,7 @@
 #pragma once
 
 #include "peak/PeakModel.h"
+#include "peak/SamplePreview.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -68,6 +69,7 @@ private:
     void ignoreHostChangesFor (double ms);
 
     juce::SharedResourcePointer<PeakModel> model;
+    juce::SharedResourcePointer<SamplePreview> samplePreview; // the Wavetables tab's sample, while it plays
     PeakConnection* connection = nullptr;
     std::vector<juce::AudioParameterInt*> params; // same order as peak::allParams()
     std::unique_ptr<std::atomic<int>[]> fromHost;  // pending host values, -1 = none

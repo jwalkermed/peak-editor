@@ -192,6 +192,14 @@ void paintCard (juce::Graphics& g, juce::Rectangle<int> bounds, const juce::Stri
     }
 }
 
+juce::Path folderShape (juce::Rectangle<float> r)
+{
+    juce::Path p;
+    p.addRoundedRectangle (r.withWidth (r.getWidth() * 0.42f).withHeight (r.getHeight() * 0.3f), 1.5f);
+    p.addRoundedRectangle (r.withTrimmedTop (r.getHeight() * 0.18f), 2.0f);
+    return p;
+}
+
 juce::Font headingFont (float height)
 {
     return DrawerStyle::font (height);

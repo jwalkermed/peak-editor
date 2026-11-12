@@ -51,6 +51,7 @@ struct Wavetable
 // Requests the Peak answers with one wave (type 06): slot 0-9, wave 0-4.
 Bytes wavetableDataRequest (int slot, int wave);
 bool isWavetableData (const uint8_t* data, size_t size); // a type 06 wave message (531 bytes)
+bool hasWavetableName (const std::vector<Bytes>& messages); // a name message among them (a .syx may have none)
 // The wave in a type 06 message, with its slot and wave number.
 std::optional<std::pair<std::pair<int, int>, Wave>> parseWavetableData (const Bytes&);
 
@@ -60,6 +61,22 @@ enum Kind { sine, square, pulse, saw, triangle, noise };
 constexpr float pulseWidth = 0.125f; // the pulse is high for this much of the cycle
 float at (Kind, float phase, unsigned& seed); // one cycle, phase 0-1, -1..1 (seed: for noise)
 Wave make (Kind, unsigned seed = 1);           // full height
+}
+
+// Taking waves out of a recording (the Import Audio Sample window).
+namespace Slicing
+{
+// Samples at 44.1 kHz (scaled for other rates): one slice when no pitch is found, and the spacing of a
+// wavetable's 5 slices (2560 in all).
+constexpr int sliceLength = 512;
+// The period (in samples) of the sound starting at `start`, by autocorrelation (30 Hz to 2 kHz), or 0
+// if it isn't clearly pitched.
+int detectPeriod (const float* samples, int count, int start, double sampleRate);
+// Where each wave is taken from: one cycle (or one slice if unpitched) starting at the first rising zero
+// crossing at or after `start`; for a wavetable, 5 of them from successive 512-sample slices.
+struct Span { int start, length; };
+std::vector<Span> spans (const float* samples, int count, int start, double sampleRate, int waves);
+Wave waveFrom (const float* samples, int count, Span); // normalised
 }
 
 namespace WaveOps

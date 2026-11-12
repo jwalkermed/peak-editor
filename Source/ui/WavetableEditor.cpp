@@ -1,27 +1,51 @@
 #include "WavetableEditor.h"
 
 #include "peak/core/ParamFormat.h"
+#include "peak/core/WavFile.h"
 #include "ui/CardStyle.h"
 
 namespace
 {
 using namespace CardStyle;
 
-constexpr int topBar = 46, pad = 18, rightWidth = 360, harmonicBars = 64;
+constexpr int topBar = 46, pad = 18, rightWidth = 380, harmonicBars = 64;
 const char* const shapeNames[] { "Sine", "Square", "Pulse", "Saw", "Triangle", "Noise" };
-const char* const opNames[] { "Copy to all waves", "Blend 1 \xe2\x86\x92 5 (morph)", "Normalise", "Reverse", "Invert" };
+const char* const opNames[] { "Copy all waves", "Blend 1 \xe2\x86\x92 5", "Normalise", "Reverse", "Invert" };
 constexpr int opCount = 5;
 
-// A shape button: a click picks the shape to draw with, a double-click fills the wave with it.
-struct ShapeButton final : juce::TextButton
+// An audio file mixed to mono, up to `maxSeconds`. JUCE's reader first; for a WAV it can't use (or
+// takes as empty, as with a data chunk longer than the file) the WAV is read directly.
+struct MonoAudio
 {
-    std::function<void()> onDoubleClick;
-    void mouseDoubleClick (const juce::MouseEvent&) override
-    {
-        if (onDoubleClick)
-            onDoubleClick();
-    }
+    std::shared_ptr<juce::AudioBuffer<float>> samples;
+    double rate = 0.0;
 };
+std::optional<MonoAudio> readMono (const juce::File& file, double maxSeconds)
+{
+    juce::AudioFormatManager formats;
+    formats.registerBasicFormats();
+    if (std::unique_ptr<juce::AudioFormatReader> reader (formats.createReaderFor (file)); reader != nullptr && reader->lengthInSamples > 0)
+    {
+        const auto length = (int) juce::jmin<juce::int64> (reader->lengthInSamples, (juce::int64) (reader->sampleRate * maxSeconds));
+        juce::AudioBuffer<float> all ((int) juce::jmax (1u, reader->numChannels), length);
+        reader->read (&all, 0, length, 0, true, true);
+        auto mono = std::make_shared<juce::AudioBuffer<float>> (1, length);
+        mono->clear();
+        for (int c = 0; c < all.getNumChannels(); ++c)
+            mono->addFrom (0, 0, all, c, 0, length, 1.0f / (float) all.getNumChannels());
+        return MonoAudio { mono, reader->sampleRate };
+    }
+    juce::MemoryBlock data;
+    if (! file.hasFileExtension ("wav") || ! file.loadFileAsData (data))
+        return std::nullopt;
+    const auto wav = peak::readWav (static_cast<const uint8_t*> (data.getData()), data.getSize());
+    if (! wav || wav->samples.empty())
+        return std::nullopt;
+    const auto length = (int) std::min<double> ((double) wav->samples.size(), wav->sampleRate * maxSeconds);
+    auto mono = std::make_shared<juce::AudioBuffer<float>> (1, length);
+    std::copy_n (wav->samples.begin(), length, mono->getWritePointer (0));
+    return MonoAudio { mono, wav->sampleRate };
+}
 
 // The editor's full scale reaches its top and bottom edges, so the grid has 4 rows above the line and 4 below.
 constexpr float editorScale = 0.5f;
@@ -52,6 +76,34 @@ void drawWave (juce::Graphics& g, juce::Rectangle<float> r, const std::vector<fl
     g.setColour (colour);
     g.strokePath (p, juce::PathStrokeType (width, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }
+// A shape button: its name and picture; a click picks the shape to draw with, a double-click fills
+// the wave with it.
+struct ShapeButton final : juce::TextButton
+{
+    explicit ShapeButton (int shape) : index (shape) {}
+    const int index;
+    std::function<void()> onDoubleClick;
+
+    void mouseDoubleClick (const juce::MouseEvent&) override
+    {
+        if (onDoubleClick)
+            onDoubleClick();
+    }
+
+    void paintButton (juce::Graphics& g, bool over, bool down) override
+    {
+        juce::TextButton::paintButton (g, over, down);
+        const auto b = getLocalBounds().toFloat();
+        g.setColour (CardStyle::text);
+        g.setFont (juce::FontOptions (13.0f));
+        g.drawText (shapeNames[index], b.withTrimmedLeft (10.0f).withTrimmedRight (44.0f), juce::Justification::centredLeft);
+        std::vector<float> icon (index == peak::Shapes::noise ? 40 : 97);
+        unsigned seed = 7;
+        for (size_t k = 0; k < icon.size(); ++k)
+            icon[k] = 0.8f * peak::Shapes::at ((peak::Shapes::Kind) index, (float) k / (float) icon.size(), seed);
+        drawWave (g, { b.getRight() - 40.0f, 7.0f, 30.0f, b.getHeight() - 14.0f }, icon, amber, 1.6f, false);
+    }
+};
 } // namespace
 
 WavetableEditor::WavetableEditor (PeakModel& m)
@@ -95,10 +147,10 @@ WavetableEditor::WavetableEditor (PeakModel& m)
     slotBox.onChange = [this] { setStatus ({}); };
 
     loadButton.setTooltip ("Read the selected user slot from the Peak");
-    importButton.setTooltip ("A WAV file (a single cycle, a Serum-style wavetable, or any sample cut into 5 waves), or a .syx wavetable");
     saveButton.setTooltip ("Save as a .syx file (Components can load it)");
     sendButton.setTooltip ("Send to the selected user slot. It plays at once; to keep it, save it on the Peak");
     sendButton.getProperties().set ("primary", true);
+    importButton.setTooltip ("A single file from anywhere: a .syx wavetable, or a WAV or MP3 (as a wavetable, or as a sample to take waves from)");
     loadButton.onClick = [this] { loadFromPeak(); };
     importButton.onClick = [this] { import(); };
     saveButton.onClick = [this] { saveFile(); };
@@ -120,7 +172,7 @@ WavetableEditor::WavetableEditor (PeakModel& m)
 
     for (int i = 0; i < 6; ++i)
     {
-        auto* b = new ShapeButton(); // name and picture drawn in paintOverChildren
+        auto* b = new ShapeButton (i);
         shapeButtons.add (b);
         b->setTooltip (juce::String ("Click: draw ") + shapeNames[i] + " cycles (drag across the wave: length, and height up or down). "
                        "Double-click: fill the wave with one");
@@ -199,7 +251,22 @@ WavetableEditor::WavetableEditor (PeakModel& m)
     for (auto* b : opButtons)
         addAndMakeVisible (b);
 
+    browser = std::make_unique<WavetableBrowser> (model.getConnection().getUserSettings());
+    browser->onFileChosen = [this] (const juce::File& f) {
+        if (f.hasFileExtension ("syx;sysex"))
+            importFile (f); // the Peak's own format: straight in
+        else
+            askHowToLoad (f);
+    };
+    addAndMakeVisible (*browser);
+
     model.onWavetableRead = [this] (int slot, const peak::Wavetable& read) {
+        if (session && session->readingOriginal && slot == session->slot)
+        {
+            session->original = read; // kept to put back, not loaded
+            session->readingOriginal = false;
+            return;
+        }
         if (slot != slotBox.getSelectedId() - 1)
             return;
         beginEdit();
@@ -226,6 +293,9 @@ WavetableEditor::WavetableEditor (PeakModel& m)
 
 WavetableEditor::~WavetableEditor()
 {
+    endSampleSession (false); // the Peak put back if the sample window was auditioning on it
+    importOverlay.reset();    // the sample window stops its playback as it goes
+    helpOverlay.reset();
     model.onWavetableRead = nullptr;
     model.changed.removeChangeListener (this);
     setLookAndFeel (nullptr);
@@ -248,6 +318,26 @@ void WavetableEditor::refreshSlots()
 void WavetableEditor::changeListenerCallback (juce::ChangeBroadcaster*)
 {
     refreshSlots(); // user wavetable names may have been read
+
+    // An oscillator's Shape Amount turned (on the Peak or the panel): the preview follows it, if that
+    // oscillator plays the selected slot (or none does). Shown only; nothing is sent back.
+    const auto* touched = model.getLastTouched();
+    const auto slot = slotBox.getSelectedId() - 1;
+    if (touched == nullptr || slot < 0 || positionSlider.isMouseButtonDown())
+        return;
+    const auto param = [] (int osc, const char* name) -> const peak::ParamDef& { return *peak::findParam ("osc" + std::to_string (osc) + name); };
+    const auto playing = [&] (int osc) { return model.get (param (osc, "_wave")) == 4 && model.get (param (osc, "_wave_more")) == 64 + slot; };
+    for (int osc = 1; osc <= 3; ++osc)
+        if (touched == &param (osc, "_manual_shape") && (playing (osc) || ! (playing (1) || playing (2) || playing (3))))
+        {
+            const auto shown = (double) model.get (*touched) * 4.0 / 127.0;
+            if (std::abs (shown - positionSlider.getValue()) > 1.0e-3)
+            {
+                positionSlider.setValue (shown, juce::dontSendNotification);
+                position = (float) shown;
+                repaint (editorArea);
+            }
+        }
 }
 
 void WavetableEditor::setStatus (const juce::String& message, bool important)
@@ -393,60 +483,66 @@ void WavetableEditor::saveFile()
 void WavetableEditor::import()
 {
     chooser = std::make_unique<juce::FileChooser> ("Import a wavetable", juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
-                                                   "*.wav;*.aif;*.aiff;*.syx");
+                                                   "*.wav;*.mp3;*.syx;*.sysex"); // as Components imports
     chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [this] (const juce::FileChooser& fc) {
-        const auto file = fc.getResult();
-        if (! file.existsAsFile())
-            return;
-        if (file.hasFileExtension ("syx"))
-        {
-            juce::MemoryBlock data;
-            file.loadFileAsData (data);
-            const auto* bytes = static_cast<const uint8_t*> (data.getData());
-            if (const auto t = peak::Wavetable::fromSysex (peak::splitSysex (bytes, data.getSize())))
-            {
-                beginEdit();
-                table = *t;
-                nameField.setText (table.name, juce::dontSendNotification);
-                edited();
-                return setStatus ("Imported \"" + juce::String (table.name).trim() + "\" from " + file.getFileName());
-            }
-            return setStatus (file.getFileName() + " isn't a Peak wavetable (.syx with 5 waves)", true);
-        }
-
-        // Audio: a single cycle goes into the selected wave; longer audio fills all 5 (Serum-style
-        // 2048-sample frames are taken as frames; anything else is cut into 5 parts).
-        juce::AudioFormatManager formats;
-        formats.registerBasicFormats();
-        std::unique_ptr<juce::AudioFormatReader> reader (formats.createReaderFor (file));
-        if (reader == nullptr || reader->lengthInSamples < 16)
-            return setStatus ("Couldn't read " + file.getFileName(), true);
-        const auto length = (int) juce::jmin<juce::int64> (reader->lengthInSamples, 1 << 20);
-        juce::AudioBuffer<float> buffer (1, length);
-        reader->read (&buffer, 0, length, 0, true, false);
-        const auto* s = buffer.getReadPointer (0);
-        const auto cycle = [&] (int start, int count) {
-            return peak::WaveOps::normalise (peak::Wave::fromSamples (std::vector<float> (s + start, s + start + count)));
-        };
-        beginEdit();
-        if (length <= 4096)
-        {
-            table.waves[(size_t) selectedWave] = cycle (0, length);
-            setStatus ("Imported a single cycle into wave " + juce::String (selectedWave + 1));
-        }
-        else
-        {
-            const int frame = length % 2048 == 0 && length / 2048 >= 5 ? 2048 : juce::jmin (4096, length / 5);
-            const int frames = length / frame;
-            for (int w = 0; w < 5; ++w)
-                table.waves[(size_t) w] = cycle (juce::jmin (frames - 1, w * (frames - 1) / 4) * frame, frame);
-            setStatus ("Imported " + juce::String (frame == 2048 && length % 2048 == 0 ? "5 of " + juce::String (frames) + " frames" : juce::String ("5 parts"))
-                       + " of " + file.getFileName());
-        }
-        table.name = file.getFileNameWithoutExtension().substring (0, peak::Wavetable::nameLength).toStdString();
-        nameField.setText (table.name, juce::dontSendNotification);
-        edited();
+        if (const auto f = fc.getResult(); f.existsAsFile())
+            f.hasFileExtension ("syx;sysex") ? importFile (f) : askHowToLoad (f);
     });
+}
+
+void WavetableEditor::importFile (const juce::File& file)
+{
+    if (file.hasFileExtension ("syx;sysex"))
+    {
+        juce::MemoryBlock data;
+        file.loadFileAsData (data);
+        const auto* bytes = static_cast<const uint8_t*> (data.getData());
+        if (const auto t = peak::Wavetable::fromSysex (peak::splitSysex (bytes, data.getSize())))
+        {
+            beginEdit();
+            table = *t;
+            if (! peak::hasWavetableName (peak::splitSysex (bytes, data.getSize())))
+                table.name = file.getFileNameWithoutExtension().substring (0, peak::Wavetable::nameLength).toStdString();
+            nameField.setText (table.name, juce::dontSendNotification);
+            edited();
+            return setStatus ("Loaded \"" + juce::String (table.name).trim() + "\" from " + file.getFileName());
+        }
+        return setStatus (file.getFileName() + " isn't a Peak wavetable (.syx with 5 waves)", true);
+    }
+
+    // Audio as a wavetable: 2048-sample frames, as Components' 3rd Party Wavetable import. One frame goes
+    // into the selected wave; 2-4 fill waves 1, 2, ... with the rest left flat; more are spread over all
+    // five. Shorter than a frame: a single cycle, into the selected wave.
+    const auto audio = readMono (file, 60.0);
+    if (! audio || audio->samples->getNumSamples() < 16)
+        return setStatus ("Couldn't read " + file.getFileName(), true);
+    const auto length = audio->samples->getNumSamples();
+    const auto* s = audio->samples->getReadPointer (0);
+    const auto cycle = [&] (int start, int count) {
+        return peak::WaveOps::normalise (peak::Wave::fromSamples (std::vector<float> (s + start, s + start + count)));
+    };
+    beginEdit();
+    constexpr int frame = 2048;
+    const int frames = length / frame;
+    if (frames <= 1)
+    {
+        table.waves[(size_t) selectedWave] = cycle (0, juce::jmin (length, frame));
+        setStatus ("Loaded " + juce::String (frames == 0 ? "a single cycle" : "a frame") + " into wave " + juce::String (selectedWave + 1));
+    }
+    else
+    {
+        // 2-4 frames fill waves 1, 2, ... in order and the rest are flat; more are spread over all five.
+        const int waves = juce::jmin (frames, peak::Wavetable::waveCount);
+        for (int w = 0; w < peak::Wavetable::waveCount; ++w)
+            table.waves[(size_t) w] = w < waves ? cycle ((frames > waves ? juce::roundToInt ((double) w * (frames - 1) / (waves - 1)) : w) * frame, frame)
+                                                : peak::WaveOps::clear();
+        setStatus (frames < peak::Wavetable::waveCount ? "Loaded the " + juce::String (frames) + " waves of " + file.getFileName() + " (waves "
+                                                             + juce::String (frames + 1) + "-5 left flat)"
+                                                       : "Loaded " + juce::String (waves) + " of " + juce::String (frames) + " frames of " + file.getFileName());
+    }
+    table.name = file.getFileNameWithoutExtension().substring (0, peak::Wavetable::nameLength).toStdString();
+    nameField.setText (table.name, juce::dontSendNotification);
+    edited(); // with Live Edit on, it goes to the Peak to be heard
 }
 
 //==============================================================================
@@ -464,11 +560,182 @@ int WavetableEditor::harmonicAt (juce::Point<int> p) const
     return juce::jlimit (1, harmonicBars, 1 + (int) ((float) (p.x - harmonicsArea.getX() - 4) / w));
 }
 
+void WavetableEditor::showOverlay (std::unique_ptr<juce::Component> card, std::function<void()> onClosed)
+{
+    importOverlay = std::make_unique<CardStyle::Overlay> (std::move (card), [this, onClosed] {
+        if (onClosed)
+            onClosed();
+        importOverlay.reset();
+    });
+    addAndMakeVisible (*importOverlay);
+    importOverlay->setBounds (getLocalBounds());
+    importOverlay->getCard().grabKeyboardFocus();
+}
+
+void WavetableEditor::askHowToLoad (const juce::File& file)
+{
+    auto card = std::make_unique<LoadChoiceCard> (file.getFileNameWithoutExtension());
+    card->onChoice = [this, file] (bool asAudio) {
+        juce::MessageManager::callAsync ([safe = juce::Component::SafePointer<WavetableEditor> (this), file, asAudio] {
+            if (safe == nullptr)
+                return;
+            safe->importOverlay.reset();
+            asAudio ? safe->openSample (file) : safe->importFile (file);
+        });
+    };
+    card->onCancel = [this] { if (importOverlay) importOverlay->close(); };
+    showOverlay (std::move (card));
+}
+
+void WavetableEditor::openSample (const juce::File& file, double startSeconds)
+{
+    const auto audio = readMono (file, 600.0); // up to 10 minutes
+    if (! audio || audio->samples->getNumSamples() < 2048)
+        return setStatus ("Couldn't read " + file.getFileName() + " as audio (it needs at least 2048 samples)", true);
+    const auto mono = audio->samples;
+    const auto rate = audio->rate;
+    auto card = std::make_unique<AudioSampleImporter> (file.getFileName(), mono, rate);
+    card->onPlay = [this, mono, rate] (bool play, int from) {
+        play ? samplePreview->play (mono, rate, from) : samplePreview->stop();
+    };
+    card->playPosition = [this] { return samplePreview->getPosition(); };
+    // The Peak's slot as it is now, to put back if nothing is imported.
+    session.emplace();
+    session->slot = slotBox.getSelectedId() - 1;
+    session->openedMs = juce::Time::getMillisecondCounterHiRes();
+    session->readingOriginal = session->slot >= 0 && model.requestUserWavetable (session->slot);
+
+    card->onAudition = [this] (const peak::Wave& wave, bool onPeak) {
+        // The cycle looped at C3 (as Components auditions a position) for a moment; while scrubbing,
+        // each new cycle blends into the last, so nothing clicks.
+        const auto samples = wave.samples (SamplePreview::cycleLength);
+        SamplePreview::Cycle cycle;
+        std::copy (samples.begin(), samples.end(), cycle.begin());
+        samplePreview->playCycle (cycle, 130.81, 0.35);
+        if (onPeak && session && session->slot >= 0)
+        {
+            session->pending = wave;
+            if (! peakAudition.isTimerRunning())
+                peakAudition.startTimer (session->peakUsed ? 150 : 10); // while scrubbing, at most every 150 ms
+        }
+    };
+    card->onPeakOff = [this] { restorePeak(); };
+    // The audition volume, kept between sessions.
+    if (auto* settings = model.getConnection().getUserSettings())
+        samplePreview->setVolume ((float) settings->getDoubleValue ("auditionVolume", 0.6));
+    card->setVolume (samplePreview->getVolume());
+    card->onVolume = [this] (float v) {
+        samplePreview->setVolume (v);
+        if (auto* settings = model.getConnection().getUserSettings())
+            settings->setValue ("auditionVolume", v);
+    };
+    card->setStart ((int) (startSeconds * rate));
+    card->onClose = [this] { if (importOverlay) importOverlay->close(); };
+    card->onImport = [this] (std::vector<peak::Wave> waves, const juce::String& from) {
+        juce::ScopeGuard end { [this] { endSampleSession (true); } }; // after the table has changed
+        beginEdit();
+        if (waves.size() == 1)
+            table.waves[(size_t) selectedWave] = waves.front();
+        else
+            for (size_t w = 0; w < waves.size() && w < table.waves.size(); ++w)
+                table.waves[w] = waves[w];
+        setStatus (waves.size() == 1 ? "Imported a waveform from " + from + " into wave " + juce::String (selectedWave + 1)
+                                     : "Imported a wavetable (5 waves) from " + from);
+        edited(); // with Live Edit on, it goes to the Peak to be heard
+        if (importOverlay)
+            importOverlay->close();
+    };
+    showOverlay (std::move (card), [this] { endSampleSession (false); }); // closed without importing (if not already ended)
+}
+
+void WavetableEditor::sendPeakAudition()
+{
+    peakAudition.stopTimer();
+    if (! session || ! session->pending)
+        return;
+    // Not before the slot as it was has been read (to put it back), unless the Peak doesn't answer.
+    if (session->readingOriginal && juce::Time::getMillisecondCounterHiRes() - session->openedMs < 1500.0)
+        return peakAudition.startTimer (50);
+    session->readingOriginal = false;
+
+    if (! session->peakUsed)
+    {
+        // An oscillator must be playing the slot: as Live Edit's audition, Oscillator 1 is switched to it
+        // if none is. What it was is kept to put back.
+        const auto param = [] (int osc, const char* name) -> const peak::ParamDef& { return *peak::findParam ("osc" + std::to_string (osc) + name); };
+        for (int osc = 1; osc <= 3; ++osc)
+            for (const auto* name : { "_wave", "_wave_more" })
+                session->oscillators.emplace_back (&param (osc, name), model.get (param (osc, name)));
+        const auto playing = [&] (int osc) { return model.get (param (osc, "_wave")) == 4 && model.get (param (osc, "_wave_more")) == 64 + session->slot; };
+        if (! playing (1) && ! playing (2) && ! playing (3))
+        {
+            model.set (param (1, "_wave_more"), 64 + session->slot);
+            model.set (param (1, "_wave"), 4);
+        }
+        session->peakUsed = true;
+    }
+    peak::Wavetable audition;
+    audition.name = session->original ? session->original->name : std::string (peak::userWavetableNames()[(size_t) session->slot]);
+    audition.waves.fill (*session->pending);
+    session->pending.reset();
+    if (model.sendUserWavetable (session->slot, audition))
+        setStatus ("Auditioning on the Peak (U" + juce::String (session->slot + 1) + "): play it from your keyboard");
+}
+
+void WavetableEditor::restorePeak()
+{
+    peakAudition.stopTimer();
+    if (! session || ! session->peakUsed)
+        return;
+    // The slot as read when the window opened (or, if the Peak didn't answer, the editor's wavetable).
+    model.sendUserWavetable (session->slot, session->original ? *session->original : table);
+    for (const auto& [def, value] : session->oscillators)
+        if (model.get (*def) != value)
+            model.set (*def, value);
+    session->oscillators.clear();
+    session->pending.reset();
+    session->peakUsed = false;
+    setStatus ("The Peak is back as it was");
+}
+
+void WavetableEditor::endSampleSession (bool imported)
+{
+    if (! session)
+        return;
+    peakAudition.stopTimer();
+    samplePreview->stop();
+    if (imported && session->peakUsed)
+    {
+        // The Peak gets what was imported, not the audition (its oscillators stay on the slot).
+        if (model.sendUserWavetable (session->slot, table))
+            unsavedOnPeak[(size_t) session->slot] = true;
+        refreshSlots();
+    }
+    else if (! imported)
+        restorePeak();
+    session.reset();
+}
+
+void WavetableEditor::browse (const juce::File& folder, const juce::File& file)
+{
+    browser->addFolder (folder, false); // not kept: e.g. a snapshot's folder
+    browser->openFolder (folder);
+    if (file.existsAsFile())
+        browser->select (file);
+}
+
+void WavetableEditor::browseHome (const juce::Array<juce::File>& folders)
+{
+    for (const auto& f : folders)
+        browser->addFolder (f, false);
+}
+
 void WavetableEditor::showHelp()
 {
     auto card = std::make_unique<CardStyle::HelpCard> ("Wavetable editor", std::vector<CardStyle::HelpCard::Section> {
         { "Getting started", { "Choose a user slot (U1 to U10). Load from Peak reads what's in it, or start from a shape.",
-                               "A wavetable is 5 waves. The Peak morphs through them as Wave Table Position moves. Click a wave to edit it." } },
+                               "A wavetable is 5 waves. The Peak morphs through them as Wave Table Position moves. Click a wave to edit it; "
+                               "drag it onto another wave to swap the two." } },
         { "Drawing", { "Pencil draws freehand. Smoothing softens pencil drawing; at 0% it stays as drawn.",
                        "Line draws a straight line where you drag.",
                        "Click a shape, then drag across the wave to draw one cycle of it in the box you drag. Start on the centre line "
@@ -486,9 +753,16 @@ void WavetableEditor::showHelp()
                                       "page 9 \"User Waves\", select it, then that page's Save.",
                                       "The editor can't tell when you've saved, so the slot is marked \"unsaved on Peak\" until you click "
                                       "\"I've saved it on the Peak\"." } },
-        { "Files", { "Import a WAV or AIFF (a single cycle goes into the selected wave; a Serum-style wavetable or a longer sample fills "
-                     "all five) or a .syx wavetable.",
-                     "Save writes a .syx file, which Components can load too." } } }, 720);
+        { "Files", { "File Browser: the folder button adds a folder (chosen in Finder) to the Home list; click one to browse it. Back, "
+                     "Forward and Up move around, Home returns to the list, and right-clicking a folder there removes it. Double-click a file to load it.",
+                     "Files are those Components imports: .syx/.sysex wavetables load at once; for a WAV or MP3 choose Wavetable "
+                     "(a single cycle, or 2048-sample frames such as a Serum wavetable; with fewer than 5 frames, the rest are left flat) or Audio file.",
+                     "Audio file: click the waveform to hear the cycle at that point (drag to scrub; Play plays the sample), then Import Waveform (one cycle into the selected wave) or Import "
+                     "Wavetable (five successive cycles into all five waves). The sample plays through the editor's audio output.",
+                     "Click one of the five waves under the timeline to hear it and choose it for Import Waveform. Play on the Peak "
+                     "sends what you audition to the selected slot, to play from your keyboard; closing without importing puts the "
+                     "Peak back as it was.",
+                     "Import opens a single file from anywhere, the same way. Save writes a .syx file, which Components can load too." } } }, 720);
     helpOverlay = std::make_unique<CardStyle::Overlay> (std::move (card), [this] { helpOverlay.reset(); });
     addAndMakeVisible (*helpOverlay);
     helpOverlay->setBounds (getLocalBounds());
@@ -499,6 +773,8 @@ void WavetableEditor::resized()
 {
     if (helpOverlay != nullptr)
         helpOverlay->setBounds (getLocalBounds());
+    if (importOverlay != nullptr)
+        importOverlay->setBounds (getLocalBounds());
     // The header (as every tab's): ? and the title, over the pinstripe.
     helpButton.setBounds (12, 10, 20, 20);
     auto r = getLocalBounds().withTrimmedTop (36).reduced (16, 8);
@@ -542,31 +818,35 @@ void WavetableEditor::resized()
     harmonicsArea = l.removeFromBottom (juce::jlimit (90, 160, l.getHeight() / 3));
     l.removeFromBottom (8);
     positionRow = l.removeFromBottom (30);
-    positionSlider.setBounds (positionRow.withTrimmedLeft (230).withTrimmedRight (90));
+    positionSlider.setBounds (positionRow.withTrimmedLeft (230));
     l.removeFromBottom (6);
     editorArea = l;
 
-    // Right card: tools, shapes, settings, wave operations, status.
+    // Right card: Draw (Pencil, Line) beside the Wave buttons, Shapes, Tool Settings, File Browser, status.
     auto rr = right.reduced (pad, 0);
     rr.removeFromTop (44);
-    auto tools = rr.removeFromTop (44);
-    pencilButton.setBounds (tools.removeFromLeft (44));
-    tools.removeFromLeft (8);
-    lineButton.setBounds (tools.removeFromLeft (44));
-    rr.removeFromTop (22 + 40);
+    auto tools = rr.removeFromTop (102);
+    pencilButton.setBounds (tools.getX(), tools.getY(), 44, 44);
+    lineButton.setBounds (tools.getX() + 52, tools.getY(), 44, 44);
+    tools.removeFromLeft (96 + 18);
+    const int buttonWidth = (tools.getWidth() - 6) / 2;
+    for (int i = 0; i < 4; ++i)
+        opButtons[i]->setBounds (tools.getX() + (i % 2) * (buttonWidth + 6), tools.getY() + (i / 2) * 36, buttonWidth, 30);
+    opButtons[4]->setBounds (tools.getX(), tools.getY() + 72, tools.getWidth(), 30);
+    rr.removeFromTop (44);
     for (int i = 0; i < 6; ++i)
         shapeButtons[i]->setBounds (rr.getX() + (i % 3) * ((rr.getWidth() + 8) / 3), rr.getY() + (i / 3) * 40, (rr.getWidth() - 16) / 3, 32);
-    rr.removeFromTop (80 + 44);
+    rr.removeFromTop (72 + 44);
     smoothing.setBounds (rr.removeFromTop (28).withTrimmedLeft (90));
-    rr.removeFromTop (4);
+    rr.removeFromTop (2);
     snapToGrid.setBounds (rr.removeFromTop (26).withWidth (200));
-    rr.removeFromTop (40);
-    for (int i = 0; i < opCount; ++i)
-        opButtons[i]->setBounds (rr.removeFromTop (34).withTrimmedBottom (4));
-    rr.removeFromTop (12);
+    rr.removeFromTop (44);
+    rr.removeFromBottom (10);
     savedButton.setBounds (rr.removeFromBottom (30));
-    rr.removeFromBottom (8);
-    status.setBounds (rr);
+    rr.removeFromBottom (6);
+    status.setBounds (rr.removeFromBottom (48));
+    rr.removeFromBottom (10);
+    browser->setBounds (rr);
 }
 
 void WavetableEditor::paint (juce::Graphics& g)
@@ -605,6 +885,25 @@ void WavetableEditor::paint (juce::Graphics& g)
         g.setFont (juce::FontOptions (11.5f));
         g.drawText ("Wave " + juce::String (w + 1), b.translated (0.0f, b.getHeight() + 2.0f).withHeight (16.0f).toNearestInt(), juce::Justification::centredLeft);
     }
+    // A wave being dragged: where it would land (outlined) and the wave itself under the pointer.
+    if (draggingWave >= 0 && dragPoint.getDistanceFrom (thumbBounds (draggingWave).getCentre()) > 8)
+    {
+        if (const auto to = thumbAt (dragPoint); to >= 0 && to != draggingWave)
+        {
+            juce::Path outline;
+            outline.addRoundedRectangle (thumbBounds (to).toFloat().expanded (2.0f), 6.0f);
+            const float dashes[] { 5.0f, 3.0f };
+            juce::PathStrokeType (1.6f).createDashedStroke (outline, outline, dashes, 2);
+            g.setColour (amber);
+            g.fillPath (outline);
+        }
+        const auto ghost = thumbBounds (draggingWave).toFloat().withCentre (dragPoint.toFloat());
+        g.setColour (juce::Colour (0xff141517).withAlpha (0.85f));
+        g.fillRoundedRectangle (ghost, 5.0f);
+        g.setColour (amber.withAlpha (0.7f));
+        g.drawRoundedRectangle (ghost.reduced (1.0f), 5.0f, 1.5f);
+        drawWave (g, ghost.reduced (6.0f, 6.0f), table.waves[(size_t) draggingWave].samples(), amber.withAlpha (0.8f), 1.6f, false);
+    }
 
     // The selected wave, large, on a grid; while the position preview is away from it, the morph as a faint line.
     const auto e = editorArea.toFloat();
@@ -638,7 +937,6 @@ void WavetableEditor::paint (juce::Graphics& g)
     g.setColour (text);
     g.setFont (juce::FontOptions (13.0f));
     g.drawText ("Wave Table Position (preview)", positionRow.withWidth (220), juce::Justification::centredLeft);
-    g.drawText ("Wave " + juce::String (position + 1.0f, 1), positionRow.withTrimmedLeft (positionRow.getWidth() - 80), juce::Justification::centredRight);
 
     // Harmonics 1-64: level or phase.
     const auto hb = harmonicsArea.toFloat();
@@ -664,8 +962,8 @@ void WavetableEditor::paint (juce::Graphics& g)
 
     // Right card headings.
     auto rr = right.reduced (pad, 0);
-    heading (rr.removeFromTop (40).withTrimmedTop (14).withHeight (22), "DRAW");
-    rr.removeFromTop (48);
+    heading (rr.removeFromTop (40).withTrimmedTop (14).withHeight (22).withWidth (96), "DRAW");
+    heading (opButtons[0]->getBounds().withY (rr.getY() - 26).withHeight (22).withRight (opButtons[1]->getRight()), "WAVE");
     g.setColour (dim);
     g.setFont (juce::FontOptions (12.0f));
     g.drawText ("Pencil", pencilButton.getBounds().translated (0, pencilButton.getHeight() + 2).withHeight (16).expanded (10, 0), juce::Justification::centred);
@@ -675,42 +973,26 @@ void WavetableEditor::paint (juce::Graphics& g)
     g.setColour (text);
     g.setFont (juce::FontOptions (13.0f));
     g.drawText ("Smoothing", smoothing.getBounds().translated (-90, 0).withWidth (88), juce::Justification::centredLeft);
-    heading (opButtons[0]->getBounds().translated (0, -36).withHeight (22), "WAVE");
+    heading (browser->getBounds().translated (0, -36).withHeight (22), "FILE BROWSER");
 }
 
-void WavetableEditor::paintOverChildren (juce::Graphics& g)
-{
-    // Each shape's name with its picture.
-    for (int i = 0; i < 6; ++i)
-    {
-        const auto b = shapeButtons[i]->getBounds().toFloat();
-        g.setColour (text);
-        g.setFont (juce::FontOptions (13.0f));
-        g.drawText (shapeNames[i], b.withTrimmedLeft (10.0f).withTrimmedRight (44.0f), juce::Justification::centredLeft);
-        const auto area = juce::Rectangle<float> (b.getRight() - 40.0f, b.getY() + 7.0f, 30.0f, b.getHeight() - 14.0f);
-        std::vector<float> icon (i == peak::Shapes::noise ? 40 : 97);
-        unsigned seed = 7;
-        for (size_t k = 0; k < icon.size(); ++k)
-            icon[k] = 0.8f * peak::Shapes::at ((peak::Shapes::Kind) i, (float) k / (float) icon.size(), seed);
-        drawWave (g, area, icon, amber, 1.6f, false);
-    }
-}
 
 //==============================================================================
 void WavetableEditor::mouseDown (const juce::MouseEvent& e)
 {
     grabKeyboardFocus();
     const auto p = e.getPosition();
-    for (int w = 0; w < 5; ++w)
-        if (thumbBounds (w).contains (p))
-        {
-            selectedWave = w;
-            positionSlider.setValue (w, juce::dontSendNotification);
-            position = (float) w;
-            auditionPosition();
-            repaint();
-            return;
-        }
+    if (const auto w = thumbAt (p); w >= 0)
+    {
+        selectedWave = w;
+        positionSlider.setValue (w, juce::dontSendNotification);
+        position = (float) w;
+        auditionPosition();
+        draggingWave = w; // dragged onto another wave, they swap places
+        dragPoint = p;
+        repaint();
+        return;
+    }
     if (editorArea.contains (p))
     {
         beginEdit();
@@ -728,8 +1010,24 @@ void WavetableEditor::mouseDown (const juce::MouseEvent& e)
     }
 }
 
+int WavetableEditor::thumbAt (juce::Point<int> p) const
+{
+    for (int w = 0; w < peak::Wavetable::waveCount; ++w)
+        if (thumbBounds (w).expanded (4, 8).contains (p))
+            return w;
+    return -1;
+}
+
 void WavetableEditor::mouseDrag (const juce::MouseEvent& e)
 {
+    if (draggingWave >= 0)
+    {
+        dragPoint = e.getPosition();
+        if (e.getDistanceFromDragStart() > 4)
+            setMouseCursor (juce::MouseCursor::DraggingHandCursor);
+        repaint (thumbs.expanded (40, 30));
+        return;
+    }
     const auto e2 = editorArea.toFloat().reduced (2.0f, 0.0f);
     const auto toIndex = [&] (float x) { return juce::jlimit (0, (int) drawing.size() - 1, (int) ((x - e2.getX()) / e2.getWidth() * (float) drawing.size())); };
     const auto toValue = [&] (float y) { return juce::jlimit (-1.0f, 1.0f, (e2.getCentreY() - y) / (e2.getHeight() * editorScale)); };
@@ -778,8 +1076,26 @@ void WavetableEditor::mouseDrag (const juce::MouseEvent& e)
     }
 }
 
-void WavetableEditor::mouseUp (const juce::MouseEvent&)
+void WavetableEditor::mouseUp (const juce::MouseEvent& e)
 {
+    if (const auto from = std::exchange (draggingWave, -1); from >= 0)
+    {
+        setMouseCursor (juce::MouseCursor::NormalCursor);
+        // Dropped on another wave: the two swap places (one undo step), and the dragged one stays selected.
+        if (const auto to = thumbAt (e.getPosition()); to >= 0 && to != from && e.getDistanceFromDragStart() > 4)
+        {
+            beginEdit();
+            std::swap (table.waves[(size_t) from], table.waves[(size_t) to]);
+            selectedWave = to;
+            positionSlider.setValue (to, juce::dontSendNotification);
+            position = (float) to;
+            setStatus ("Wave " + juce::String (from + 1) + " and wave " + juce::String (to + 1) + " swapped places");
+            edited();
+            auditionPosition();
+        }
+        repaint();
+        return;
+    }
     if (! drawing.empty())
     {
         // The drawing becomes harmonics (pencil drawing smoothed as set), which is what the Peak plays. Without

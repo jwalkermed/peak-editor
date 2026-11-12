@@ -30,6 +30,7 @@ set(PEAK_CORE_SOURCES
     Source/peak/core/Settings.cpp
     Source/peak/core/WavetableInfo.cpp
     Source/peak/core/Wavetable.cpp
+    Source/peak/core/WavFile.cpp
     Source/peak/core/Patch.cpp)
 
 juce_add_plugin(PeakEditor
@@ -73,7 +74,9 @@ target_sources(PeakEditor PRIVATE
     Source/ui/ModMatrixDrawer.cpp
     Source/ui/ModAssign.cpp
     Source/ui/SettingsDrawer.cpp
-    Source/ui/WavetableEditor.cpp)
+    Source/ui/WavetableEditor.cpp
+    Source/ui/WavetableBrowser.cpp
+    Source/ui/AudioSampleImporter.cpp)
 
 target_include_directories(PeakEditor PRIVATE Source)
 
@@ -120,7 +123,9 @@ target_sources(PanelSnapshot PRIVATE
     Source/ui/ModMatrixDrawer.cpp
     Source/ui/ModAssign.cpp
     Source/ui/SettingsDrawer.cpp
-    Source/ui/WavetableEditor.cpp)
+    Source/ui/WavetableEditor.cpp
+    Source/ui/WavetableBrowser.cpp
+    Source/ui/AudioSampleImporter.cpp)
 target_include_directories(PanelSnapshot PRIVATE Source)
 target_compile_definitions(PanelSnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
 target_link_libraries(PanelSnapshot PRIVATE PeakAssets juce::juce_gui_basics juce::juce_audio_basics juce::juce_audio_utils "-framework CoreMIDI")
