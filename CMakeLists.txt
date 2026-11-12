@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Target architectures")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum macOS version")
 
-project(PeakEditor VERSION 1.2.0 LANGUAGES C CXX)
+project(PeakEditor VERSION 1.3.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -31,6 +31,7 @@ set(PEAK_CORE_SOURCES
     Source/peak/core/WavetableInfo.cpp
     Source/peak/core/Wavetable.cpp
     Source/peak/core/WavFile.cpp
+    Source/peak/core/Version.cpp
     Source/peak/core/Patch.cpp)
 
 juce_add_plugin(PeakEditor

@@ -9,7 +9,9 @@ Peak follows; turn one on the Peak and the editor follows.
 - **Platform:** macOS 12 or later, Universal (Apple Silicon and Intel)
 - **Formats:** standalone app, Audio Unit, VST3
 - **Synth:** Novation Peak, firmware 2.2 (connected by USB, DIN MIDI or a network MIDI session)
-- **Latest release:** [Releases](../../releases) (zips plus an installer script)
+- **Latest release:** [Releases](../../releases) (zips plus an installer script). The editor says so at the bottom
+  left when a newer one is out.
+- **Price:** free. A hobby project, offered as is.
 
 ---
 
@@ -22,6 +24,7 @@ Peak follows; turn one on the Peak and the editor follows.
 - [Known limitations](#known-limitations)
 - [Building from source](#building-from-source)
 - [How it talks to the Peak](#how-it-talks-to-the-peak)
+- [Licence](#licence)
 - [Credits](#credits)
 
 ---
@@ -257,6 +260,13 @@ The protocol details were worked out on the hardware and are recorded in
 - **Clock Rate** is stored in the patch and has no MIDI message of its own.
 
 ---
+
+## Licence
+
+Free software under the [GNU Affero General Public License v3](LICENSE) (the licence JUCE is used under
+here). You may use, share and change it; versions you distribute must stay under the same licence, with their
+source. It comes with no warranty. The Exo 2 font is under the SIL Open Font License
+(`Resources/Fonts/Exo2-OFL.txt`).
 
 ## Credits
 

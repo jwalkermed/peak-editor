@@ -1,5 +1,6 @@
 #include "PluginEditor.h"
 
+#include "peak/UpdateCheck.h"
 #include "ui/CardStyle.h"
 #include "ui/ModAssign.h"
 #include "ui/WavetableEditor.h"
@@ -54,7 +55,8 @@ private:
 };
 
 // Front panel with the playable keyboard strip underneath (it can be hidden from the bar below the panel).
-class PanelPage final : public juce::Component
+class PanelPage final : public juce::Component,
+                        private juce::ChangeListener
 {
 public:
     PanelPage (PeakModel& model, std::function<void (const juce::String&)> showTab)
@@ -77,6 +79,29 @@ public:
         };
         addAndMakeVisible (keyboardSwitch);
         setWantsKeyboardFocus (true);
+
+        // A newer release on GitHub: a link beside the version, to its page.
+        updateLink.setFont (juce::FontOptions (11.0f), false, juce::Justification::centredLeft);
+        updateLink.setColour (juce::HyperlinkButton::textColourId, CardStyle::amber);
+        addChildComponent (updateLink);
+        updates->found.addChangeListener (this);
+        changeListenerCallback (nullptr);
+    }
+
+    ~PanelPage() override
+    {
+        updates->found.removeChangeListener (this);
+    }
+
+    void changeListenerCallback (juce::ChangeBroadcaster*) override
+    {
+        if (updates->getNewerVersion().isEmpty())
+            return;
+        updateLink.setButtonText ("Update available: " + updates->getNewerVersion());
+        updateLink.setURL (updates->getReleasePage());
+        updateLink.setTooltip ("Open the release page on GitHub to download it");
+        updateLink.setVisible (true);
+        resized();
     }
 
     // Arrow keys (also when the on-screen keyboard has focus, which passes them up):
@@ -107,6 +132,7 @@ public:
             keys.setBounds (r.removeFromBottom (KeyboardStrip::preferredHeight));
         footer = r.removeFromBottom (footerHeight);
         keyboardSwitch.setBounds (footer.reduced (12, 0).removeFromRight (90));
+        updateLink.setBounds (footer.withTrimmedLeft (12 + 104).withWidth (200));
         panel.setBounds (r);
     }
 
@@ -131,6 +157,8 @@ private:
     KeyboardStrip keys;
     juce::PropertiesFile* settings;
     FooterSwitch keyboardSwitch { "Keyboard" };
+    juce::SharedResourcePointer<UpdateCheck> updates;
+    juce::HyperlinkButton updateLink;
     juce::Rectangle<int> footer;
 };
 } // namespace
