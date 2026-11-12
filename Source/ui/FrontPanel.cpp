@@ -643,6 +643,19 @@ FrontPanel::FrontPanel (PeakModel& m) : model (m)
         controls.push_back (std::move (c));
     }
 
+    // Under Hold: Panic, level with Patch -/+, and the patch's volume (Patch Level, in the Mixer menu).
+    for (const auto& added : { PanelElement { PanelElement::button, "panic", 135.1f, 314.0f, 0.0f, 0.0f, 62.0f, 26.0f, "Panic", "action:panic", 0, false, "dark" },
+                               PanelElement { PanelElement::knob, "patch_volume", 135.1f, 408.0f, 0.0f, 0.0f, 0.0f, 0.0f, "Patch Volume", "patch_level", 0, false, "" } })
+    {
+        Control c;
+        c.e = &changedElements.emplace_back (added);
+        if (added.type == PanelElement::button)
+            c.action = "panic";
+        else
+            c.alternatives.push_back ({ peak::findParam ("patch_level") });
+        controls.push_back (std::move (c));
+    }
+
     // Bank -/+ above Patch -/+, the buttons' tops level with the screen's.
     for (const auto& added : { PanelElement { PanelElement::button, "bank_down", 251.9f, 251.0f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_down", 0, false, "dark" },
                                PanelElement { PanelElement::button, "bank_up", 336.3f, 251.1f, 0.0f, 0.0f, 62.0f, 26.0f, "", "action:bank_up", 0, false, "dark" },
@@ -987,6 +1000,15 @@ void FrontPanel::press (Control& c)
     }
     else if (c.action == "patch_up" || c.action == "patch_down")
         stepPatch (c.action == "patch_up" ? 1 : -1);
+    else if (c.action == "panic")
+    {
+        // All notes off, sustain off, and every key on the editor's keyboards released.
+        auto& connection = model.getConnection();
+        connection.keyboardState.allNotesOff (0);
+        const auto ch = connection.getChannel() + 1;
+        if (! connection.send (juce::MidiMessage::controllerEvent (ch, 123, 0)) || ! connection.send (juce::MidiMessage::controllerEvent (ch, 64, 0)))
+            showMessage ("No MIDI output to the Peak");
+    }
     else if (c.action == "initialise")
     {
         // As the Peak's own Initialise: the Init Patch becomes the current sound (nothing saved).
@@ -1659,8 +1681,8 @@ void FrontPanel::drawButton (juce::Graphics& g, const Control& c) const
     if (*e.label != 0)
     {
         const auto inside = style == "animate" || style == "hold";
-        g.setColour (inside ? juce::Colour (0xff7a5a2a) : colours::text);
-        g.setFont (font (inside ? (style == "hold" ? 11.0f : 18.0f) : 13.5f));
+        g.setColour (style == "hold" ? juce::Colours::black : inside ? juce::Colour (0xff7a5a2a) : colours::text);
+        g.setFont (font (inside ? (style == "hold" ? 12.0f : 18.0f) : 13.5f));
         if (inside)
             g.drawText (utf8 (e.label), r, juce::Justification::centred);
         else

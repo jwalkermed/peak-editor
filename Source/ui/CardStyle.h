@@ -30,6 +30,9 @@ public:
     juce::Font getComboBoxFont (juce::ComboBox&) override;
     void drawButtonBackground (juce::Graphics&, juce::Button&, const juce::Colour&, bool over, bool down) override;
     juce::Font getTextButtonFont (juce::TextButton&, int) override;
+    void drawTickBox (juce::Graphics&, juce::Component&, float x, float y, float w, float h, bool ticked, bool enabled, bool over, bool down) override;
+    void fillTextEditorBackground (juce::Graphics&, int w, int h, juce::TextEditor&) override;
+    void drawTextEditorOutline (juce::Graphics&, int w, int h, juce::TextEditor&) override;
 };
 
 Look& look();
@@ -39,6 +42,12 @@ void paintCard (juce::Graphics&, juce::Rectangle<int> bounds, const juce::String
 
 // A section heading: small blue capitals with a line under them.
 void styleHeading (juce::Label&);
+
+// Every tab's header: the drawer background, then the title (Exo 2, as the panel's lettering)
+// with the blue pinstripe under it at y = 34. `titleX` leaves room for a ? button.
+void paintTabHeader (juce::Graphics&, juce::Rectangle<int> tabBounds, const juce::String& title, int titleX = 12);
+// The heading lettering (Exo 2 Bold).
+juce::Font headingFont (float height);
 
 // Holds one card over the front panel: clicks outside it close it (like Close); Esc is passed to
 // `onEscape` (or closes). The card is centred and kept inside the panel.

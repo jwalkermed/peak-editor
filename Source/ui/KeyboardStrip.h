@@ -5,7 +5,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 
 // Playable strip under the front panel: pitch and mod wheels, an on-screen
-// keyboard (mouse or computer keyboard), octave/velocity, panic, and the choice
+// keyboard (mouse or computer keyboard), octave/velocity, and the choice
 // of a hardware keyboard input whose notes are forwarded to the Peak.
 class KeyboardStrip final : public juce::Component,
                             private juce::ChangeListener
@@ -30,7 +30,7 @@ private:
     juce::Slider pitchWheel { juce::Slider::LinearVertical, juce::Slider::NoTextBox };
     juce::Slider modWheel { juce::Slider::LinearVertical, juce::Slider::NoTextBox };
     juce::Slider velocity { juce::Slider::LinearHorizontal, juce::Slider::TextBoxRight };
-    juce::TextButton octaveDown { juce::String::fromUTF8 ("Oct –") }, octaveUp { "Oct +" }, panic { "Panic" };
+    juce::TextButton octaveDown { juce::String::fromUTF8 ("Oct –") }, octaveUp { "Oct +" };
     juce::Label octaveLabel, velocityLabel { {}, "Velocity" }, inputLabel { {}, "Keyboard in" };
     juce::ComboBox inputBox;
     int lowestKey = 36; // C2 on screen

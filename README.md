@@ -38,6 +38,9 @@ Peak follows; turn one on the Peak and the editor follows.
 - **Bank −/+ and Patch −/+** step through Peak banks A–D, then My Banks. The arrow keys do the same:
   Left/Right for patches, Up/Down for banks.
 - **Animate 1/2** are momentary, and latch with Hold.
+- **Panic** (under Hold) sends All Notes Off and releases every held key. **Patch Volume** sets the patch's level
+  (the Mixer menu's Patch Level), which is saved with the patch.
+- Oscillator **Coarse** reads in semitones, −12.0 to +12.0, as on the Peak.
 - Double-click any value to put it back as saved in the patch.
 
 ![Envelope and filter graphs on the screen](docs/screenshots/screen-graphs.png)
@@ -189,7 +192,8 @@ Everything lives in `~/Library/Application Support/Peak Editor/`:
   the first time.
 - **Estimated graph scales:** the envelope and filter graphs use estimated scales (about 1 ms to 10 s, and
   20 Hz to 20 kHz), because Novation doesn't publish the Peak's.
-- **Master Volume:** the Peak ignores MIDI volume, so the editor has no master volume.
+- **Master Volume:** the Peak ignores MIDI volume, so the editor has no master volume (Patch Volume sets each
+  patch's own level).
 - **Clock status:** the Peak doesn't report whether it's locked to an external clock. The status line follows
   the Source setting and, in the plugin, the DAW clock it sends.
 - **External changes:** the Peak doesn't announce memory changes made by other software. The editor checks at

@@ -499,10 +499,10 @@ void WavetableEditor::resized()
 {
     if (helpOverlay != nullptr)
         helpOverlay->setBounds (getLocalBounds());
-    auto r = getLocalBounds().reduced (16, 8);
+    // The header (as every tab's): ? and the title, over the pinstripe.
+    helpButton.setBounds (12, 10, 20, 20);
+    auto r = getLocalBounds().withTrimmedTop (36).reduced (16, 8);
     auto top = r.removeFromTop (topBar - 8).withSizeKeepingCentre (r.getWidth(), 30);
-    helpButton.setBounds (top.removeFromLeft (30).withSizeKeepingCentre (26, 26));
-    top.removeFromLeft (10);
     undoButton.setBounds (top.removeFromLeft (34));
     top.removeFromLeft (4);
     redoButton.setBounds (top.removeFromLeft (34));
@@ -571,7 +571,7 @@ void WavetableEditor::resized()
 
 void WavetableEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (juce::Colour (0xff18191c));
+    CardStyle::paintTabHeader (g, getLocalBounds(), "Wavetables", 40);
     for (auto card : { left, right })
     {
         g.setColour (CardStyle::card);
@@ -582,13 +582,13 @@ void WavetableEditor::paint (juce::Graphics& g)
 
     const auto heading = [&] (juce::Rectangle<int> r, const juce::String& t) {
         g.setColour (blue);
-        g.setFont (juce::FontOptions (13.0f));
+        g.setFont (CardStyle::headingFont (11.5f));
         g.drawText (t, r, juce::Justification::centredLeft);
         g.setColour (line);
         g.fillRect (r.getX(), r.getBottom(), r.getWidth(), 1);
     };
     g.setColour (blue);
-    g.setFont (juce::FontOptions (16.0f));
+    g.setFont (CardStyle::headingFont (15.0f));
     g.drawText (juce::String::fromUTF8 ("WAVETABLE  \xc2\xb7  5 WAVES"), left.reduced (pad, 0).removeFromTop (44), juce::Justification::centredLeft);
 
     // The 5 waves.

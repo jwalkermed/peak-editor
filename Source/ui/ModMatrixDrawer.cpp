@@ -1,5 +1,7 @@
 #include "ModMatrixDrawer.h"
 
+#include "ui/CardStyle.h"
+
 #include "peak/core/ParamFormat.h"
 #include "ui/DrawerStyle.h"
 
@@ -15,36 +17,10 @@ const peak::ParamDef* param (const juce::String& id)
     return peak::findParam (id.toStdString());
 }
 
-// Drop-downs and buttons in the drawer lettering (Exo 2), as in the TEO-5 drawer.
-struct DrawerLookAndFeel : juce::LookAndFeel_V4
+// The same drop-downs and buttons as every other tab and the menus.
+juce::LookAndFeel& drawerLookAndFeel()
 {
-    juce::Font getComboBoxFont (juce::ComboBox&) override { return font (11.0f); }
-    juce::Font getPopupMenuFont() override { return font (12.0f); }
-    void positionComboBoxText (juce::ComboBox& box, juce::Label& label) override
-    {
-        label.setBounds (6, 1, box.getWidth() - 24, box.getHeight() - 2);
-        label.setFont (getComboBoxFont (box));
-    }
-    void drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool highlighted, bool down) override
-    {
-        auto r = b.getLocalBounds().toFloat().reduced (0.5f);
-        g.setColour (down ? juce::Colour (0xff26282d).brighter (0.08f) : juce::Colour (0xff26282d));
-        g.fillRoundedRectangle (r, 2.5f);
-        g.setColour (highlighted && b.isEnabled() ? juce::Colour (0xff4a4f59) : juce::Colour (0xff34373e));
-        g.drawRoundedRectangle (r, 2.5f, 1.0f);
-    }
-    void drawButtonText (juce::Graphics& g, juce::TextButton& b, bool, bool) override
-    {
-        g.setColour (silkscreen.withAlpha (b.isEnabled() ? 1.0f : 0.35f));
-        g.setFont (font (11.0f));
-        g.drawText (b.getButtonText(), b.getLocalBounds(), juce::Justification::centred, false);
-    }
-};
-
-DrawerLookAndFeel& drawerLookAndFeel()
-{
-    static DrawerLookAndFeel lf;
-    return lf;
+    return CardStyle::look();
 }
 } // namespace
 
@@ -98,16 +74,20 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        auto b = getLocalBounds().toFloat().reduced (0.5f, 3.5f);
-        g.setColour (field);
-        g.fillRoundedRectangle (b, 2.0f);
-        g.setColour (pinstripe.withAlpha (0.45f));
-        g.drawRoundedRectangle (b, 2.0f, 1.0f);
+        // As the menus' value bars.
+        auto b = getLocalBounds().toFloat().reduced (0.5f, 1.5f);
+        g.setColour (CardStyle::cell);
+        g.fillRoundedRectangle (b, 5.0f);
+        g.setColour (isMouseOverOrDragging() ? CardStyle::dim : CardStyle::line);
+        g.drawRoundedRectangle (b, 5.0f, 1.0f);
 
-        const auto xFor = [&] (double v) { return b.getX() + b.getWidth() * (float) (v / 127.0); };
+        const auto xFor = [&] (double v) { return b.getX() + 2.0f + (b.getWidth() - 4.0f) * (float) (v / 127.0); };
         const float centreX = xFor (depthCentre), valueX = xFor (getValue());
-        g.setColour (dimmed ? silkscreen.withAlpha (0.25f) : accent.withAlpha (0.85f));
-        g.fillRect (juce::Rectangle<float>::leftTopRightBottom (juce::jmin (centreX, valueX), b.getY() + 2.0f, juce::jmax (centreX, valueX), b.getBottom() - 2.0f));
+        if (std::abs (valueX - centreX) > 1.0f)
+        {
+            g.setColour (dimmed ? CardStyle::dim.withAlpha (0.35f) : CardStyle::barFill);
+            g.fillRoundedRectangle (juce::Rectangle<float>::leftTopRightBottom (juce::jmin (centreX, valueX), b.getY() + 2.0f, juce::jmax (centreX, valueX), b.getBottom() - 2.0f), 4.0f);
+        }
 
         if (ghost.has_value())
         {
@@ -123,13 +103,13 @@ public:
             return;
         }
 
-        g.setColour (silkscreen.withAlpha (0.35f));
-        g.fillRect (centreX - 0.5f, b.getY() + 1.0f, 1.0f, b.getHeight() - 2.0f);
+        g.setColour (CardStyle::dim);
+        g.fillRect (juce::Rectangle<float> (1.0f, b.getHeight() - 8.0f).withCentre ({ centreX, b.getCentreY() }));
 
         const int v = juce::roundToInt (getValue()) - depthCentre;
-        g.setColour (silkscreen.withAlpha (dimmed ? 0.4f : 1.0f));
-        g.setFont (font (9.5f));
-        g.drawText (v > 0 ? "+" + juce::String (v) : juce::String (v), b.reduced (6.0f, 0.0f),
+        g.setColour (CardStyle::text.withAlpha (dimmed ? 0.4f : 1.0f));
+        g.setFont (juce::FontOptions (13.0f));
+        g.drawText (v > 0 ? "+" + juce::String (v) : juce::String (v), b.reduced (10.0f, 0.0f),
                     v < 0 ? juce::Justification::centredRight : juce::Justification::centredLeft, false);
     }
 };
@@ -156,10 +136,6 @@ public:
                 owner.userEdit (juce::String (what) + " of slot " + slot.label);
                 peakModel.set (*def, box.getSelectedId() - 1);
             };
-            box.setColour (juce::ComboBox::backgroundColourId, field);
-            box.setColour (juce::ComboBox::textColourId, silkscreen);
-            box.setColour (juce::ComboBox::outlineColourId, pinstripe.withAlpha (0.45f));
-            box.setColour (juce::ComboBox::arrowColourId, silkscreen.withAlpha (0.6f));
             box.setLookAndFeel (&drawerLookAndFeel());
             addAndMakeVisible (box);
         };

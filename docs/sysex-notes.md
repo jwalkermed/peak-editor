@@ -201,3 +201,12 @@ Stored patches hold **Arp Chance 0** where the same patch as the current sound r
   positive sine parts are drawn upward (as decoded). Components draws a wave as Σ x·cos − y·sin, the opposite
   way up, so the editor negates the cosine part to match: what the scope shows is −(Components' drawing).
   (To confirm with a 25% pulse: high for a quarter of the cycle, not three quarters.)
+
+## Oscillator Coarse display (read 2026-11-12, firmware 2.2)
+- Coarse is a CC pair (raw 0–255). The Peak shows it as semitones to a tenth: −12.0 at 0, 0.0 at 127 and 128,
+  +12.0 at 255. Readings taken by turning the Peak's knob to a shown value and recording the raw value it sent:
+  +0.1 = 129, +0.5 = 133, +1.0 = 138, +2.0 = 149, +3.0 = 160, +5.0 = 182, +7.0 = 203, +9.0 = 224, +11.0 = 245,
+  +11.9 = 254, +12.0 = 255; −0.1 = 126, −1.0 = 117, −3.0 = 95, −5.0 = 74, −7.0 = 53, −9.0 = 31, −11.0 = 10, −12.0 = 0.
+- Best fit: round((raw − 127.5) × 120 / 128) tenths, exact for 17 of 19; +5.0 and +7.0 read 0.1 lower than it.
+  No rule fits all 19, which suggests the knob is finer than the 256 values sent, so a raw value can show either
+  of two neighbouring tenths.

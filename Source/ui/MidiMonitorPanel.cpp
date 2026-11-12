@@ -1,5 +1,7 @@
 #include "MidiMonitorPanel.h"
 
+#include "ui/CardStyle.h"
+
 #include "peak/core/MidiDescribe.h"
 
 namespace
@@ -30,9 +32,10 @@ void fillPortBox (juce::ComboBox& box, const std::vector<PeakConnection::PortInf
 
 MidiMonitorPanel::MidiMonitorPanel (PeakConnection& c) : connection (c)
 {
+    setLookAndFeel (&CardStyle::look());
     for (auto* l : { &inputLabel, &outputLabel, &channelLabel, &ccLabel, &ccValueLabel })
     {
-        l->setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.75f));
+        l->setColour (juce::Label::textColourId, CardStyle::text);
         l->setJustificationType (juce::Justification::centredRight);
         addAndMakeVisible (l);
     }
@@ -111,18 +114,19 @@ void MidiMonitorPanel::showDeveloperTools (bool show)
 
 MidiMonitorPanel::~MidiMonitorPanel()
 {
+    setLookAndFeel (nullptr);
     connection.logChanged.removeChangeListener (this);
     connection.stateChanged.removeChangeListener (this);
 }
 
 void MidiMonitorPanel::paint (juce::Graphics& g)
 {
-    g.fillAll (panelColour);
+    CardStyle::paintTabHeader (g, getLocalBounds(), "MIDI");
 }
 
 void MidiMonitorPanel::resized()
 {
-    auto area = getLocalBounds().reduced (16, 10);
+    auto area = getLocalBounds().withTrimmedTop (36).reduced (16, 8);
     constexpr int rowH = 28, gap = 8;
 
     auto row = area.removeFromTop (rowH);

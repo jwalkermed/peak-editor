@@ -714,6 +714,7 @@ void LibraryDrawer::cancelSave (bool notify)
 //==============================================================================
 LibraryDrawer::LibraryDrawer (PeakModel& m) : model (m), library (m.getLibrary())
 {
+    setLookAndFeel (&CardStyle::look()); // the same buttons, drop-downs and fields as every tab
     savePanel = std::make_unique<SavePanel> (*this);
     addChildComponent (*savePanel);
     title.setFont (font (14.0f));
@@ -863,6 +864,7 @@ LibraryDrawer::LibraryDrawer (PeakModel& m) : model (m), library (m.getLibrary()
 
 LibraryDrawer::~LibraryDrawer()
 {
+    setLookAndFeel (nullptr);
     model.onSlotStored = nullptr;
     model.onSlotChangedOutside = nullptr;
     library.changed.removeChangeListener (this);
