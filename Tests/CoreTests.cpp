@@ -483,8 +483,14 @@ int main()
         const auto f = [] (const char* id, int v) { return formatValue (*findParam (id), v); };
         CHECK (f ("osc1_range", 63) == "16'");
         CHECK (f ("osc1_range", 66) == "2'");
-        CHECK (f ("osc1_coarse", 128) == "0");
-        CHECK (f ("osc1_coarse", 140) == "+12");
+        CHECK (f ("osc1_coarse", 128) == "0.0" && f ("osc1_coarse", 127) == "0.0");
+        CHECK (f ("osc1_coarse", 140) == "+1.2");
+        // As the Peak showed them (read 2026-11-12 by turning its Coarse knob).
+        for (const auto& [raw, shown] : std::vector<std::pair<int, const char*>> {
+                 { 129, "+0.1" }, { 133, "+0.5" }, { 138, "+1.0" }, { 149, "+2.0" }, { 160, "+3.0" }, { 224, "+9.0" }, { 245, "+11.0" },
+                 { 254, "+11.9" }, { 126, "-0.1" }, { 117, "-1.0" }, { 95, "-3.0" }, { 74, "-5.0" }, { 53, "-7.0" }, { 31, "-9.0" }, { 10, "-11.0" } })
+            CHECK (f ("osc1_coarse", raw) == shown);
+        CHECK (f ("osc1_coarse", 0) == "-12.0" && f ("osc1_coarse", 255) == "+12.0" && f ("osc2_coarse", 192) == "+6.0");
         CHECK (f ("osc2_fine", 28) == "-100");
         CHECK (f ("osc3_wave", 2) == "Sawtooth");
         CHECK (f ("osc1_modenv1_to_shape", 0) == "-64");

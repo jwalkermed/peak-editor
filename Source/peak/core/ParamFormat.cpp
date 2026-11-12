@@ -1,6 +1,7 @@
 #include "ParamFormat.h"
 
 #include <array>
+#include <cmath>
 #include <cstring>
 #include <regex>
 #include <string_view>
@@ -106,6 +107,7 @@ struct Format
     const Names* names = nullptr;     // enumerated names
     int namesBase = 0;                // raw value of names[0]
     bool onOff = false, offAtZero = false, offAtCentre = false, percent = false, phase = false, bpm = false, wave = false;
+    bool semitones = false; // Coarse: -12.0 to +12.0, as the Peak shows it
     const std::vector<std::string>* list = nullptr; // mod matrix source/destination names
 };
 
@@ -130,6 +132,7 @@ const Format& formatFor (const ParamDef& p)
                    : matches (q, "^fxmod\\d_dest$")        ? &fxDestinationNames()
                                                             : nullptr;
             f.offAtCentre = matches (q, "^pre_glide$");
+            f.semitones = matches (q, "^osc\\d_coarse$");
             f.offAtZero = matches (q, "(_fixed_note|_repeats)$");
             f.phase = matches (q, "^lfo\\d_phase$");
             f.percent = matches (q, "^arp_(chance|swing)$");
@@ -253,6 +256,15 @@ std::string formatValue (const ParamDef& p, int v)
         return v == 0 ? "Free" : std::to_string ((v - 1) * 3) + "\u00b0";
     if (f.bpm)
         return std::to_string (v) + " BPM";
+    if (f.semitones)
+    {
+        // Raw 0-255, centred between 127 and 128 (both 0.0), 12 semitones per 128 steps, to the nearest
+        // tenth: fitted to the Peak's own display (17 of 19 readings exact, the rest 0.1 out; the
+        // Peak's knob is finer than the 256 values it sends, so no rule matches every one).
+        const auto tenths = (int) std::lround ((v - 127.5) * 120.0 / 128.0);
+        const auto text = std::to_string (std::abs (tenths) / 10) + "." + std::to_string (std::abs (tenths) % 10);
+        return tenths > 0 ? "+" + text : tenths < 0 ? "-" + text : text;
+    }
     if (f.percent)
         return std::to_string (v) + "%";
     if (f.centre >= 0)

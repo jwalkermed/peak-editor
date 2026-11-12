@@ -1,5 +1,6 @@
 #include "SettingsDrawer.h"
 
+#include "ui/CardStyle.h"
 #include "ui/DrawerStyle.h"
 
 #include <cstring>
@@ -26,25 +27,34 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        auto b = getLocalBounds().toFloat().reduced (0.5f, 4.5f);
-        g.setColour (field);
-        g.fillRoundedRectangle (b, 2.0f);
-        g.setColour (pinstripe.withAlpha (0.45f));
-        g.drawRoundedRectangle (b, 2.0f, 1.0f);
+        // As the menus' value bars.
+        auto b = getLocalBounds().toFloat().reduced (0.5f, 2.5f);
+        g.setColour (CardStyle::cell);
+        g.fillRoundedRectangle (b, 5.0f);
+        g.setColour (isMouseOverOrDragging() ? CardStyle::dim : CardStyle::line);
+        g.drawRoundedRectangle (b, 5.0f, 1.0f);
         if (! known)
         {
-            g.setColour (silkscreen.withAlpha (0.35f));
-            g.setFont (font (9.5f));
-            g.drawText ("not read yet", b.reduced (6.0f, 0.0f), juce::Justification::centredLeft, false);
+            g.setColour (CardStyle::dim);
+            g.setFont (juce::FontOptions (13.0f));
+            g.drawText ("not read yet", b.reduced (10.0f, 0.0f), juce::Justification::centredLeft, false);
             return;
         }
-        const auto xFor = [&] (double v) { return b.getX() + b.getWidth() * (float) ((v - def.min) / (double) (def.max - def.min)); };
+        const auto xFor = [&] (double v) { return b.getX() + 2.0f + (b.getWidth() - 4.0f) * (float) ((v - def.min) / (double) (def.max - def.min)); };
         const auto from = xFor (def.centre >= 0 ? def.centre : def.min), to = xFor (getValue());
-        g.setColour (accent.withAlpha (0.85f));
-        g.fillRect (juce::Rectangle<float>::leftTopRightBottom (juce::jmin (from, to), b.getY() + 2.0f, juce::jmax (from, to), b.getBottom() - 2.0f));
-        g.setColour (silkscreen);
-        g.setFont (font (10.0f));
-        g.drawText (juce::String (peak::formatSetting (def, (int) getValue())), b.reduced (6.0f, 0.0f), juce::Justification::centredRight, false);
+        if (std::abs (to - from) > 1.0f)
+        {
+            g.setColour (CardStyle::barFill);
+            g.fillRoundedRectangle (juce::Rectangle<float>::leftTopRightBottom (juce::jmin (from, to), b.getY() + 2.0f, juce::jmax (from, to), b.getBottom() - 2.0f), 4.0f);
+        }
+        if (def.centre >= 0)
+        {
+            g.setColour (CardStyle::dim);
+            g.fillRect (juce::Rectangle<float> (1.0f, b.getHeight() - 8.0f).withCentre ({ from, b.getCentreY() }));
+        }
+        g.setColour (CardStyle::text);
+        g.setFont (juce::FontOptions (13.0f));
+        g.drawText (juce::String (peak::formatSetting (def, (int) getValue())), b.reduced (10.0f, 0.0f), juce::Justification::centredRight, false);
     }
 
 private:
@@ -62,6 +72,7 @@ struct SettingsDrawer::Row
 
 SettingsDrawer::SettingsDrawer (PeakModel& m) : model (m)
 {
+    setLookAndFeel (&CardStyle::look());
     title.setFont (font (14.0f));
     title.setColour (juce::Label::textColourId, silkscreen);
     addAndMakeVisible (title);
@@ -107,7 +118,7 @@ SettingsDrawer::SettingsDrawer (PeakModel& m) : model (m)
             lastPage = s.page;
             auto& t = pageTitles.emplace_back (std::make_unique<juce::Label> (juce::String(), juce::String (s.page).toUpperCase()));
             t->setFont (font (11.0f));
-            t->setColour (juce::Label::textColourId, pinstripe);
+            t->setColour (juce::Label::textColourId, CardStyle::blue);
             addAndMakeVisible (*t);
         }
 
@@ -123,9 +134,6 @@ SettingsDrawer::SettingsDrawer (PeakModel& m) : model (m)
             row->choices = std::make_unique<juce::ComboBox>();
             for (size_t i = 0; i < s.names.size(); ++i)
                 row->choices->addItem (s.names[i], (int) i + 1);
-            row->choices->setColour (juce::ComboBox::backgroundColourId, field);
-            row->choices->setColour (juce::ComboBox::textColourId, silkscreen);
-            row->choices->setColour (juce::ComboBox::outlineColourId, pinstripe.withAlpha (0.45f));
             row->choices->setEnabled (! s.readOnly);
             row->choices->onChange = [this, r = row.get()] {
                 if (! updating && r->choices->getSelectedId() > 0)
@@ -151,6 +159,7 @@ SettingsDrawer::SettingsDrawer (PeakModel& m) : model (m)
 
 SettingsDrawer::~SettingsDrawer()
 {
+    setLookAndFeel (nullptr);
     model.changed.removeChangeListener (this);
 }
 

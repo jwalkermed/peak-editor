@@ -1,5 +1,7 @@
 #include "CardStyle.h"
 
+#include "ui/DrawerStyle.h"
+
 namespace CardStyle
 {
 Look::Look()
@@ -17,6 +19,42 @@ Look::Look()
     setColour (juce::PopupMenu::highlightedTextColourId, amber);
     setColour (juce::ScrollBar::thumbColourId, barFill);
     setColour (juce::ScrollBar::trackColourId, juce::Colours::transparentBlack);
+    setColour (juce::ToggleButton::textColourId, text);
+    setColour (juce::ToggleButton::tickColourId, amber);
+    setColour (juce::TextEditor::textColourId, text);
+    setColour (juce::TextEditor::highlightColourId, barFill);
+    setColour (juce::CaretComponent::caretColourId, amber);
+    setColour (juce::ListBox::backgroundColourId, juce::Colour (0xff141517));
+}
+
+void Look::drawTickBox (juce::Graphics& g, juce::Component&, float x, float y, float w, float h, bool ticked, bool enabled, bool over, bool)
+{
+    const auto r = juce::Rectangle<float> (x, y, w, h).reduced (1.0f);
+    g.setColour (over ? cellHover : cell);
+    g.fillRoundedRectangle (r, 3.5f);
+    g.setColour (ticked ? amber : line.brighter (0.3f));
+    g.drawRoundedRectangle (r, 3.5f, 1.0f);
+    if (ticked)
+    {
+        juce::Path tick;
+        tick.startNewSubPath (r.getX() + r.getWidth() * 0.25f, r.getCentreY());
+        tick.lineTo (r.getX() + r.getWidth() * 0.43f, r.getBottom() - r.getHeight() * 0.27f);
+        tick.lineTo (r.getRight() - r.getWidth() * 0.22f, r.getY() + r.getHeight() * 0.27f);
+        g.setColour (amber.withAlpha (enabled ? 1.0f : 0.4f));
+        g.strokePath (tick, juce::PathStrokeType (1.8f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+}
+
+void Look::fillTextEditorBackground (juce::Graphics& g, int w, int h, juce::TextEditor&)
+{
+    g.setColour (cell);
+    g.fillRoundedRectangle (juce::Rectangle<float> ((float) w, (float) h).reduced (0.5f), 5.0f);
+}
+
+void Look::drawTextEditorOutline (juce::Graphics& g, int w, int h, juce::TextEditor& e)
+{
+    g.setColour (e.hasKeyboardFocus (true) && ! e.isReadOnly() ? blue : line);
+    g.drawRoundedRectangle (juce::Rectangle<float> ((float) w, (float) h).reduced (0.5f), 5.0f, 1.0f);
 }
 
 void Look::drawLinearSlider (juce::Graphics& g, int x, int y, int w, int h, float pos, float, float, juce::Slider::SliderStyle style,
@@ -144,7 +182,7 @@ void paintCard (juce::Graphics& g, juce::Rectangle<int> bounds, const juce::Stri
 
     auto top = bounds.reduced (18, 0).withHeight (52);
     g.setColour (blue);
-    g.setFont (juce::FontOptions (17.0f));
+    g.setFont (headingFont (15.0f));
     g.drawText (title, top, juce::Justification::centredLeft);
     if (note.isNotEmpty())
     {
@@ -154,9 +192,24 @@ void paintCard (juce::Graphics& g, juce::Rectangle<int> bounds, const juce::Stri
     }
 }
 
+juce::Font headingFont (float height)
+{
+    return DrawerStyle::font (height);
+}
+
+void paintTabHeader (juce::Graphics& g, juce::Rectangle<int> tab, const juce::String& title, int titleX)
+{
+    g.fillAll (DrawerStyle::background);
+    g.setColour (DrawerStyle::silkscreen);
+    g.setFont (headingFont (14.0f));
+    g.drawText (title.toUpperCase(), juce::Rectangle<int> (tab.getX() + titleX + 5, tab.getY() + 8, 300, 24), juce::Justification::centredLeft);
+    g.setColour (DrawerStyle::pinstripe);
+    g.fillRect (tab.getX() + 12, tab.getY() + 34, tab.getWidth() - 24, 1);
+}
+
 void styleHeading (juce::Label& l)
 {
-    l.setFont (juce::FontOptions (12.0f));
+    l.setFont (headingFont (11.0f));
     l.setColour (juce::Label::textColourId, blue);
     l.setBorderSize ({ 0, 0, 0, 0 });
 }
@@ -219,7 +272,7 @@ bool Overlay::keyPressed (const juce::KeyPress& key)
 HelpCard::HelpCard (const juce::String& t, std::vector<Section> sections, int width) : title (t)
 {
     float y = 0.0f;
-    const auto add = [&] (bool bullet, const juce::String& words, juce::FontOptions font, juce::Colour colour, float spaceBefore) {
+    const auto add = [&] (bool bullet, const juce::String& words, juce::Font font, juce::Colour colour, float spaceBefore) {
         juce::AttributedString text (words);
         text.setFont (font);
         text.setColour (colour);
@@ -231,9 +284,9 @@ HelpCard::HelpCard (const juce::String& t, std::vector<Section> sections, int wi
     };
     for (size_t i = 0; i < sections.size(); ++i)
     {
-        add (false, sections[i].heading.toUpperCase(), juce::FontOptions (12.5f).withStyle ("Bold"), blue, i > 0 ? 14.0f : 0.0f);
+        add (false, sections[i].heading.toUpperCase(), headingFont (12.0f), blue, i > 0 ? 14.0f : 0.0f);
         for (const auto& point : sections[i].points)
-            add (true, point, juce::FontOptions (14.0f), CardStyle::text, 0.0f);
+            add (true, point, juce::Font (juce::FontOptions (14.0f)), CardStyle::text, 0.0f);
     }
     setSize (width, top + 14 + (int) std::ceil (y) + bottom);
 

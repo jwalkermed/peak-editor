@@ -48,12 +48,6 @@ KeyboardStrip::KeyboardStrip (PeakConnection& c)
 
     octaveDown.onClick = [this] { shiftOctave (-1); };
     octaveUp.onClick = [this] { shiftOctave (1); };
-    panic.setTooltip ("All notes off (CC 123) and release every key");
-    panic.onClick = [this] {
-        connection.keyboardState.allNotesOff (0);
-        sendController (123, 0);
-        sendController (64, 0);
-    };
 
     inputBox.setTooltip ("A MIDI keyboard whose notes, bend, mod wheel, aftertouch and sustain are played on the Peak");
     inputBox.onChange = [this] {
@@ -70,7 +64,7 @@ KeyboardStrip::KeyboardStrip (PeakConnection& c)
     }
     octaveLabel.setJustificationType (juce::Justification::centred);
 
-    for (auto* comp : std::initializer_list<juce::Component*> { &velocity, &octaveDown, &octaveUp, &panic, &inputBox })
+    for (auto* comp : std::initializer_list<juce::Component*> { &velocity, &octaveDown, &octaveUp, &inputBox })
         addAndMakeVisible (comp);
 
     connection.stateChanged.addChangeListener (this);
@@ -121,8 +115,6 @@ void KeyboardStrip::resized()
     row = controls.removeFromTop (24);
     inputLabel.setBounds (row.removeFromLeft (76));
     inputBox.setBounds (row);
-    controls.removeFromTop (4);
-    panic.setBounds (controls.removeFromTop (22).removeFromRight (80));
 
     keyboard.setBounds (area);
     keyboard.setKeyWidth ((float) area.getWidth() / (7.0f * visibleOctaves + 1.0f));
