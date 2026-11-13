@@ -11,7 +11,12 @@ namespace
 constexpr auto inputKey = "midiInput";
 constexpr auto outputKey = "midiOutput";
 constexpr auto channelKey = "midiChannel";
-constexpr auto keyboardKey = "keyboardInput";
+// The keyboard input is remembered separately for the app and the plugins: in a DAW the controller usually
+// reaches the Peak through the track already, so the plugins start with none (else every note plays twice).
+const char* keyboardKey()
+{
+    return juce::JUCEApplicationBase::isStandaloneApp() ? "keyboardInput" : "keyboardInputPlugin";
+}
 
 juce::String findPeakPort (const std::vector<PeakConnection::PortInfo>& ports)
 {
@@ -104,7 +109,7 @@ void PeakConnection::autoConnect()
     }
 
     if (getKeyboardInputIdentifier().isEmpty())
-        if (const auto saved = props->getValue (keyboardKey); isAvailable (inputs, saved))
+        if (const auto saved = props->getValue (keyboardKey()); isAvailable (inputs, saved))
             openKeyboardInput (saved);
 }
 
@@ -114,7 +119,7 @@ void PeakConnection::openKeyboardInput (const juce::String& identifier)
     const auto ok = keyboardTransport.openInput (identifier.toStdString());
 
     if (identifier.isEmpty() || ok)
-        settings.getUserSettings()->setValue (keyboardKey, identifier);
+        settings.getUserSettings()->setValue (keyboardKey(), identifier);
 
     stateChanged.sendChangeMessage();
 }
