@@ -105,7 +105,7 @@ target_include_directories(PeakCoreTests PRIVATE Source Tests)
 target_compile_definitions(PeakCoreTests PRIVATE PEAK_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/Tests/fixtures")
 add_test(NAME PeakCoreTests COMMAND PeakCoreTests)
 
-# Renders the front panel to PNG (visual check against docs/reference/peak-front-panel.png)
+# Renders the front panel, menus and tabs to PNG (the README screenshots; checks against a photo of the panel)
 juce_add_console_app(PanelSnapshot PRODUCT_NAME "PanelSnapshot")
 target_sources(PanelSnapshot PRIVATE
     Tests/PanelSnapshot.cpp

@@ -1026,7 +1026,7 @@ juce::Rectangle<float> FrontPanel::helpButtonArea()
 }
 
 // PEAK as on the hardware, right-aligned at `right`, letters `h` high from `top`. Traced from
-// the reference photo (docs/reference/peak-front-panel.png, measured at 6x: letters span
+// a reference photo of the panel (measured at 6x: letters span
 // x 65-1242, y 56-266 of that enlargement).
 juce::Path FrontPanel::peakLogo (float right, float top, float h)
 {

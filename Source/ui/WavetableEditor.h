@@ -29,7 +29,7 @@ public:
     void mouseUp (const juce::MouseEvent&) override;
     bool keyPressed (const juce::KeyPress&) override; // Cmd+Z / Shift+Cmd+Z
     void showHelp();                                   // the help card (the ? button)
-    void browse (const juce::File& folder, const juce::File& select = {}); // the file browser at a folder (e.g. for snapshots)
+    void browse (const juce::File& folder, const juce::File& select = {}); // the file browser at a folder, a file selected (a .syx loaded); for snapshots
     void browseHome (const juce::Array<juce::File>& folders);             // its Home list with these (not kept; for snapshots)
     void askHowToLoad (const juce::File&);              // an audio file: as a wavetable, or as a sample
     void openSample (const juce::File&, double startSeconds = 0.0); // the Import Audio Sample window
