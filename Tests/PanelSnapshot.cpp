@@ -8,6 +8,7 @@
 #include "ui/ModMatrixDrawer.h"
 #include "ui/SettingsDrawer.h"
 #include "ui/WavetableEditor.h"
+#include "ui/UpdateCard.h"
 #include "ui/MidiMonitorPanel.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -107,6 +108,39 @@ int main (int argc, char** argv)
             folders.add (juce::File (f));
         editor->browseHome (folders);
         view = std::move (editor);
+    }
+    else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("updatertest:"))
+    {
+        // updatertest:<version>|<folder with that release's three zips>: installs them as Install Update would.
+        const auto parts = juce::StringArray::fromTokens (juce::String (argv[2]).fromFirstOccurrenceOf (":", false, false), "|", "");
+        UpdateCheck::Release release;
+        release.version = parts[0];
+        for (const auto& zip : juce::File (parts[1]).findChildFiles (juce::File::findFiles, false, "*.zip"))
+            release.downloads.set (zip.getFileName(), juce::URL (zip).toString (false));
+        bool finished = false;
+        Updater updater (release, [] (float p, const juce::String& s) { printf ("%3d%% %s\n", (int) (p * 100), s.toRawUTF8()); },
+                         [&finished] (bool ok, const juce::String& m) { printf ("%s: %s\n", ok ? "OK" : "FAILED", m.toRawUTF8()); finished = true; });
+        for (int i = 0; i < 600 && ! finished; ++i)
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (200);
+        return finished ? 0 : 1;
+    }
+    else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("update:"))
+    {
+        // update:available|installing|installed|failed, for an example release
+        UpdateCheck::Release release;
+        release.version = "v1.4.0";
+        release.notes = "An editor and librarian for the Novation Peak.\n\n## New in 1.4.0\n- **One-click updates:** Install Update downloads "
+                        "the new version and replaces the app and plugins.\n- A [README](https://example.com) section on updating.\n\n"
+                        "## Installing\nDownload the zips and run the installer.";
+        auto card = std::make_unique<UpdateCard> (release);
+        const auto state = juce::String (argv[2]).fromFirstOccurrenceOf (":", false, false);
+        if (state == "installing")
+            card->show (UpdateCard::State::installing, 0.42f, juce::String::fromUTF8 ("Downloading Peak-Editor-1.4.0-macOS-AU.zip\xe2\x80\xa6"));
+        else if (state == "installed")
+            card->show (UpdateCard::State::installed, 1.0f, "Updated to v1.4.0.");
+        else if (state == "failed")
+            card->show (UpdateCard::State::failed, 1.0f, "Couldn't install /Applications/Peak Editor.app (no permission?).\nUpdated: AU, VST3.");
+        view = std::move (card);
     }
     else if (juce::String (argc > 2 ? argv[2] : "") == "wavetablehelp")
     {

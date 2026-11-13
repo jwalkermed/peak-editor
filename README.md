@@ -9,8 +9,9 @@ Peak follows; turn one on the Peak and the editor follows.
 - **Platform:** macOS 12 or later, Universal (Apple Silicon and Intel)
 - **Formats:** standalone app, Audio Unit, VST3
 - **Synth:** Novation Peak, firmware 2.2 (connected by USB, DIN MIDI or a network MIDI session)
-- **Latest release:** [Releases](../../releases) (zips plus an installer script). The editor says so at the bottom
-  left when a newer one is out.
+- **Latest release:** [Releases](../../releases) (zips plus an installer script). When a newer one is out, the
+  editor says so at the bottom left: click it to see what's new and **Install Update** (it replaces the app and
+  plugins, then Relaunch).
 - **Price:** free. A hobby project, offered as is.
 
 ---
