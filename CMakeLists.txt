@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Target architectures")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum macOS version")
 
-project(PeakEditor VERSION 1.3.0 LANGUAGES C CXX)
+project(PeakEditor VERSION 1.4.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -77,7 +77,9 @@ target_sources(PeakEditor PRIVATE
     Source/ui/SettingsDrawer.cpp
     Source/ui/WavetableEditor.cpp
     Source/ui/WavetableBrowser.cpp
-    Source/ui/AudioSampleImporter.cpp)
+    Source/ui/AudioSampleImporter.cpp
+    Source/peak/Updater.cpp
+    Source/ui/UpdateCard.cpp)
 
 target_include_directories(PeakEditor PRIVATE Source)
 
@@ -126,9 +128,11 @@ target_sources(PanelSnapshot PRIVATE
     Source/ui/SettingsDrawer.cpp
     Source/ui/WavetableEditor.cpp
     Source/ui/WavetableBrowser.cpp
-    Source/ui/AudioSampleImporter.cpp)
+    Source/ui/AudioSampleImporter.cpp
+    Source/peak/Updater.cpp
+    Source/ui/UpdateCard.cpp)
 target_include_directories(PanelSnapshot PRIVATE Source)
-target_compile_definitions(PanelSnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+target_compile_definitions(PanelSnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_MODAL_LOOPS_PERMITTED=1 JucePlugin_VersionString="${PROJECT_VERSION}")
 target_link_libraries(PanelSnapshot PRIVATE PeakAssets juce::juce_gui_basics juce::juce_audio_basics juce::juce_audio_utils "-framework CoreMIDI")
 
 # Library tests (My Banks, NOT SENT, undo/redo) in a temporary folder

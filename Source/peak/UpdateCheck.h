@@ -13,6 +13,15 @@ class UpdateCheck final : private juce::Thread,
 {
 public:
     static constexpr const char* latestRelease = "https://api.github.com/repos/jwalkermed/peak-editor/releases/latest";
+    static constexpr const char* releasesPage = "https://github.com/jwalkermed/peak-editor/releases/latest";
+
+    // A newer release: its version ("v1.4.0"), page, notes (Markdown) and downloads (file name -> URL).
+    struct Release
+    {
+        juce::String version, notes;
+        juce::URL page;
+        juce::StringPairArray downloads;
+    };
 
     UpdateCheck() : juce::Thread ("Update check") { startThread (juce::Thread::Priority::low); }
     ~UpdateCheck() override
@@ -21,9 +30,10 @@ public:
         cancelPendingUpdate();
     }
 
-    // The newer release's version ("v1.3.0") and page, once found (message thread).
-    juce::String getNewerVersion() const { return newerVersion; }
-    juce::URL getReleasePage() const { return releasePage; }
+    // The newer release, once found (message thread); empty version until then.
+    const Release& getNewerRelease() const { return newer; }
+    juce::String getNewerVersion() const { return newer.version; }
+    juce::URL getReleasePage() const { return newer.page; }
     juce::ChangeBroadcaster found;
 
 private:
@@ -37,23 +47,35 @@ private:
         const auto stream = juce::URL (latestRelease).createInputStream (options);
         if (stream == nullptr || threadShouldExit())
             return;
-        const auto release = juce::JSON::parse (stream->readEntireStreamAsString());
-        const auto tag = release["tag_name"].toString();
+        const auto json = juce::JSON::parse (stream->readEntireStreamAsString());
+        const auto tag = json["tag_name"].toString();
         if (! peak::isNewerVersion (tag.toStdString(), JucePlugin_VersionString))
             return;
-        tagFound = tag;
-        pageFound = release["html_url"].toString();
+
+        Release release;
+        release.version = tag;
+        release.notes = json["body"].toString();
+        const auto page = json["html_url"].toString();
+        release.page = juce::URL (page.startsWith ("https://github.com/") ? page : juce::String (releasesPage));
+        if (const auto* assets = json["assets"].getArray())
+            for (const auto& asset : *assets)
+                if (const auto url = asset["browser_download_url"].toString(); url.startsWith ("https://github.com/"))
+                    release.downloads.set (asset["name"].toString(), url);
+        const juce::ScopedLock lock (foundLock);
+        fromThread = std::move (release);
         triggerAsyncUpdate();
     }
 
     void handleAsyncUpdate() override
     {
-        newerVersion = tagFound;
-        releasePage = juce::URL (pageFound.startsWith ("https://github.com/") ? pageFound : juce::String ("https://github.com/jwalkermed/peak-editor/releases/latest"));
+        {
+            const juce::ScopedLock lock (foundLock);
+            newer = fromThread;
+        }
         found.sendChangeMessage();
     }
 
-    juce::String tagFound, pageFound; // from the thread, before the async update
-    juce::String newerVersion;
-    juce::URL releasePage;
+    juce::CriticalSection foundLock;
+    Release fromThread; // from the thread, before the async update
+    Release newer;
 };

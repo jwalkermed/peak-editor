@@ -1,6 +1,7 @@
 #include "PluginEditor.h"
 
 #include "peak/UpdateCheck.h"
+#include "ui/UpdateCard.h"
 #include "ui/CardStyle.h"
 #include "ui/ModAssign.h"
 #include "ui/WavetableEditor.h"
@@ -88,6 +89,16 @@ public:
         changeListenerCallback (nullptr);
     }
 
+    void showUpdate()
+    {
+        auto card = std::make_unique<UpdateCard> (updates->getNewerRelease());
+        card->onClose = [this] { if (updateOverlay) updateOverlay->close(); };
+        updateOverlay = std::make_unique<CardStyle::Overlay> (std::move (card), [this] { updateOverlay.reset(); });
+        addAndMakeVisible (*updateOverlay);
+        updateOverlay->setBounds (getLocalBounds());
+        updateOverlay->grabKeyboardFocus();
+    }
+
     ~PanelPage() override
     {
         updates->found.removeChangeListener (this);
@@ -98,8 +109,9 @@ public:
         if (updates->getNewerVersion().isEmpty())
             return;
         updateLink.setButtonText ("Update available: " + updates->getNewerVersion());
-        updateLink.setURL (updates->getReleasePage());
-        updateLink.setTooltip ("Open the release page on GitHub to download it");
+        updateLink.setURL ({}); // the Update window instead of the browser
+        updateLink.setTooltip ("What's new, and Install Update");
+        updateLink.onClick = [this] { showUpdate(); };
         updateLink.setVisible (true);
         resized();
     }
@@ -127,6 +139,8 @@ public:
 
     void resized() override
     {
+        if (updateOverlay != nullptr)
+            updateOverlay->setBounds (getLocalBounds());
         auto r = getLocalBounds();
         if (keys.isVisible())
             keys.setBounds (r.removeFromBottom (KeyboardStrip::preferredHeight));
@@ -159,6 +173,7 @@ private:
     FooterSwitch keyboardSwitch { "Keyboard" };
     juce::SharedResourcePointer<UpdateCheck> updates;
     juce::HyperlinkButton updateLink;
+    std::unique_ptr<CardStyle::Overlay> updateOverlay;
     juce::Rectangle<int> footer;
 };
 } // namespace
