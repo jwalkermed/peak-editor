@@ -1,6 +1,7 @@
 #include "PluginEditor.h"
 
 #include "peak/UpdateCheck.h"
+#include "ui/HostWindow.h"
 #include "ui/UpdateCard.h"
 #include "ui/CardStyle.h"
 #include "ui/ModAssign.h"
@@ -223,6 +224,8 @@ PeakEditorEditor::PeakEditorEditor (PeakEditorProcessor& p)
     };
     addChildComponent (optionsButton);
     optionsButton.setVisible (p.isStandalone());
+    if (! p.isStandalone())
+        windowPlacer.startTimer (250);
 
     projectMessage.setColour (juce::Label::textColourId, juce::Colours::white);
     sendProjectPatch.setTooltip ("Replace the Peak's current sound with the project's patch (nothing is saved on the Peak)");
@@ -325,6 +328,38 @@ void PeakEditorEditor::parentHierarchyChanged()
                 safe->setUsingNativeTitleBar (true);
             }
         });
+}
+
+void PeakEditorEditor::placeWindow()
+{
+    const auto position = HostWindow::topLeft (*this);
+    auto* settings = peakProcessor.getModel().getConnection().getUserSettings();
+    if (! position || settings == nullptr)
+        return; // not shown yet
+    const auto key = juce::String ("pluginWindow ") + juce::PluginHostType().getHostDescription();
+
+    if (! placed)
+    {
+        // A moment after the DAW has put the window up, put it back where it was last time.
+        if (++placeChecks < 2)
+            return;
+        placed = true;
+        const auto saved = juce::StringArray::fromTokens (settings->getValue (key), ",", "");
+        if (saved.size() == 2)
+            if (const juce::Point<int> last { saved[0].getIntValue(), saved[1].getIntValue() }; last != *position && HostWindow::moveTo (*this, last))
+            {
+                savedPosition = last;
+                return;
+            }
+        savedPosition = position;
+        return;
+    }
+    // Then every place it's moved to is kept.
+    if (position != savedPosition)
+    {
+        savedPosition = position;
+        settings->setValue (key, juce::String (position->x) + "," + juce::String (position->y));
+    }
 }
 
 PeakEditorEditor::~PeakEditorEditor()

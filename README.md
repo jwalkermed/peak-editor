@@ -120,6 +120,9 @@ Peak follows; turn one on the Peak and the editor follows.
 - **Track MIDI → Peak:** play the Peak from the DAW track.
 - **DAW clock → Peak:** send the DAW's tempo and Start/Stop as MIDI clock.
 - Every parameter can be automated, and the project remembers its patch.
+- **Keyboard in** starts at none in the plugins (the controller already reaches the Peak through the track), and
+  is remembered separately from the app's.
+- The plugin window opens where you last put it in that DAW.
 
 ---
 

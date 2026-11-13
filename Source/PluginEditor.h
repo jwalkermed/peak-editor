@@ -61,5 +61,12 @@ private:
     juce::TextButton sendProjectPatch { "Send to Peak" }, loadProjectPatch { "Load in editor only" }, dismissProject { "Ignore" };
     juce::TooltipWindow tooltips { this, 400 };
 
+    // A plugin's window comes back where it was last time in that DAW (the DAW places it otherwise).
+    void placeWindow();
+    juce::TimedCallback windowPlacer { [this] { placeWindow(); } };
+    int placeChecks = 0;
+    bool placed = false;
+    std::optional<juce::Point<int>> savedPosition;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PeakEditorEditor)
 };
