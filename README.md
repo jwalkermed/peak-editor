@@ -357,6 +357,7 @@ source. It comes with no warranty. The Exo 2 font is under the SIL Open Font Lic
 
 ## Credits
 
+- Made by [jwalkermed](https://github.com/jwalkermed).
 - Built with [JUCE](https://juce.com).
 - Wavetable notes come from the "Novation Peak/Summit factory wavetable list" posted on r/synthesizers.
 - Novation and Peak are trademarks of Focusrite Audio Engineering Ltd. This is an independent project, not
