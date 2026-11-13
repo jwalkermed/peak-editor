@@ -109,6 +109,27 @@ int main (int argc, char** argv)
         editor->browseHome (folders);
         view = std::move (editor);
     }
+    else if (juce::String (argc > 2 ? argv[2] : "") == "updaterlive")
+    {
+        // updaterlive: installs the latest GitHub release here, exactly as Install Update does.
+        const auto json = juce::JSON::parse (juce::URL (UpdateCheck::latestRelease).readEntireTextStream());
+        UpdateCheck::Release release;
+        release.version = json["tag_name"].toString();
+        if (const auto* assets = json["assets"].getArray())
+            for (const auto& asset : *assets)
+                release.downloads.set (asset["name"].toString(), asset["browser_download_url"].toString());
+        printf ("latest: %s, %d downloads\n", release.version.toRawUTF8(), release.downloads.size());
+        bool finished = false;
+        int lastPercent = -10;
+        Updater updater (release,
+                         [&lastPercent] (float p, const juce::String& st) {
+                             if ((int) (p * 100) >= lastPercent + 10) { lastPercent = (int) (p * 100); printf ("%3d%% %s\n", lastPercent, st.toRawUTF8()); }
+                         },
+                         [&finished] (bool ok, const juce::String& m) { printf ("%s: %s\n", ok ? "OK" : "FAILED", m.toRawUTF8()); finished = true; });
+        for (int i = 0; i < 900 && ! finished; ++i)
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (200);
+        return finished ? 0 : 1;
+    }
     else if (juce::String (argc > 2 ? argv[2] : "").startsWith ("updatertest:"))
     {
         // updatertest:<version>|<folder with that release's three zips>: installs them as Install Update would.

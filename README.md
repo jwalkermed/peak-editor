@@ -18,7 +18,9 @@ Peak follows; turn one on the Peak and the editor follows.
 
 ## Contents
 - [Features](#features)
+- [Wavetable editor](#wavetable-editor)
 - [Installing](#installing)
+- [Updating](#updating)
 - [Setting up the Peak](#setting-up-the-peak)
 - [Using the editor](#using-the-editor)
 - [Where things are kept](#where-things-are-kept)
@@ -46,6 +48,13 @@ Peak follows; turn one on the Peak and the editor follows.
   (the Mixer menu's Patch Level), which is saved with the patch.
 - Oscillator **Coarse** reads in semitones, −12.0 to +12.0, as on the Peak.
 - Double-click any value to put it back as saved in the patch.
+- Changes made on the Peak that it doesn't send over MIDI (its **Initialise**, for one) still show up: the editor
+  quietly checks the Peak's sound every couple of seconds when nothing else is going on.
+
+**Keyboard strip** (under the panel; the **Keyboard** switch shows or hides it)
+- Play the Peak with the mouse or the computer keyboard, with Octave −/+ and Velocity.
+- **Keyboard in:** a MIDI controller whose notes, bend, mod wheel, aftertouch and sustain go to the Peak.
+- The **pitch and mod wheels** move with any wheel: your controller's, the DAW track's, or the Peak's own.
 
 ![Envelope and filter graphs on the screen](docs/screenshots/screen-graphs.png)
 
@@ -92,33 +101,79 @@ Peak follows; turn one on the Peak and the editor follows.
 
 ![The Library](docs/screenshots/library.png)
 
-**Wavetables**
-- Draw and edit the Peak's **user wavetables** (U1–U10): 5 waves each, with Pencil, Line and shape drawing
-  (click a shape and drag a box; double-click to fill the wave), Snap to grid, harmonic level and phase bars,
-  Copy to all, Blend 1 → 5, Normalise, Reverse, Invert, Reset and Undo/Redo.
-- **Load from Peak** reads a user slot; **Send to Peak** plays it at once. **Live Edit** sends every change, and
-  clicking a wave or moving Wave Table Position moves the Peak there.
-- A sent wavetable is kept only once it's **saved on the Peak** (Osc menu, page 9 "User Waves", Save); the slot is
-  marked "unsaved on Peak" until you say you have.
-- Drag a wave onto another to swap them.
-- **File Browser:** add folders (chosen in Finder) to its Home list, browse them with Back, Forward, Up and Home,
-  and double-click to load. Wavetables with fewer than five frames fill the first waves and leave the rest flat. It lists what
-  Components imports: `.syx`/`.sysex` wavetables (loaded at once), and WAV or MP3 files, loaded either as a
-  wavetable (single cycle or 2048-sample frames, e.g. Serum) or as an **audio sample**: play and scrub through it,
-  pick a point, then **Import Waveform** (one cycle into the selected wave) or **Import Wavetable** (five successive
-  cycles into all five waves). **Import…** opens a single file from anywhere; **Save** writes a `.syx` that
-  Components can load. The **?** explains the rest.
-
 **Settings**
 - The Peak's global settings (Clock Source, Brightness, pedals, MIDI and so on), read from the Peak and written
   back to it.
 
 ![Settings](docs/screenshots/settings.png)
 
+**MIDI**
+- The Peak's MIDI ports and channel, the connection status, and a live log of everything sent and received.
+- **Developer tools** (off by default) adds a raw CC and SysEx sender and saving captured SysEx, for exploring the
+  Peak's protocol.
+
+![The MIDI tab](docs/screenshots/midi.png)
+
+**Wavetables** — see [Wavetable editor](#wavetable-editor) below.
+
 **Plugin (AU/VST3)**
 - **Track MIDI → Peak:** play the Peak from the DAW track.
 - **DAW clock → Peak:** send the DAW's tempo and Start/Stop as MIDI clock.
 - Every parameter can be automated, and the project remembers its patch.
+
+---
+
+## Wavetable editor
+
+The **Wavetables** tab draws, edits and imports the Peak's ten **user wavetables** (U1–U10). Each has five waves;
+the oscillator's Wave Table Position (Shape Amount) morphs through them. The **?** at the top left explains
+everything in the tab.
+
+![The Wavetables tab](docs/screenshots/wavetables.png)
+
+**Editing**
+- Click one of the five waves to edit it; **drag a wave onto another** to swap them.
+- **Pencil** draws freehand (softened by **Smoothing**); **Line** draws straight lines.
+- **Shapes:** click one (Sine, Square, Pulse, Saw, Triangle, Noise), then drag a box across the wave to draw one
+  cycle of it there; start on the centre line to keep it in one half. Double-click a shape to fill the whole wave.
+  **Snap to grid** snaps lines and shapes.
+- The **harmonic bars** under the wave set the level, or the phase, of harmonics 1–64.
+- **Copy all waves**, **Blend 1 → 5** (waves 2–4 morph between 1 and 5), **Normalise**, **Reverse**, **Invert**,
+  **Reset wave**, **Reset all**, and Undo/Redo.
+- **Wave Table Position** previews the morph, and follows the Peak's Shape Amount knob as you turn it.
+
+**On the Peak**
+- **Load from Peak** reads a user slot. **Send to Peak** sends the wavetable to the chosen slot, where it plays at
+  once. **Live Edit** sends every change as you make it; clicking a wave or moving Wave Table Position moves the
+  Peak there too.
+- A sent wavetable is only **kept once you save it on the Peak**: Osc menu, page 9 "User Waves", select it, then
+  that page's Save. The editor can't do this over MIDI, so the slot is marked "unsaved on Peak" until you click
+  **I've saved it on the Peak**.
+
+**File Browser**
+- The folder button adds a folder (chosen in Finder) to the browser's **Home** list. Add as many as you like;
+  they're remembered, and shared with the plugins. Right-click one at Home to remove it from the list.
+- Browse with **Back**, **Forward**, **Up** and **Home**; double-click a file to load it.
+- It lists what Novation Components imports: **`.syx`/`.sysex`** wavetables, which load straight in, and **WAV**
+  and **MP3** files, which ask how to load them:
+  - **Wavetable:** the file as it is. A single cycle goes into the selected wave; 2048-sample frames (Serum-style
+    wavetables) fill the five waves, and with fewer than five frames the rest are left flat.
+  - **Audio file…:** opens Import Audio Sample (below).
+- **Import…** at the top opens a single file from anywhere, the same way. **Save…** writes a `.syx` file that
+  Components can load too.
+
+**Import Audio Sample**
+- Play and scrub through a sample; **click the waveform to hear the cycle at that point**, and drag to scrub. A
+  volume slider sets how loud it plays.
+- **From here** shows the five waves the chosen point gives; click one to hear it and choose it.
+- **Import Waveform** puts the chosen wave into the editor's selected wave. **Import Wavetable** fills all five
+  waves with five successive cycles (512-sample slices) from that point.
+- **Play on the Peak:** what you audition is also sent to the selected user slot, so you can play it from your
+  keyboard. Close the window without importing and the Peak goes back to how it was.
+- The sample plays through the editor's audio output: in the app, the audio device in its settings; as a plugin,
+  the DAW track.
+
+![Import Audio Sample](docs/screenshots/import-audio-sample.png)
 
 ---
 
@@ -148,6 +203,19 @@ xattr -dr com.apple.quarantine "/Applications/Peak Editor.app"
 ```
 
 Do the same for the plugins.
+
+---
+
+## Updating
+
+When a newer release is out, the editor shows **Update available** at the bottom left (it asks GitHub once at
+startup; nothing else is sent). Click it to see what's new, then **Install Update**: it downloads the new
+version, checks it, and replaces the app and both plugins where they're installed. Then **Relaunch Now** (the
+app), or reopen your DAW project (a plugin). Your library, settings and added folders are kept.
+
+![The Update window](docs/screenshots/update.png)
+
+You can also install a new release by hand, as above.
 
 ---
 
@@ -181,6 +249,9 @@ checks its stored banks against the Peak.
 | Change the category | Click the category on the screen (saved straight away) |
 | Favourite | Click the star next to the name |
 | Show/hide the keyboard | The **Keyboard** switch under the panel |
+| Load a wavetable file | Wavetables tab: add its folder in the File Browser, then double-click the file |
+| Hear a wavetable on the Peak | **Send to Peak** (or turn on **Live Edit**), with an oscillator playing that user slot |
+| Keep a wavetable on the Peak | On the Peak: Osc menu, page 9 "User Waves", select it, Save |
 | Help | The **?** at the top left of the panel, the Library and the Wavetables tab |
 
 ---
@@ -193,6 +264,10 @@ Everything lives in `~/Library/Application Support/Peak Editor/`:
 - `Peak Banks/`: the editor's copy of Peak banks A–D, NOT SENT changes and the global settings.
 - `Backups/`: banks saved automatically before each write to the Peak, and before the copy is updated when the
   Peak changed outside the editor.
+- `settings.xml`: MIDI ports and channel, the File Browser's folders, the audition volume and other preferences
+  (shared by the app and the plugins).
+
+The standalone app's audio device is in `~/Library/Application Support/Peak Editor.settings`.
 
 ---
 
@@ -208,6 +283,10 @@ Everything lives in `~/Library/Application Support/Peak Editor/`:
   the Source setting and, in the plugin, the DAW clock it sends.
 - **External changes:** the Peak doesn't announce memory changes made by other software. The editor checks at
   startup and whenever the Peak selects a slot.
+- **User wavetables are temporary** until saved on the Peak (see above), and only the ten user slots can be read;
+  the Peak's factory wavetables can't.
+- **Updating in place** needs permission to replace the app and plugins where they're installed; if it can't, it
+  leaves them as they were and the release page has the installer.
 
 ---
 
@@ -232,13 +311,17 @@ Add `-DPEAK_COPY_PLUGINS=ON` to copy the plugins into `~/Library/Audio/Plug-Ins`
 ```
 
 `PanelSnapshot` renders the panel, menus and tabs to PNG (it made the screenshots here). For example:
-`PanelSnapshot out.png 2191 patch.syx filter_frequency=120`.
+`PanelSnapshot out.png 2191 patch.syx filter_frequency=120`, or `PanelSnapshot out.png wavetables`
+(also `library`, `settings`, `modmatrix`, `midi`, `menu:FX`, `wave:1`, `update:available`; see
+`Tests/PanelSnapshot.cpp`).
 
 **Source layout**
 - `Source/peak/core`: the Peak's patch format, parameter table, MIDI and SysEx. Plain C++, tested.
 - `Source/peak`: the MIDI connection (CoreMIDI), the model and the library.
-- `Source/ui`: the front panel, cards, Library, Mod Matrix, Settings and graphs.
-- `tools`: the parameter table generator, the panel measuring scripts and the installer script.
+- `Source/ui`: the front panel, cards, Library, Mod Matrix, Settings, Wavetables (editor, File Browser, Import
+  Audio Sample), the Update window and graphs.
+- `tools`: the parameter table generator, the panel measuring scripts (they need a photo of the panel, not
+  included) and the installer script.
 
 ---
 

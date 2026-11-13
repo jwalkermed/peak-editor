@@ -722,6 +722,8 @@ void WavetableEditor::browse (const juce::File& folder, const juce::File& file)
     browser->openFolder (folder);
     if (file.existsAsFile())
         browser->select (file);
+    if (file.hasFileExtension ("syx;sysex"))
+        importFile (file); // as a double-click would
 }
 
 void WavetableEditor::browseHome (const juce::Array<juce::File>& folders)
